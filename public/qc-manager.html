@@ -1,0 +1,2325 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QC Manager - QMS System</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f4f7f5;
+            display: flex;
+        }
+
+        .sidebar {
+            width: 280px;
+            background: white;
+            color: #1f2937;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            border-right: 1px solid #e5e7eb;
+            box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1b4d3e;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 1rem 0;
+        }
+
+        .sidebar-menu li {
+            margin: 0;
+        }
+
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            color: #4b5563;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .sidebar-menu a:hover {
+            background: #f0fdf4;
+            color: #1b4d3e;
+            border-left-color: #1b4d3e;
+        }
+
+        .sidebar-menu a.active {
+            background: #dcfce7;
+            color: #166534;
+            border-left-color: #1b4d3e;
+        }
+
+        .sidebar-icon {
+            font-size: 1.25rem;
+            margin-right: 1rem;
+            width: 24px;
+            text-align: center;
+        }
+
+        main {
+            margin-left: 280px;
+            padding: 2rem;
+            width: calc(100% - 280px);
+            min-height: 100vh;
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .top-bar-left h1 {
+            font-size: 1.875rem;
+            color: #1f2937;
+            margin: 0;
+        }
+
+        .top-bar-right {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .notification-bell {
+            position: relative;
+            cursor: pointer;
+            font-size: 1.5rem;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        .notification-panel {
+            position: absolute;
+            top: 60px;
+            right: 0;
+            width: 400px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            max-height: 500px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+
+        .notification-panel.show {
+            display: block;
+        }
+
+        .notification-item {
+            padding: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .notification-item:hover {
+            background: #f9fafb;
+        }
+
+        .notification-item.unread {
+            background: #dbeafe;
+            font-weight: 500;
+        }
+
+        .notification-item-title {
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 0.5rem;
+        }
+
+        .notification-item-text {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 1.5rem;
+        }
+
+        .filters-container {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .filter-group label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .filter-group input,
+        .filter-group select {
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 0.875rem;
+        }
+
+        .inspection-list {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .inspection-item {
+            padding: 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .inspection-item:hover {
+            background: #f9fafb;
+        }
+
+        .inspection-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .inspection-trans-no {
+            font-weight: 700;
+            font-size: 1rem;
+            color: #1f2937;
+        }
+
+        .inspection-status {
+            padding: 0.375rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: white;
+        }
+
+        .status-pass {
+            background: #10b981;
+        }
+
+        .status-fail {
+            background: #ef4444;
+        }
+
+        .status-pending {
+            background: #f59e0b;
+        }
+
+        .inspection-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            font-size: 0.875rem;
+        }
+
+        .detail-row {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .detail-label {
+            color: #6b7280;
+            font-weight: 600;
+        }
+
+        .detail-value {
+            color: #1f2937;
+        }
+
+        .defect-section {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .defect-section-title {
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 0.75rem;
+        }
+
+        .defect-item {
+            background: #f9fafb;
+            padding: 0.75rem;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .stat-label {
+            color: #6b7280;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1b4d3e;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1.5rem;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .summary-card {
+            background: white;
+            padding: 1rem 1.25rem;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .summary-card .stat-label {
+            margin-bottom: 0.35rem;
+        }
+
+        .summary-card .stat-value {
+            font-size: 1.5rem;
+            text-align: left;
+        }
+
+        .section-grid {
+            display: grid;
+            grid-template-columns: 1.4fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .panel-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .panel-card h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 1rem;
+        }
+
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        .report-table th,
+        .report-table td {
+            padding: 0.9rem;
+            border-bottom: 1px solid #e5e7eb;
+            text-align: left;
+            vertical-align: top;
+            font-size: 0.875rem;
+        }
+
+        .report-table th {
+            background: #f3f4f6;
+            color: #1f2937;
+            font-weight: 600;
+        }
+
+        .report-table tr:hover {
+            background: #f9fafb;
+        }
+
+        .compact-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .compact-table th,
+        .compact-table td {
+            padding: 0.85rem;
+            border-bottom: 1px solid #e5e7eb;
+            text-align: left;
+            font-size: 0.875rem;
+        }
+
+        .compact-table th {
+            background: #f9fafb;
+            color: #1f2937;
+        }
+
+        .form-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1.5rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .form-field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.45rem;
+        }
+
+        .form-field label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .form-field input,
+        .form-field select,
+        .form-field textarea {
+            width: 100%;
+            padding: 0.7rem 0.8rem;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            color: #1f2937;
+            background: white;
+        }
+
+        .form-field textarea {
+            resize: vertical;
+            min-height: 96px;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .action-btn {
+            padding: 0.7rem 1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            background: #1b4d3e;
+            color: white;
+        }
+
+        .action-btn.secondary {
+            background: #e5e7eb;
+            color: #1f2937;
+        }
+
+        .inline-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.3rem 0.65rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .badge-assigned {
+            background: #d1fae5;
+            color: #047857;
+        }
+
+        .badge-unassigned {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .badge-pass {
+            background: #d1fae5;
+            color: #047857;
+        }
+
+        .badge-fail {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .badge-pending {
+            background: #fef3c7;
+            color: #b45309;
+        }
+
+        .detail-stack {
+            display: grid;
+            gap: 0.75rem;
+        }
+
+        .detail-chip {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 0.85rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            font-size: 0.875rem;
+        }
+
+        .detail-chip strong {
+            color: #1f2937;
+        }
+
+        .empty-state {
+            padding: 2rem;
+            text-align: center;
+            color: #6b7280;
+            background: #f9fafb;
+            border: 1px dashed #d1d5db;
+            border-radius: 12px;
+        }
+
+        @media (max-width: 1100px) {
+            .section-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-container h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 1rem;
+        }
+
+        .cost-breakdown-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .cost-breakdown-table th,
+        .cost-breakdown-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .cost-breakdown-table th {
+            background: #f3f4f6;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .cost-breakdown-table tr:hover {
+            background: #f9fafb;
+        }
+
+        .logout-btn {
+            padding: 0.5rem 1rem;
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        .logout-btn:hover {
+            background: #dc2626;
+        }
+
+        #alertContainer {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            max-width: 400px;
+            z-index: 2000;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 6px;
+            color: white;
+            margin-bottom: 0.5rem;
+            animation: slideIn 0.3s ease;
+        }
+
+        .alert-success {
+            background: #10b981;
+        }
+
+        .alert-error {
+            background: #ef4444;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <img src="/logo.png" alt="VFR Logo" style="height: 38px; border-radius: 4px;">
+            <span>QMS</span>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="#" class="sidebar-link active" onclick="switchSection('inspection-control', this)">
+                    <span class="sidebar-icon">📋</span>
+                    <span>Inspection Control</span>
+                </a></li>
+            <li><a href="#" class="sidebar-link" onclick="switchSection('quality-control', this)">
+                    <span class="sidebar-icon">📊</span>
+                    <span>Quality Control</span>
+                </a></li>
+            <li><a href="#" class="sidebar-link" onclick="switchSection('owner-assignment', this)">
+                    <span class="sidebar-icon">👤</span>
+                    <span>Owner Assignment</span>
+                </a></li>
+            <li><a href="#" class="sidebar-link" onclick="switchSection('notification-center', this)">
+                    <span class="sidebar-icon">🔔</span>
+                    <span>Notification Center</span>
+                </a></li>
+            <li><a href="#" class="sidebar-link" onclick="switchSection('cost-management', this)">
+                    <span class="sidebar-icon">💰</span>
+                    <span>Cost Management</span>
+                </a></li>
+        </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Alert Container -->
+        <div id="alertContainer"></div>
+
+        <!-- Top Bar with Notification Bell -->
+        <div class="top-bar">
+            <div class="top-bar-left">
+                <h1>QC Manager</h1>
+            </div>
+            <div class="top-bar-right">
+                <div style="position: relative;">
+                    <div class="notification-bell" onclick="toggleNotificationPanel()">
+                        🔔
+                        <span class="notification-badge" id="notificationCount">0</span>
+                    </div>
+                    <div class="notification-panel" id="notificationPanel">
+                        <div id="notificationList" style="padding: 1rem; text-align: center; color: #6b7280;">
+                            No notifications
+                        </div>
+                    </div>
+                </div>
+                <span style="color: #6b7280;">QC Manager - <span id="username"></span></span>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </div>
+
+        <!-- Inspection Control Section -->
+        <div id="inspection-control" class="section active">
+            <div class="section-title">Inspection Control</div>
+
+            <div class="panel-card">
+                <h3>Inspection Data</h3>
+                <div class="filters-container" id="inspectionColumnFilters"></div>
+                <div style="overflow-x: auto;">
+                    <table class="report-table">
+                        <thead id="inspectionTableHead"></thead>
+                        <tbody id="inspectionList">
+                            <tr>
+                                <td colspan="24" class="empty-state">Loading inspections...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="form-actions"
+                    style="justify-content: space-between; margin-top: 1rem; align-items: center;">
+                    <div style="color: #6b7280; font-size: 0.875rem;">
+                        Showing <span id="inspectionLoadedCount">0</span> of <span id="inspectionTotalCount">0</span>
+                    </div>
+                    <button type="button" class="action-btn" id="inspectionLoadMoreBtn"
+                        onclick="loadMoreInspectionControl()">Load More</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="fail-file-report" class="section" style="display:none;"></div>
+
+        <div id="quarantine-reports" class="section">
+            <div class="section-title">Quarantine Reports</div>
+
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <div class="stat-label">Total Quarantine Reports</div>
+                    <div class="stat-value" id="totalQuarantines">0</div>
+                </div>
+                <div class="summary-card">
+                    <div class="stat-label">Assigned Reports</div>
+                    <div class="stat-value" id="assignedQuarantines">0</div>
+                </div>
+                <div class="summary-card">
+                    <div class="stat-label">Unassigned Reports</div>
+                    <div class="stat-value" id="unassignedQuarantines">0</div>
+                </div>
+                <div class="summary-card">
+                    <div class="stat-label">High Priority</div>
+                    <div class="stat-value" id="highPriorityQuarantines">0</div>
+                </div>
+            </div>
+
+            <div class="panel-card">
+                <h3>Full Quarantine List</h3>
+                <div style="overflow-x: auto;">
+                    <table class="report-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Product</th>
+                                <th>Batch</th>
+                                <th>Stage</th>
+                                <th>Defect</th>
+                                <th>Severity</th>
+                                <th>Assignment</th>
+                                <th>Created</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="quarantineReportBody">
+                            <tr>
+                                <td colspan="9" class="empty-state">Loading quarantine reports...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="owner-assignment" class="section">
+            <div class="section-title">Owner Assignment</div>
+
+            <div class="section-grid">
+                <div class="form-card">
+                    <h3>Assign Problem Owner</h3>
+                    <p style="color: #6b7280; font-size: 0.875rem; margin-top: 0.25rem;">Fill in the quarantine ID or
+                        use the action button from the quarantine list.</p>
+                    <form id="ownerAssignmentForm" onsubmit="submitOwnerAssignment(event)">
+                        <div class="form-grid">
+                            <div class="form-field">
+                                <label for="assignmentQuarantineId">Quarantine ID</label>
+                                <input type="number" id="assignmentQuarantineId" min="1" required>
+                            </div>
+                            <div class="form-field">
+                                <label for="assignmentProblemOwnerId">Problem Owner ID</label>
+                                <input type="number" id="assignmentProblemOwnerId" min="1" required>
+                            </div>
+                            <div class="form-field">
+                                <label for="assignmentDepartmentId">Repair Department ID</label>
+                                <input type="number" id="assignmentDepartmentId" min="1" required>
+                            </div>
+                            <div class="form-field">
+                                <label for="assignmentPriority">Priority</label>
+                                <select id="assignmentPriority" required>
+                                    <option value="Low">Low</option>
+                                    <option value="Medium" selected>Medium</option>
+                                    <option value="High">High</option>
+                                    <option value="Critical">Critical</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="action-btn">Create Assignment</button>
+                            <button type="button" class="action-btn secondary"
+                                onclick="resetOwnerAssignmentForm()">Reset</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="panel-card">
+                    <h3>Assignment Overview</h3>
+                    <div class="detail-stack" id="assignmentSummary">
+                        <div class="detail-chip"><strong>Total assignments</strong><span
+                                id="totalAssignmentsView">0</span></div>
+                        <div class="detail-chip"><strong>Last assigned quarantine</strong><span
+                                id="lastAssignedQuarantine">N/A</span></div>
+                        <div class="detail-chip"><strong>Top priority</strong><span
+                                id="topPriorityAssignment">N/A</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel-card">
+                <h3>Existing Assignments</h3>
+                <div style="overflow-x: auto;">
+                    <table class="compact-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Quarantine</th>
+                                <th>Product</th>
+                                <th>Owner</th>
+                                <th>Department</th>
+                                <th>Priority</th>
+                                <th>Assigned</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ownerAssignmentBody">
+                            <tr>
+                                <td colspan="7" class="empty-state">Loading assignments...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="notification-center" class="section">
+            <div class="section-title">Notification Center</div>
+
+            <div class="section-grid">
+                <div class="panel-card">
+                    <h3>Recent Notifications</h3>
+                    <div id="notificationCenterList" class="detail-stack">
+                        <div class="empty-state">Loading notifications...</div>
+                    </div>
+                </div>
+
+                <div class="form-card">
+                    <h3>Send Notification</h3>
+                    <form id="sendNotificationForm" onsubmit="submitNotification(event)">
+                        <div class="form-grid">
+                            <div class="form-field" style="grid-column: 1 / -1;">
+                                <label for="notificationMessage">Message</label>
+                                <textarea id="notificationMessage" placeholder="Write a message for Production Manager"
+                                    required></textarea>
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="action-btn">Send Notification</button>
+                            <button type="button" class="action-btn secondary"
+                                onclick="document.getElementById('notificationMessage').value = ''">Clear</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quality Control Section -->
+        <div id="quality-control" class="section">
+            <div id="qc-dashboard-root">
+                <div class="panel-card">
+                    <div class="empty-state">Loading dashboard...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cost Management Section -->
+        <div id="cost-management" class="section">
+            <div class="section-title">Cost Management</div>
+
+            <div class="filters-container">
+                <div class="filter-group">
+                    <label>Group By</label>
+                    <select id="costGroupBy" onchange="loadCostManagement()">
+                        <option value="total">Total Cost</option>
+                        <option value="stage">By Stage</option>
+                        <option value="department">By Department</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="dashboard-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Total Labor Cost</div>
+                    <div class="stat-value" id="totalLaborCost">$0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Total Spare Cost</div>
+                    <div class="stat-value" id="totalSpareCost">$0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Cost of Poor Quality (COPQ)</div>
+                    <div class="stat-value" id="totalCOPQ">$0</div>
+                </div>
+            </div>
+
+            <div
+                style="background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden;">
+                <table class="cost-breakdown-table" id="costTable">
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>Labor Cost</th>
+                            <th>Spare Cost</th>
+                            <th>COPQ</th>
+                            <th>Items</th>
+                        </tr>
+                    </thead>
+                    <tbody id="costTableBody">
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 2rem; color: #6b7280;">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const API_BASE = 'http://localhost:8000/api';
+        const DASHBOARD_API_BASE = 'http://localhost:8000/api';
+        let token = localStorage.getItem('token');
+        let userId = localStorage.getItem('userId');
+        let role = localStorage.getItem('role');
+
+        if (!token) {
+            window.location.href = '/index.html';
+        }
+
+        if (role !== 'QC Manager') {
+            localStorage.removeItem('token');
+            localStorage.removeItem('userId');
+            localStorage.removeItem('username');
+            localStorage.removeItem('role');
+            window.location.href = '/index.html';
+        }
+
+        document.getElementById('username').textContent = localStorage.getItem('username');
+
+        const inspectionColumns = [
+            { field: 'id', label: 'ID', type: 'number' },
+            { field: 'branch_itw', label: 'Branch ITW', type: 'text' },
+            { field: 'branch_fgw', label: 'Branch FGW', type: 'text' },
+            { field: 'wo_no', label: 'WO No.', type: 'text' },
+            { field: 'item_code', label: 'Item Code', type: 'text' },
+            { field: 'partcode', label: 'Partcode', type: 'text' },
+            { field: 'wo_quantity', label: 'WO Quantity', type: 'number' },
+            { field: 'inspector', label: 'Inspector', type: 'text' },
+            { field: 'inspector_name', label: 'Inspector Name', type: 'text' },
+            { field: 'inspector_dept', label: 'Inspector Dept', type: 'text' },
+            { field: 'inspection_stage', label: 'Inspection Stage', type: 'text' },
+            { field: 'inspected_date', label: 'Inspected Date', type: 'date' },
+            { field: 'inspected_time', label: 'Inspected Time', type: 'date' },
+            { field: 'inspected_qty', label: 'Inspected Qty', type: 'number' },
+            { field: 'pass_qty', label: 'Pass Qty', type: 'number' },
+            { field: 'fail_qty', label: 'Fail Qty', type: 'number' },
+            { field: 'quarantine', label: 'Quarantine', type: 'number' },
+            { field: 'defect_code', label: 'Defect Code', type: 'text' },
+            { field: 'defect_category', label: 'Defect Category', type: 'text' },
+            { field: 'defect_owner', label: 'Defect Owner', type: 'text' },
+            { field: 'inspector_recommend', label: 'Inspector Recommend', type: 'text' },
+            { field: 'repair_department', label: 'Repair Department', type: 'text' },
+            { field: 'remark', label: 'Remark', type: 'text' },
+            { field: 'status', label: 'Status', type: 'text' },
+        ];
+
+        const inspectionPageSize = 50;
+        let inspectionOffset = 0;
+        let inspectionTotal = 0;
+        let inspectionHasMore = false;
+
+        function toggleAdvancedFilters() {
+            const el = document.getElementById('advancedFiltersContainer');
+            const btn = document.getElementById('advancedFiltersToggleBtn');
+            if (!el || !btn) return;
+            if (el.style.display === 'none') {
+                el.style.display = 'flex';
+                btn.textContent = 'Hide Advanced Filters';
+            } else {
+                el.style.display = 'none';
+                btn.textContent = '🔧 Advanced Filters';
+            }
+        }
+
+        function renderInspectionFilters() {
+            const container = document.getElementById('inspectionColumnFilters');
+            if (!container) return;
+
+            const primaryHtml = `
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap; width: 100%; align-items: flex-end;">
+                    <div class="filter-group" style="flex: 1.5; min-width: 250px;">
+                        <label>Universal Search</label>
+                        <input type="text" id="inspectionFilter_search" placeholder="Search WO No, Item Code, Partcode, Inspector..." onkeyup="if(event.key === 'Enter' || this.value === '') applyInspectionFilters()">
+                    </div>
+                    <div class="filter-group" style="flex: 1; min-width: 130px;">
+                        <label>Status</label>
+                        <select id="inspectionFilter_status" onchange="applyInspectionFilters()">
+                            <option value="">All Statuses</option>
+                            <option value="Pass">Pass</option>
+                            <option value="Fail">Fail</option>
+                            <option value="Pending">Pending</option>
+                        </select>
+                    </div>
+                    <div class="filter-group" style="flex: 1; min-width: 140px;">
+                        <label>Inspection Stage</label>
+                        <select id="inspectionFilter_inspection_stage" onchange="applyInspectionFilters()">
+                            <option value="">All Stages</option>
+                            <option value="Incoming">Incoming</option>
+                            <option value="Machinery">Machinery</option>
+                            <option value="Sanding">Sanding</option>
+                            <option value="Item White">Item White</option>
+                            <option value="Assembly">Assembly</option>
+                            <option value="Finishing">Finishing</option>
+                            <option value="Upholstery">Upholstery</option>
+                            <option value="Final">Final</option>
+                        </select>
+                    </div>
+                    <div class="filter-group" style="flex: 1; min-width: 130px;">
+                        <label>Branch</label>
+                        <select id="inspectionFilter_branch_itw" onchange="applyInspectionFilters()">
+                            <option value="">All Branches</option>
+                            <option value="VFR2.1">VFR2.1</option>
+                            <option value="VFR1.0">VFR1.0</option>
+                            <option value="VFR3.0">VFR3.0</option>
+                        </select>
+                    </div>
+                    <div class="filter-group" style="flex-direction: row; gap: 8px; margin-bottom: 2px;">
+                        <button type="button" class="action-btn secondary" id="advancedFiltersToggleBtn" onclick="toggleAdvancedFilters()">🔧 Advanced Filters</button>
+                        <button type="button" class="action-btn" onclick="applyInspectionFilters()">🔍 Search</button>
+                    </div>
+                </div>
+            `;
+
+            const advancedColumns = inspectionColumns.filter(col => 
+                col.field !== 'status' && 
+                col.field !== 'inspection_stage' && 
+                col.field !== 'branch_itw'
+            );
+
+            const advancedHtml = `
+                <div id="advancedFiltersContainer" style="display: none; width: 100%; gap: 1rem; flex-wrap: wrap; margin-top: 1rem; border-top: 1px dashed #e5e7eb; padding-top: 1rem;">
+                    ${advancedColumns.map(column => {
+                        const inputId = `inspectionFilter_${column.field}`;
+                        if (column.field === 'quarantine') {
+                            return `
+                                <div class="filter-group">
+                                    <label>${column.label}</label>
+                                    <select id="${inputId}" onchange="applyInspectionFilters()">
+                                        <option value="">All</option>
+                                        <option value="0">0</option>
+                                        <option value="1">1</option>
+                                    </select>
+                                </div>
+                            `;
+                        }
+                        return `
+                            <div class="filter-group">
+                                <label>${column.label}</label>
+                                <input type="${column.type}" id="${inputId}" placeholder="Filter ${column.label}" onchange="applyInspectionFilters()">
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+
+            container.innerHTML = primaryHtml + advancedHtml;
+        }
+
+        function renderInspectionTableHead() {
+            const head = document.getElementById('inspectionTableHead');
+            if (!head) return;
+            head.innerHTML = `<tr>${inspectionColumns.map(column => `<th>${column.label}</th>`).join('')}</tr>`;
+        }
+
+        function getInspectionControlQueryParams() {
+            const params = new URLSearchParams();
+            
+            const searchInput = document.getElementById('inspectionFilter_search');
+            const searchValue = searchInput ? searchInput.value.trim() : '';
+            if (searchValue) params.append('search', searchValue);
+
+            inspectionColumns.forEach(column => {
+                const input = document.getElementById(`inspectionFilter_${column.field}`);
+                const value = input ? input.value.trim() : '';
+                if (value) params.append(column.field, value);
+            });
+            params.append('limit', String(inspectionPageSize));
+            params.append('offset', String(inspectionOffset));
+            return params;
+        }
+
+        function updateInspectionLoadMoreButton() {
+            const button = document.getElementById('inspectionLoadMoreBtn');
+            if (!button) return;
+            button.style.display = inspectionHasMore ? 'inline-flex' : 'none';
+            button.disabled = !inspectionHasMore;
+        }
+
+        function applyInspectionFilters() {
+            inspectionOffset = 0;
+            loadInspectionControl(false);
+        }
+
+        function loadMoreInspectionControl() {
+            if (!inspectionHasMore) return;
+            inspectionOffset += inspectionPageSize;
+            loadInspectionControl(true);
+        }
+
+        // Load data on page load
+        window.addEventListener('load', () => {
+            renderInspectionFilters();
+            renderInspectionTableHead();
+            loadInspectionControl();
+
+            // Compile and evaluate Babel React script using classic runtime to avoid unpkg config conflicts
+            const reactScript = document.querySelector('script[type="text/custom-babel"]');
+            if (reactScript) {
+                try {
+                    const compiled = Babel.transform(reactScript.textContent, {
+                        presets: [['react', { runtime: 'classic' }]]
+                    }).code;
+                    const scriptEl = document.createElement('script');
+                    scriptEl.textContent = compiled;
+                    document.body.appendChild(scriptEl);
+                } catch (err) {
+                    console.error('Error compiling React dashboard:', err);
+                }
+            }
+
+            initializeQcDashboard();
+            loadCostManagement();
+            loadNotifications();
+            loadQuarantineReports();
+            loadOwnerAssignments();
+
+            // Auto-refresh every 10 seconds
+            setInterval(() => {
+                refreshQcDashboard();
+                loadNotifications();
+                loadQuarantineReports();
+                loadOwnerAssignments();
+            }, 10000);
+        });
+
+        function switchSection(sectionId, element) {
+            if (typeof event !== 'undefined' && event.preventDefault) {
+                event.preventDefault();
+            }
+
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+            // Remove active from all links
+            document.querySelectorAll('.sidebar-link').forEach(link => link.classList.remove('active'));
+
+            // Show selected section
+            document.getElementById(sectionId).classList.add('active');
+            element.classList.add('active');
+        }
+
+        function toggleNotificationPanel() {
+            const panel = document.getElementById('notificationPanel');
+            panel.classList.toggle('show');
+        }
+
+        function applyFilters() {
+            loadInspectionControl();
+        }
+
+        async function loadNotifications() {
+            try {
+                const response = await fetch(`${API_BASE}/qc-manager/notifications`, {
+                    headers: { 'token': token }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const notifications = data.notifications || [];
+
+                    document.getElementById('notificationCount').textContent = notifications.length;
+                    renderNotificationCenter(notifications);
+
+                    let html = '';
+                    if (notifications.length === 0) {
+                        html = '<div style="padding: 1rem; text-align: center; color: #6b7280;">No notifications</div>';
+                    } else {
+                        notifications.forEach((notif, index) => {
+                            html += `
+                                <div class="notification-item ${index === 0 ? 'unread' : ''}">
+                                    <div class="notification-item-title">${notif.product_id}</div>
+                                    <div class="notification-item-text">${notif.message} | ${notif.inspection_stage || 'N/A'} | ${notif.status || 'N/A'} | ${notif.defect_count} defects</div>
+                                </div>
+                            `;
+                        });
+                    }
+
+                    document.getElementById('notificationList').innerHTML = html;
+                }
+            } catch (error) {
+                console.error('Error loading notifications:', error);
+            }
+        }
+
+        function renderNotificationCenter(notifications) {
+            const container = document.getElementById('notificationCenterList');
+            if (!container) return;
+
+            if (!notifications || notifications.length === 0) {
+                container.innerHTML = '<div class="empty-state">No notifications</div>';
+                return;
+            }
+
+            container.innerHTML = notifications.map(notif => `
+                <div class="detail-chip">
+                    <div>
+                        <strong>${notif.product_id}</strong>
+                        <div style="color:#6b7280; font-size:0.8rem; margin-top:0.2rem;">${notif.message}</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div>${notif.inspection_stage || 'N/A'}</div>
+                        <div style="color:#6b7280; font-size:0.8rem;">${notif.defect_count} defects</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function loadQuarantineReports() {
+            try {
+                const response = await fetch(`${API_BASE}/qc-manager/quarantine-reports`, {
+                    headers: { 'token': token }
+                });
+
+                if (!response.ok) return;
+
+                const data = await response.json();
+                const reports = data.reports || [];
+
+                const totalQuarantines = document.getElementById('totalQuarantines');
+                const assignedQuarantines = document.getElementById('assignedQuarantines');
+                const unassignedQuarantines = document.getElementById('unassignedQuarantines');
+                const highPriorityQuarantines = document.getElementById('highPriorityQuarantines');
+
+                if (totalQuarantines) totalQuarantines.textContent = reports.length;
+                if (assignedQuarantines) assignedQuarantines.textContent = reports.filter(r => r.assignment_status === 'assigned').length;
+                if (unassignedQuarantines) unassignedQuarantines.textContent = reports.filter(r => r.assignment_status !== 'assigned').length;
+                if (highPriorityQuarantines) highPriorityQuarantines.textContent = reports.filter(r => r.priority === 'High' || r.priority === 'Critical').length;
+
+                const body = document.getElementById('quarantineReportBody');
+                if (!body) return;
+
+                if (reports.length === 0) {
+                    body.innerHTML = '<tr><td colspan="9" class="empty-state">No quarantine reports found</td></tr>';
+                    return;
+                }
+
+                body.innerHTML = reports.map(report => {
+                    const assignmentClass = report.assignment_status === 'assigned' ? 'badge-assigned' : 'badge-unassigned';
+                    const createdDate = report.created_date ? new Date(report.created_date).toLocaleString() : 'N/A';
+                    return `
+                        <tr>
+                            <td>${report.quarantine_id}</td>
+                            <td>${report.product_id}</td>
+                            <td>${report.batch_number}</td>
+                            <td>${report.inspection_stage || 'N/A'}</td>
+                            <td>${report.defect_code || report.defect_type || 'N/A'}</td>
+                            <td>${report.severity || 'N/A'}</td>
+                            <td><span class="inline-badge ${assignmentClass}">${report.assignment_status}</span></td>
+                            <td>${createdDate}</td>
+                            <td><button class="action-btn" type="button" onclick="prefillAssignmentForm(${report.quarantine_id})">Assign</button></td>
+                        </tr>
+                    `;
+                }).join('');
+
+                window.qcQuarantineReports = reports;
+            } catch (error) {
+                console.error('Error loading quarantine reports:', error);
+            }
+        }
+
+        function loadFailFileReport() {
+            return;
+        }
+
+        function prefillAssignmentForm(quarantineId) {
+            document.getElementById('assignmentQuarantineId').value = quarantineId;
+            document.getElementById('assignmentProblemOwnerId').focus();
+            switchSection('owner-assignment', document.querySelector('.sidebar-link[onclick*="owner-assignment"]'));
+        }
+
+        function resetOwnerAssignmentForm() {
+            document.getElementById('ownerAssignmentForm').reset();
+        }
+
+        async function submitOwnerAssignment(event) {
+            event.preventDefault();
+
+            try {
+                const payload = {
+                    quarantine_id: Number(document.getElementById('assignmentQuarantineId').value),
+                    problem_owner_id: Number(document.getElementById('assignmentProblemOwnerId').value),
+                    repair_department_id: Number(document.getElementById('assignmentDepartmentId').value),
+                    priority: document.getElementById('assignmentPriority').value
+                };
+
+                const response = await fetch(`${API_BASE}/qc-manager/owner-assignment`, {
+                    method: 'POST',
+                    headers: {
+                        'token': token,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const error = await response.text();
+                    throw new Error(error);
+                }
+
+                showAlert('Owner assignment created successfully', 'success');
+                resetOwnerAssignmentForm();
+                loadQuarantineReports();
+                loadOwnerAssignments();
+            } catch (error) {
+                console.error('Error creating assignment:', error);
+                showAlert('Failed to create owner assignment', 'error');
+            }
+        }
+
+        async function loadOwnerAssignments() {
+            try {
+                const response = await fetch(`${API_BASE}/qc-manager/owner-assignments`, {
+                    headers: { 'token': token }
+                });
+
+                if (!response.ok) return;
+
+                const data = await response.json();
+                const assignments = data.assignments || [];
+
+                const totalAssignmentsEl = document.getElementById('totalAssignmentsView');
+                if (totalAssignmentsEl) totalAssignmentsEl.textContent = assignments.length;
+
+                const lastAssignedEl = document.getElementById('lastAssignedQuarantine');
+                if (lastAssignedEl) lastAssignedEl.textContent = assignments.length ? assignments[0].quarantine_id : 'N/A';
+
+                const topPriorityEl = document.getElementById('topPriorityAssignment');
+                if (topPriorityEl) {
+                    topPriorityEl.textContent = assignments.some(a => a.priority === 'Critical') ? 'Critical' : (assignments.some(a => a.priority === 'High') ? 'High' : 'N/A');
+                }
+
+                const dashboardAssignmentsEl = document.getElementById('dashboardAssignments');
+                if (dashboardAssignmentsEl) dashboardAssignmentsEl.textContent = assignments.length;
+
+                const body = document.getElementById('ownerAssignmentBody');
+                if (!body) return;
+
+                if (assignments.length === 0) {
+                    body.innerHTML = '<tr><td colspan="7" class="empty-state">No assignments found</td></tr>';
+                    return;
+                }
+
+                body.innerHTML = assignments.map(assignment => `
+                    <tr>
+                        <td>${assignment.assignment_id}</td>
+                        <td>${assignment.quarantine_id}</td>
+                        <td>${assignment.product_id}</td>
+                        <td>${assignment.problem_owner_name} (${assignment.problem_owner_id})</td>
+                        <td>${assignment.repair_department_id || 'N/A'}</td>
+                        <td>${assignment.priority || 'N/A'}</td>
+                        <td>${assignment.assigned_date ? new Date(assignment.assigned_date).toLocaleString() : 'N/A'}</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading assignments:', error);
+            }
+        }
+
+        async function submitNotification(event) {
+            event.preventDefault();
+
+            try {
+                const message = document.getElementById('notificationMessage').value.trim();
+                const response = await fetch(`${API_BASE}/qc-manager/send-notification`, {
+                    method: 'POST',
+                    headers: {
+                        'token': token,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ message })
+                });
+
+                if (!response.ok) {
+                    const error = await response.text();
+                    throw new Error(error);
+                }
+
+                showAlert('Notification sent successfully', 'success');
+                document.getElementById('notificationMessage').value = '';
+            } catch (error) {
+                console.error('Error sending notification:', error);
+                showAlert('Failed to send notification', 'error');
+            }
+        }
+
+        async function loadInspectionControl() {
+            try {
+                const params = getInspectionControlQueryParams();
+                const url = `${API_BASE}/qc-manager/inspection-control?${params.toString()}`;
+
+                const response = await fetch(url, {
+                    headers: { 'token': token }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (!inspectionOffset) {
+                        const container = document.getElementById('inspectionList');
+                        if (container) container.innerHTML = '';
+                    }
+                    inspectionTotal = data.total || 0;
+                    inspectionHasMore = !!data.has_more;
+                    displayInspections(data.inspections || [], inspectionOffset > 0);
+                    document.getElementById('inspectionLoadedCount').textContent = Math.min(inspectionOffset + (data.inspections || []).length, inspectionTotal);
+                    document.getElementById('inspectionTotalCount').textContent = inspectionTotal;
+                    updateInspectionLoadMoreButton();
+                }
+            } catch (error) {
+                console.error('Error loading inspections:', error);
+            }
+        }
+
+        function displayInspections(inspections, append = false) {
+            const container = document.getElementById('inspectionList');
+
+            if (!container) return;
+
+            if (!inspections || inspections.length === 0) {
+                if (!append) {
+                    container.innerHTML = '<tr><td colspan="24" class="empty-state">No inspections found</td></tr>';
+                }
+                return;
+            }
+
+            const rowsHtml = inspections.map(inspection => `
+                <tr>
+                    <td>${inspection.id ?? 'N/A'}</td>
+                    <td>${inspection.branch_itw || 'N/A'}</td>
+                    <td>${inspection.branch_fgw || 'N/A'}</td>
+                    <td>${inspection.wo_no || 'N/A'}</td>
+                    <td>${inspection.item_code || 'N/A'}</td>
+                    <td>${inspection.partcode || 'N/A'}</td>
+                    <td>${inspection.wo_quantity ?? 0}</td>
+                    <td>${inspection.inspector || 'N/A'}</td>
+                    <td>${inspection.inspector_name || 'N/A'}</td>
+                    <td>${inspection.inspector_dept || 'N/A'}</td>
+                    <td>${inspection.inspection_stage || 'N/A'}</td>
+                    <td>${inspection.inspected_date || 'N/A'}</td>
+                    <td>${inspection.inspected_time || 'N/A'}</td>
+                    <td>${inspection.inspected_qty ?? 0}</td>
+                    <td>${inspection.pass_qty ?? 0}</td>
+                    <td>${inspection.fail_qty ?? 0}</td>
+                    <td><span class="inline-badge ${Number(inspection.quarantine) ? 'badge-fail' : 'badge-pass'}">${Number(inspection.quarantine) ? '1' : '0'}</span></td>
+                    <td>${inspection.defect_code || 'N/A'}</td>
+                    <td>${inspection.defect_category || 'N/A'}</td>
+                    <td>${inspection.defect_owner || 'N/A'}</td>
+                    <td>${inspection.inspector_recommend || 'N/A'}</td>
+                    <td>${inspection.repair_department || 'N/A'}</td>
+                    <td>${inspection.remark || ''}</td>
+                    <td><span class="inline-badge ${inspection.status === 'Fail' ? 'badge-fail' : inspection.status === 'Pending' ? 'badge-pending' : 'badge-pass'}">${inspection.status || 'Pass'}</span></td>
+                </tr>
+            `).join('');
+
+            if (append) {
+                container.insertAdjacentHTML('beforeend', rowsHtml);
+            } else {
+                container.innerHTML = rowsHtml;
+            }
+        }
+
+        let failRateChart = null;
+        let defectFrequencyChart = null;
+        let monthlyTrendChart = null;
+
+        async function loadQualityControl() {
+            try {
+                const stage = document.getElementById('dashboardStageFilter')?.value || '';
+                const dateFrom = document.getElementById('dashboardDateFrom')?.value || '';
+                const dateTo = document.getElementById('dashboardDateTo')?.value || '';
+                const defectCode = document.getElementById('dashboardDefectCode')?.value || '';
+                const includeUnknown = document.getElementById('dashboardIncludeUnknown')?.value || 'false';
+
+                const query = new URLSearchParams();
+                if (stage) query.append('stage', stage);
+                if (dateFrom) query.append('date_from', dateFrom);
+                if (dateTo) query.append('date_to', dateTo);
+                if (defectCode) query.append('defect_code', defectCode);
+                if (includeUnknown) query.append('include_unknown', includeUnknown);
+
+                const dashResponse = await fetch(`${API_BASE}/qc-manager/dashboard?${query.toString()}`, {
+                    headers: { 'token': token }
+                });
+
+                const freqResponse = await fetch(`${API_BASE}/qc-manager/defect-frequency?${query.toString()}`, {
+                    headers: { 'token': token }
+                });
+
+                if (dashResponse.ok) {
+                    const data = await dashResponse.json();
+
+                    document.getElementById('overallFailRate').textContent = data.overall_fail_rate + '%';
+                    document.getElementById('totalInspected').textContent = data.total_inspected;
+                    document.getElementById('totalFailed').textContent = data.total_failed;
+                    document.getElementById('dashboardQuarantines').textContent = data.total_quarantines || 0;
+                    document.getElementById('dashboardAssignments').textContent = data.total_assignments || 0;
+                    document.getElementById('dashboardPassCount').textContent = data.status_breakdown?.Pass || 0;
+                    document.getElementById('dashboardPendingCount').textContent = data.status_breakdown?.Pending || 0;
+
+                    renderFailRateChart(data.fail_by_stage);
+                    renderMonthlyTrendChart(data.monthly_trends);
+                    renderDashboardBreakdown(data.status_breakdown, data.top_defects);
+                }
+
+                if (freqResponse.ok) {
+                    const freqData = await freqResponse.json();
+                    const uniqueDefects = new Set(freqData.defect_frequency.map(d => d.code));
+                    document.getElementById('defectTypes').textContent = uniqueDefects.size;
+                    renderDefectFrequencyChart(freqData.defect_frequency);
+                }
+            } catch (error) {
+                console.error('Error loading quality control:', error);
+            }
+        }
+
+        function renderDashboardBreakdown(statusBreakdown, topDefects) {
+            const statusContainer = document.getElementById('dashboardStatusBreakdown');
+            const defectContainer = document.getElementById('topDefectsList');
+
+            if (statusContainer) {
+                const entries = Object.entries(statusBreakdown || {});
+                statusContainer.innerHTML = entries.length ? entries.map(([label, value]) => `
+                    <div class="detail-chip">
+                        <strong>${label}</strong>
+                        <span>${value}</span>
+                    </div>
+                `).join('') : '<div class="empty-state">No breakdown data</div>';
+            }
+
+            if (defectContainer) {
+                defectContainer.innerHTML = topDefects && topDefects.length ? topDefects.map(defect => `
+                    <div class="detail-chip">
+                        <strong>${defect.code}</strong>
+                        <span>${defect.count}</span>
+                    </div>
+                `).join('') : '<div class="empty-state">No defect data</div>';
+            }
+        }
+
+        function renderFailRateChart(failByStage) {
+            const ctx = document.getElementById('failRateChart');
+            if (!ctx) return;
+
+            if (failRateChart) {
+                failRateChart.destroy();
+            }
+
+            const stages = Object.keys(failByStage).sort((a, b) =>
+                failByStage[b].fail_rate - failByStage[a].fail_rate
+            );
+            const rates = stages.map(s => failByStage[s].fail_rate);
+
+            const colors = ['#ef4444', '#f97316', '#f59e0b', '#eab308', '#84cc16', '#22c55e', '#3b82f6'];
+
+            failRateChart = new Chart(ctx.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: stages,
+                    datasets: [{
+                        label: 'Fail Rate (%)',
+                        data: rates,
+                        backgroundColor: colors.slice(0, stages.length),
+                        borderRadius: 8,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            max: 5
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderDefectFrequencyChart(defectFrequency) {
+            const ctx = document.getElementById('defectFrequencyChart');
+            if (!ctx) return;
+
+            if (defectFrequencyChart) {
+                defectFrequencyChart.destroy();
+            }
+
+            const codes = defectFrequency.slice(0, 8).map(d => d.code);
+            const counts = defectFrequency.slice(0, 8).map(d => d.count);
+
+            defectFrequencyChart = new Chart(ctx.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: codes,
+                    datasets: [{
+                        data: counts,
+                        backgroundColor: [
+                            '#ef4444', '#f97316', '#f59e0b', '#eab308',
+                            '#84cc16', '#22c55e', '#10b981', '#14b8a6'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'right' }
+                    }
+                }
+            });
+        }
+
+        function renderMonthlyTrendChart(monthlyTrends) {
+            const ctx = document.getElementById('monthlyTrendChart');
+            if (!ctx) return;
+
+            if (monthlyTrendChart) {
+                monthlyTrendChart.destroy();
+            }
+
+            const monthOrder = ['January', 'February', 'March', 'April', 'May', 'June'];
+            const months = monthOrder.filter(m => monthlyTrends[m]);
+            const rates = months.map(m => {
+                const data = monthlyTrends[m];
+                return data.inspected > 0 ? (data.failed / data.inspected * 100) : 0;
+            });
+
+            monthlyTrendChart = new Chart(ctx.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: 'Monthly Fail Rate (%)',
+                        data: rates,
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 6,
+                        pointBackgroundColor: '#ef4444',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: true }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 5
+                        }
+                    }
+                }
+            });
+        }
+
+        async function loadCostManagement() {
+            try {
+                const groupBy = document.getElementById('costGroupBy').value;
+                const response = await fetch(`${API_BASE}/qc-manager/cost-breakdown?group_by=${groupBy}`, {
+                    headers: { 'token': token }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+
+                    document.getElementById('totalLaborCost').textContent = '$' + data.total_labor_cost.toFixed(2);
+                    document.getElementById('totalSpareCost').textContent = '$' + data.total_spare_cost.toFixed(2);
+                    document.getElementById('totalCOPQ').textContent = '$' + data.total_copq.toFixed(2);
+
+                    let rows = '';
+                    Object.entries(data.breakdown).forEach(([category, costs]) => {
+                        rows += `
+                            <tr>
+                                <td>${category}</td>
+                                <td>$${costs.labor_cost.toFixed(2)}</td>
+                                <td>$${costs.spare_cost.toFixed(2)}</td>
+                                <td>$${costs.copq.toFixed(2)}</td>
+                                <td>${costs.count}</td>
+                            </tr>
+                        `;
+                    });
+
+                    document.getElementById('costTableBody').innerHTML = rows;
+                }
+            } catch (error) {
+                console.error('Error loading cost management:', error);
+            }
+        }
+
+        function showAlert(message, type = 'success') {
+            const container = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            container.appendChild(alert);
+            setTimeout(() => alert.remove(), 5000);
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('userId');
+            localStorage.removeItem('username');
+            localStorage.removeItem('role');
+            window.location.href = '/index.html';
+        }
+    </script>
+
+    <script src="/dashboardUtils.js"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/prop-types@15.8.1/prop-types.min.js"></script>
+    <script src="https://unpkg.com/react-is@18/umd/react-is.production.min.js"></script>
+    <script src="https://unpkg.com/recharts/umd/Recharts.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script type="text/custom-babel">
+        const { useEffect, useMemo, useState } = React;
+        const {
+            ResponsiveContainer,
+            ComposedChart,
+            BarChart,
+            LineChart,
+            Bar,
+            Line,
+            CartesianGrid,
+            XAxis,
+            YAxis,
+            Tooltip,
+            Legend,
+            Cell,
+        } = Recharts;
+
+        const MIN_SAMPLE_SIZE = 500;
+        const INSPECTOR_RANK_LIMIT = 10;
+        const EMPTY_MESSAGE = 'No data available for the selected filters';
+        const BAR_COLORS = ['#2563eb', '#14b8a6', '#f59e0b', '#ef4444', '#8b5cf6', '#22c55e', '#0f766e', '#ea580c', '#1d4ed8', '#a855f7'];
+
+        function formatNumber(value) {
+            return new Intl.NumberFormat('en-US').format(Number(value) || 0);
+        }
+
+        function formatPercent(value) {
+            if (value === null || value === undefined || Number.isNaN(value)) {
+                return 'N/A';
+            }
+            return `${Number(value).toFixed(2)}%`;
+        }
+
+        function sortUnique(values) {
+            return Array.from(new Set(values.filter((value) => value !== null && value !== undefined && String(value).trim() !== '')))
+                .map((value) => String(value))
+                .sort((left, right) => left.localeCompare(right));
+        }
+
+        function MultiSelect({ label, options, value, onChange, helperText }) {
+            return (
+                <div className="filter-group">
+                    <label>{label}</label>
+                    <select multiple value={value} onChange={onChange} style={{ minHeight: '132px' }}>
+                        {options.length === 0 ? <option value="" disabled>No options available</option> : null}
+                        {options.map((option) => (
+                            <option key={option} value={option}>
+                                {option}
+                            </option>
+                        ))}
+                    </select>
+                    {helperText ? <div style={{ color: '#6b7280', fontSize: '0.8rem' }}>{helperText}</div> : null}
+                </div>
+            );
+        }
+
+        function SingleSelect({ label, options, value, onChange, includeAll = true }) {
+            return (
+                <div className="filter-group">
+                    <label>{label}</label>
+                    <select value={value} onChange={onChange}>
+                        {includeAll ? <option value="">All</option> : null}
+                        {options.map((option) => (
+                            <option key={option} value={option}>
+                                {option}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+            );
+        }
+
+        function ToggleGroup({ label, value, options, onChange }) {
+            return (
+                <div className="filter-group">
+                    <label>{label}</label>
+                    <div style={{ display: 'inline-flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        {options.map((option) => (
+                            <button
+                                key={option.value}
+                                type="button"
+                                onClick={() => onChange(option.value)}
+                                style={{
+                                    padding: '0.55rem 0.9rem',
+                                    borderRadius: '999px',
+                                    border: `1px solid ${value === option.value ? '#1b4d3e' : '#d1d5db'}`,
+                                    background: value === option.value ? '#1b4d3e' : '#fff',
+                                    color: value === option.value ? '#fff' : '#374151',
+                                    fontWeight: 600,
+                                    cursor: 'pointer',
+                                }}
+                            >
+                                {option.label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            );
+        }
+
+        function MetricCard({ label, value, hint }) {
+            return (
+                <div className="summary-card">
+                    <div className="stat-label">{label}</div>
+                    <div className="stat-value">{value}</div>
+                    {hint ? <div style={{ color: '#6b7280', fontSize: '0.8rem', marginTop: '0.35rem' }}>{hint}</div> : null}
+                </div>
+            );
+        }
+
+        function ChartShell({ title, subtitle, children, toolbar }) {
+            return (
+                <div className="chart-container">
+                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+                        <div>
+                            <h3 style={{ marginBottom: '0.3rem' }}>{title}</h3>
+                            {subtitle ? <div style={{ color: '#6b7280', fontSize: '0.85rem' }}>{subtitle}</div> : null}
+                        </div>
+                        {toolbar ? <div>{toolbar}</div> : null}
+                    </div>
+                    {children}
+                </div>
+            );
+        }
+
+        function DashboardEmptyState({ message }) {
+            return (
+                <div className="empty-state" style={{ minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '2rem' }}>
+                    {message}
+                </div>
+            );
+        }
+
+        function DashboardApp() {
+            const [sourceRows, setSourceRows] = useState([]);
+            const [sourcePath, setSourcePath] = useState('');
+            const [loading, setLoading] = useState(true);
+            const [error, setError] = useState('');
+            const [startDate, setStartDate] = useState('');
+            const [endDate, setEndDate] = useState('');
+            const [inspectionStages, setInspectionStages] = useState([]);
+            const [branch, setBranch] = useState('');
+            const [inspectorDept, setInspectorDept] = useState('');
+            const [defectOwners, setDefectOwners] = useState([]);
+            const [trendPeriod, setTrendPeriod] = useState('week');
+            const [rankingMode, setRankingMode] = useState('top');
+
+            useEffect(() => {
+                let active = true;
+
+                const loadDashboardData = async (isSilent = false) => {
+                    if (!isSilent) {
+                        setLoading(true);
+                    }
+                    setError('');
+
+                    try {
+                        const token = localStorage.getItem('token') || '';
+                        const response = await fetch(`${DASHBOARD_API_BASE}/qc-manager/dashboard-source`, {
+                            headers: token ? { token } : {},
+                        });
+
+                        if (!response.ok) {
+                            throw new Error(`Unable to load dashboard source (${response.status})`);
+                        }
+
+                        const payload = await response.json();
+                        if (!active) return;
+
+                        setSourceRows(Array.isArray(payload.rows) ? payload.rows : []);
+                        setSourcePath(payload.source_path || '');
+                    } catch (loadError) {
+                        if (!active) return;
+                        setError(loadError?.message || 'Failed to load dashboard data');
+                    } finally {
+                        if (active) {
+                            setLoading(false);
+                        }
+                    }
+                };
+
+                loadDashboardData(false);
+
+                const handleRefresh = () => {
+                    loadDashboardData(true);
+                };
+
+                window.addEventListener('qc-dashboard-refresh', handleRefresh);
+
+                return () => {
+                    active = false;
+                    window.removeEventListener('qc-dashboard-refresh', handleRefresh);
+                };
+            }, []);
+
+            const uniqueOptions = useMemo(() => ({
+                stages: sortUnique(sourceRows.map((row) => row.inspectionStage)),
+                branches: sortUnique(sourceRows.map((row) => row.branchITW)),
+                depts: sortUnique(sourceRows.map((row) => row.inspectorDept)),
+                owners: sortUnique(sourceRows.map((row) => row.defectOwner)),
+            }), [sourceRows]);
+
+            const dashboardFilters = useMemo(() => ({
+                startDate: startDate || undefined,
+                endDate: endDate || undefined,
+                inspectionStages,
+                branch,
+                inspectorDept,
+                defectOwners,
+            }), [startDate, endDate, inspectionStages, branch, inspectorDept, defectOwners]);
+
+            const filteredData = useMemo(() => window.QcDashboardUtils.filterData(sourceRows, dashboardFilters), [sourceRows, dashboardFilters]);
+            const overview = useMemo(() => window.QcDashboardUtils.getQualityOverviewMetrics(filteredData), [filteredData]);
+            const trendData = useMemo(() => window.QcDashboardUtils.aggregateTrendByPeriod(filteredData, trendPeriod), [filteredData, trendPeriod]);
+            const stageData = useMemo(() => window.QcDashboardUtils.aggregateByStage(filteredData), [filteredData]);
+            const paretoData = useMemo(() => window.QcDashboardUtils.getParetoData(filteredData, 10), [filteredData]);
+            const inspectorData = useMemo(() => window.QcDashboardUtils.aggregateByInspector(filteredData, MIN_SAMPLE_SIZE), [filteredData]);
+            const inspectorThreshold = useMemo(() => {
+                const rates = inspectorData
+                    .filter((item) => item.sufficientSample && item.failRatePct !== null)
+                    .map((item) => item.failRatePct);
+                return window.QcDashboardUtils.getPercentile(rates, 90);
+            }, [inspectorData]);
+
+            const rankedInspectors = useMemo(() => {
+                const sortedInspectors = inspectorData.slice().sort((left, right) => {
+                    if (rankingMode === 'bottom') {
+                        if (left.inspectedQty !== right.inspectedQty) {
+                            return left.inspectedQty - right.inspectedQty;
+                        }
+                    } else if (left.inspectedQty !== right.inspectedQty) {
+                        return right.inspectedQty - left.inspectedQty;
+                    }
+
+                    return left.inspectorName.localeCompare(right.inspectorName);
+                });
+
+                return sortedInspectors.slice(0, INSPECTOR_RANK_LIMIT).map((item) => ({
+                    ...item,
+                    highlighted: item.sufficientSample && inspectorThreshold !== null && item.failRatePct !== null && item.failRatePct > inspectorThreshold,
+                }));
+            }, [inspectorData, rankingMode, inspectorThreshold]);
+
+            const activeFilterCount = [startDate, endDate, branch, inspectorDept].filter(Boolean).length + inspectionStages.length + defectOwners.length;
+            const hasFilteredData = filteredData.length > 0;
+
+            const inspectorTooltip = ({ active, payload }) => {
+                if (!active || !payload || !payload.length) {
+                    return null;
+                }
+
+                const point = payload[0].payload;
+
+                return (
+                    <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: '12px', boxShadow: '0 12px 30px rgba(15, 23, 42, 0.12)', padding: '0.85rem 1rem' }}>
+                        <div style={{ fontWeight: 700, color: '#111827', marginBottom: '0.35rem' }}>{point.inspectorName}</div>
+                        <div style={{ color: '#374151', fontSize: '0.85rem' }}>Inspected Qty: {formatNumber(point.inspectedQty)}</div>
+                        <div style={{ color: '#374151', fontSize: '0.85rem' }}>Fail Qty: {formatNumber(point.failQty)}</div>
+                        <div style={{ color: '#374151', fontSize: '0.85rem' }}>
+                            Fail Rate: {point.sufficientSample && point.failRatePct !== null ? formatPercent(point.failRatePct) : 'Insufficient sample'}
+                        </div>
+                        {point.highlighted ? <div style={{ color: '#dc2626', fontSize: '0.8rem', marginTop: '0.35rem' }}>Above dynamic warning threshold</div> : null}
+                    </div>
+                );
+            };
+
+            if (loading) {
+                return (
+                    <div className="panel-card" style={{ padding: '2rem', textAlign: 'center' }}>
+                        <div style={{ fontWeight: 700, fontSize: '1.05rem', marginBottom: '0.5rem' }}>Loading dashboard data</div>
+                        <div style={{ color: '#6b7280' }}>Reading the configured Excel workbook and preparing the chart data.</div>
+                    </div>
+                );
+            }
+
+            if (error) {
+                return (
+                    <div className="panel-card" style={{ padding: '2rem', textAlign: 'center' }}>
+                        <div style={{ fontWeight: 700, fontSize: '1.05rem', marginBottom: '0.5rem', color: '#b91c1c' }}>Dashboard failed to load</div>
+                        <div style={{ color: '#6b7280', marginBottom: '1rem' }}>{error}</div>
+                        <button type="button" className="action-btn" onClick={() => window.refreshQcDashboard()}>
+                            Retry
+                        </button>
+                    </div>
+                );
+            }
+
+            return (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    <div style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1d4ed8 60%, #38bdf8 100%)', color: '#fff', borderRadius: '24px', padding: '1.5rem 1.75rem', boxShadow: '0 24px 60px rgba(15, 23, 42, 0.18)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+                            <div>
+                                <div style={{ letterSpacing: '0.16em', textTransform: 'uppercase', fontSize: '0.74rem', fontWeight: 700, opacity: 0.75, marginBottom: '0.5rem' }}>
+                                    QC Manager Dashboard
+                                </div>
+                                <h1 style={{ fontSize: '2rem', fontWeight: 800, margin: 0 }}>Quality Overview, Pareto, Stage and Inspector Performance</h1>
+                                <p style={{ marginTop: '0.65rem', maxWidth: '60rem', color: 'rgba(255,255,255,0.9)', lineHeight: 1.6 }}>
+                                    Source: {sourcePath || 'Configured Excel workbook'} · {formatNumber(sourceRows.length)} rows loaded · {formatNumber(filteredData.length)} rows after filters.
+                                </p>
+                            </div>
+                            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+                                <div style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: '18px', padding: '0.85rem 1rem', minWidth: '140px' }}>
+                                    <div style={{ fontSize: '0.75rem', opacity: 0.82 }}>Active filters</div>
+                                    <div style={{ fontSize: '1.75rem', fontWeight: 800 }}>{activeFilterCount}</div>
+                                </div>
+                                <div style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: '18px', padding: '0.85rem 1rem', minWidth: '140px' }}>
+                                    <div style={{ fontSize: '0.75rem', opacity: 0.82 }}>Filtered rows</div>
+                                    <div style={{ fontSize: '1.75rem', fontWeight: 800 }}>{formatNumber(filteredData.length)}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="filters-container">
+                        <div className="filter-group">
+                            <label>Time Range Start</label>
+                            <input type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} />
+                        </div>
+                        <div className="filter-group">
+                            <label>Time Range End</label>
+                            <input type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} />
+                        </div>
+                        <MultiSelect
+                            label="Inspection Stage"
+                            options={uniqueOptions.stages}
+                            value={inspectionStages}
+                            onChange={(event) => setInspectionStages(Array.from(event.target.selectedOptions, (option) => option.value))}
+                            helperText="Hold Ctrl or Cmd to select multiple stages."
+                        />
+                        <SingleSelect label="Branch" options={uniqueOptions.branches} value={branch} onChange={(event) => setBranch(event.target.value)} />
+                        <SingleSelect label="Inspector Dept" options={uniqueOptions.depts} value={inspectorDept} onChange={(event) => setInspectorDept(event.target.value)} />
+                        <MultiSelect
+                            label="Defect Owner"
+                            options={uniqueOptions.owners}
+                            value={defectOwners}
+                            onChange={(event) => setDefectOwners(Array.from(event.target.selectedOptions, (option) => option.value))}
+                            helperText="Null values are excluded from the selectable list."
+                        />
+                        <div className="filter-group" style={{ alignSelf: 'flex-end' }}>
+                            <label>&nbsp;</label>
+                            <button
+                                type="button"
+                                className="action-btn secondary"
+                                onClick={() => {
+                                    setStartDate('');
+                                    setEndDate('');
+                                    setInspectionStages([]);
+                                    setBranch('');
+                                    setInspectorDept('');
+                                    setDefectOwners([]);
+                                }}
+                            >
+                                Clear Filters
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="summary-grid">
+                        <MetricCard label="Total Inspected Qty" value={formatNumber(overview.totalInspectedQty)} hint="Sum of inspected quantity in the filtered data." />
+                        <MetricCard label="Pass Rate %" value={formatPercent(overview.passRatePct)} hint={overview.passRatePct === null ? 'N/A when inspected quantity is zero.' : 'Pass Qty / Inspected Qty'} />
+                        <MetricCard label="Fail Rate %" value={formatPercent(overview.failRatePct)} hint={overview.failRatePct === null ? 'N/A when inspected quantity is zero.' : 'Fail Qty / Inspected Qty'} />
+                        <MetricCard label="Quarantine Rate %" value={formatPercent(overview.quarantineRatePct)} hint={overview.quarantineRatePct === null ? 'N/A when inspected quantity is zero.' : 'Quarantine / Inspected Qty'} />
+                    </div>
+
+                    <ChartShell
+                        title="Quality Overview Trend"
+                        subtitle="Fail rate grouped by calendar week or month across the currently filtered dataset."
+                        toolbar={
+                            <ToggleGroup
+                                label="Granularity"
+                                value={trendPeriod}
+                                options={[
+                                    { label: 'Week', value: 'week' },
+                                    { label: 'Month', value: 'month' },
+                                ]}
+                                onChange={setTrendPeriod}
+                            />
+                        }
+                    >
+                        {hasFilteredData && trendData.length > 0 ? (
+                            <div style={{ height: '320px' }}>
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <LineChart data={trendData} margin={{ top: 5, right: 16, left: 0, bottom: 5 }}>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                                        <XAxis dataKey="periodLabel" tick={{ fill: '#475569', fontSize: 12 }} />
+                                        <YAxis tickFormatter={(value) => `${value}%`} tick={{ fill: '#475569', fontSize: 12 }} width={60} />
+                                        <Tooltip formatter={(value, name) => [name === 'failRatePct' ? formatPercent(value) : formatNumber(value), name === 'failRatePct' ? 'Fail Rate' : name]} />
+                                        <Legend />
+                                        <Line type="monotone" dataKey="failRatePct" name="Fail Rate %" stroke="#dc2626" strokeWidth={3} dot={{ r: 4, fill: '#dc2626' }} activeDot={{ r: 6 }} />
+                                    </LineChart>
+                                </ResponsiveContainer>
+                            </div>
+                        ) : (
+                            <DashboardEmptyState message={EMPTY_MESSAGE} />
+                        )}
+                    </ChartShell>
+
+                    <div className="section-grid">
+                        <ChartShell title="Stage Performance" subtitle="Stages are ranked by fail rate in descending order.">
+                            {hasFilteredData && stageData.length > 0 ? (
+                                <div style={{ height: '320px' }}>
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={stageData} margin={{ top: 5, right: 16, left: 0, bottom: 5 }}>
+                                            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                                            <XAxis dataKey="stage" tick={{ fill: '#475569', fontSize: 12 }} />
+                                            <YAxis tickFormatter={(value) => `${value}%`} tick={{ fill: '#475569', fontSize: 12 }} width={60} />
+                                            <Tooltip formatter={(value, name) => [name === 'failRatePct' ? formatPercent(value) : formatNumber(value), name === 'failRatePct' ? 'Fail Rate' : name]} />
+                                            <Legend />
+                                            <Bar dataKey="failRatePct" name="Fail Rate %" radius={[10, 10, 0, 0]}>
+                                                {stageData.map((entry, index) => (
+                                                    <Cell key={`stage-cell-${entry.stage}`} fill={BAR_COLORS[index % BAR_COLORS.length]} />
+                                                ))}
+                                            </Bar>
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            ) : (
+                                <DashboardEmptyState message={EMPTY_MESSAGE} />
+                            )}
+                        </ChartShell>
+
+                        <ChartShell title="Defect Pareto Analysis" subtitle="Top 10 defect codes by fail quantity with cumulative contribution.">
+                            {hasFilteredData && paretoData.length > 0 ? (
+                                <div style={{ height: '320px' }}>
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <ComposedChart data={paretoData} margin={{ top: 5, right: 32, left: 0, bottom: 5 }}>
+                                            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                                            <XAxis dataKey="defectCode" tick={{ fill: '#475569', fontSize: 12 }} />
+                                            <YAxis yAxisId="left" tick={{ fill: '#475569', fontSize: 12 }} width={55} />
+                                            <YAxis yAxisId="right" orientation="right" tickFormatter={(value) => `${value}%`} tick={{ fill: '#475569', fontSize: 12 }} width={60} />
+                                            <Tooltip formatter={(value, name) => [name === 'cumulativePct' ? formatPercent(value) : formatNumber(value), name === 'cumulativePct' ? 'Cumulative %' : 'Fail Qty']} />
+                                            <Legend />
+                                            <Bar yAxisId="left" dataKey="failQty" name="Fail Qty" radius={[10, 10, 0, 0]}>
+                                                {paretoData.map((entry, index) => (
+                                                    <Cell key={`pareto-cell-${entry.defectCode}`} fill={BAR_COLORS[index % BAR_COLORS.length]} />
+                                                ))}
+                                            </Bar>
+                                            <Line yAxisId="right" type="monotone" dataKey="cumulativePct" name="Cumulative %" stroke="#111827" strokeWidth={3} dot={{ r: 4, fill: '#111827' }} activeDot={{ r: 6 }} />
+                                        </ComposedChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            ) : (
+                                <DashboardEmptyState message={EMPTY_MESSAGE} />
+                            )}
+                        </ChartShell>
+                    </div>
+
+                    <ChartShell
+                        title="Inspector Performance"
+                        subtitle={`Ranked by ${rankingMode === 'top' ? 'highest' : 'lowest'} inspected quantity. Fail rate line only appears for inspectors with at least ${formatNumber(MIN_SAMPLE_SIZE)} inspected qty.`}
+                        toolbar={
+                            <ToggleGroup
+                                label="Ranking"
+                                value={rankingMode}
+                                options={[
+                                    { label: 'Top 10', value: 'top' },
+                                    { label: 'Bottom 10', value: 'bottom' },
+                                ]}
+                                onChange={setRankingMode}
+                            />
+                        }
+                    >
+                        {hasFilteredData && rankedInspectors.length > 0 ? (
+                            <>
+                                <div style={{ height: '360px' }}>
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <ComposedChart data={rankedInspectors} margin={{ top: 5, right: 32, left: 0, bottom: 5 }}>
+                                            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                                            <XAxis dataKey="inspectorName" tick={{ fill: '#475569', fontSize: 12 }} />
+                                            <YAxis yAxisId="left" tick={{ fill: '#475569', fontSize: 12 }} width={60} />
+                                            <YAxis yAxisId="right" orientation="right" tickFormatter={(value) => `${value}%`} tick={{ fill: '#475569', fontSize: 12 }} width={60} />
+                                            <Tooltip content={inspectorTooltip} />
+                                            <Legend />
+                                            <Bar yAxisId="left" dataKey="inspectedQty" name="Inspected Qty" radius={[10, 10, 0, 0]}>
+                                                {rankedInspectors.map((entry) => (
+                                                    <Cell key={`inspector-cell-${entry.inspectorName}`} fill={entry.highlighted ? '#dc2626' : '#1b4d3e'} />
+                                                ))}
+                                            </Bar>
+                                            <Line
+                                                yAxisId="right"
+                                                type="monotone"
+                                                dataKey="failRatePct"
+                                                name="Fail Rate %"
+                                                stroke="#0f172a"
+                                                strokeWidth={3}
+                                                dot={(props) => {
+                                                    const { cx, cy, payload } = props;
+                                                    if (!cx || !cy || !payload) return null;
+                                                    return (
+                                                        <circle
+                                                            key={`dot-${payload.inspectorName}`}
+                                                            cx={cx}
+                                                            cy={cy}
+                                                            r={4}
+                                                            fill={payload.highlighted ? '#dc2626' : '#0f172a'}
+                                                            stroke={payload.highlighted ? '#dc2626' : '#0f172a'}
+                                                        />
+                                                    );
+                                                }}
+                                                activeDot={{ r: 6 }}
+                                                connectNulls={false}
+                                            />
+                                        </ComposedChart>
+                                    </ResponsiveContainer>
+                                </div>
+                                <div style={{ marginTop: '0.75rem', color: '#6b7280', fontSize: '0.85rem' }}>
+                                    Inspectors below the minimum sample size are excluded from the fail-rate threshold calculation and show <strong>Insufficient sample</strong> in the tooltip.
+                                </div>
+                            </>
+                        ) : (
+                            <DashboardEmptyState message={EMPTY_MESSAGE} />
+                        )}
+                    </ChartShell>
+                </div>
+            );
+        }
+
+        function initializeQcDashboard() {
+            const root = document.getElementById('qc-dashboard-root');
+            if (!root || root.dataset.mounted === 'true') {
+                return;
+            }
+
+            root.dataset.mounted = 'true';
+            ReactDOM.createRoot(root).render(<DashboardApp />);
+        }
+
+        function refreshQcDashboard() {
+            window.dispatchEvent(new Event('qc-dashboard-refresh'));
+        }
+
+        window.initializeQcDashboard = initializeQcDashboard;
+        window.refreshQcDashboard = refreshQcDashboard;
+    </script>
+</body>
+
+</html>

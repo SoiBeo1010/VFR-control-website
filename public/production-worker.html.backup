@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Production Worker - QMS System</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <nav>
+        <div class="container">
+            <div class="nav-brand">QMS System</div>
+            <ul class="nav-menu">
+                <li style="color: #6b7280;"><strong>Production Worker</strong> - <span id="username"></span></li>
+                <li><button class="logout-btn" onclick="logout()">Logout</button></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main>
+        <div class="container">
+            <h1 class="page-title">Production Worker Dashboard</h1>
+            
+            <div id="alertContainer"></div>
+
+            <div class="dashboard-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Assigned Plans</div>
+                    <div class="stat-value" id="assignedPlans">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">In Progress</div>
+                    <div class="stat-value" id="inProgress">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Completed</div>
+                    <div class="stat-value" id="completed">0</div>
+                </div>
+            </div>
+
+            <!-- Assigned Repair Plans -->
+            <h2 class="section-title">My Assigned Repair Plans</h2>
+            <div id="plansContainer">
+                <div class="spinner"></div>
+            </div>
+
+            <!-- Completion Modal -->
+            <div id="completionModal" class="modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <span>Complete Repair</span>
+                        <button class="modal-close" onclick="closeModal()">&times;</button>
+                    </div>
+                    <form id="completionForm">
+                        <input type="hidden" id="planId">
+                        
+                        <div class="form-group">
+                            <label for="rootCause">Root Cause Analysis</label>
+                            <textarea id="rootCause" required placeholder="Explain the root cause of the defect"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="preventiveAction">Preventive Action</label>
+                            <textarea id="preventiveAction" required placeholder="What preventive actions will be taken"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="actualCost">Actual Repair Cost (USD)</label>
+                            <input type="number" id="actualCost" required min="0" step="0.01" placeholder="Total cost of repair">
+                        </div>
+
+                        <div class="form-buttons">
+                            <button type="submit" class="btn btn-success">Mark as Complete</button>
+                            <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const API_BASE = 'http://localhost:8000/api';
+        let token = localStorage.getItem('token');
+        let userId = localStorage.getItem('userId');
+
+        if (!token) {
+            window.location.href = '/index.html';
+        }
+
+        document.getElementById('username').textContent = localStorage.getItem('username');
+
+        // Load repair plans on page load
+        loadRepairPlans();
+        setInterval(loadRepairPlans, 5000);
+
+        async function loadRepairPlans() {
+            try {
+                const response = await fetch(`${API_BASE}/production-worker/repair-plans`, {
+                    headers: { 'token': token }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const plans = data.plans;
+
+                    // Update stats
+                    document.getElementById('assignedPlans').textContent = plans.length;
+                    document.getElementById('inProgress').textContent = 
+                        plans.filter(p => p.status === 'pending').length;
+                    document.getElementById('completed').textContent = 
+                        plans.filter(p => p.status === 'completed').length;
+
+                    displayPlans(plans);
+                } else if (response.status === 401) {
+                    window.location.href = '/index.html';
+                }
+            } catch (error) {
+                console.error('Error loading repair plans:', error);
+            }
+        }
+
+        function displayPlans(plans) {
+            const container = document.getElementById('plansContainer');
+            if (plans.length === 0) {
+                container.innerHTML = '<p class="text-center text-muted">No assigned repair plans.</p>';
+                return;
+            }
+
+            let html = '<table><thead><tr><th>Product</th><th>Batch</th><th>Repair Plan</th><th>Est. Days</th><th>Status</th><th>Action</th></tr></thead><tbody>';
+            plans.forEach(plan => {
+                const statusClass = `status-${plan.status}`;
+                const actionBtn = plan.status === 'pending' 
+                    ? `<button class="btn btn-success" style="padding: 0.5rem 1rem; font-size: 0.875rem;" onclick="openCompletionModal(${plan.plan_id})">Complete</button>`
+                    : '<span class="text-muted">Completed</span>';
+                
+                html += `<tr>
+                    <td>${plan.product_id}</td>
+                    <td>${plan.batch_number}</td>
+                    <td>${plan.plan_description.substring(0, 50)}...</td>
+                    <td>${plan.estimated_days}</td>
+                    <td><span class="status-badge ${statusClass}">${plan.status.toUpperCase()}</span></td>
+                    <td>${actionBtn}</td>
+                </tr>`;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function openCompletionModal(planId) {
+            document.getElementById('planId').value = planId;
+            document.getElementById('completionModal').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('completionModal').classList.remove('show');
+            document.getElementById('completionForm').reset();
+        }
+
+        document.getElementById('completionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const planId = document.getElementById('planId').value;
+            const rootCause = document.getElementById('rootCause').value;
+            const preventiveAction = document.getElementById('preventiveAction').value;
+            const actualCost = document.getElementById('actualCost').value;
+            
+            try {
+                const response = await fetch(`${API_BASE}/production-worker/repair-completion`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'token': token
+                    },
+                    body: JSON.stringify({
+                        repair_plan_id: parseInt(planId),
+                        actual_cost: parseFloat(actualCost),
+                        root_cause: rootCause,
+                        preventive_action: preventiveAction
+                    })
+                });
+
+                if (response.ok) {
+                    showAlert('Repair marked as complete and sent for approval', 'success');
+                    closeModal();
+                    loadRepairPlans();
+                } else {
+                    showAlert('Failed to complete repair', 'error');
+                }
+            } catch (error) {
+                showAlert('Error: ' + error.message, 'error');
+            }
+        });
+
+        function showAlert(message, type = 'info') {
+            const container = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            container.innerHTML = '';
+            container.appendChild(alert);
+            setTimeout(() => alert.remove(), 5000);
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('userId');
+            localStorage.removeItem('username');
+            localStorage.removeItem('role');
+            window.location.href = '/index.html';
+        }
+    </script>
+</body>
+</html>

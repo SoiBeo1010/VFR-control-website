@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Higher Department - QMS System</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <nav>
+        <div class="container">
+            <div class="nav-brand">
+                <img src="/logo.png" alt="VFR Logo">
+                <span>QMS System</span>
+            </div>
+            <ul class="nav-menu">
+                <li style="color: #6b7280;"><strong>Higher Department</strong> - <span id="username"></span></li>
+                <li><button class="logout-btn" onclick="logout()">Logout</button></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main>
+        <div class="container">
+            <h1 class="page-title">Higher Department - Approval Dashboard</h1>
+            
+            <div id="alertContainer"></div>
+
+            <div class="dashboard-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Pending Approvals</div>
+                    <div class="stat-value" id="pendingApprovals">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Approved</div>
+                    <div class="stat-value" id="approved">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Total Cost (USD)</div>
+                    <div class="stat-value" id="totalCost">$0</div>
+                </div>
+            </div>
+
+            <!-- Repairs for Approval -->
+            <h2 class="section-title">Repairs Pending Approval</h2>
+            <div id="repairsContainer">
+                <div class="spinner"></div>
+            </div>
+
+            <!-- Approval Modal -->
+            <div id="approvalModal" class="modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <span>Approve/Reject Repair</span>
+                        <button class="modal-close" onclick="closeModal()">&times;</button>
+                    </div>
+                    <form id="approvalForm">
+                        <input type="hidden" id="planId">
+                        
+                        <div class="card" style="margin-bottom: 1.5rem; background-color: #f9fafb;">
+                            <div id="repairDetails"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="approvalStatus">Decision</label>
+                            <select id="approvalStatus" required>
+                                <option value="">-- Select Decision --</option>
+                                <option value="approved">Approve</option>
+                                <option value="rejected">Reject</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="approvalComments">Comments</label>
+                            <textarea id="approvalComments" placeholder="Additional comments or feedback"></textarea>
+                        </div>
+
+                        <div class="form-buttons">
+                            <button type="submit" class="btn btn-primary">Submit Decision</button>
+                            <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const API_BASE = 'http://localhost:8000/api';
+        let token = localStorage.getItem('token');
+        let userId = localStorage.getItem('userId');
+
+        if (!token) {
+            window.location.href = '/index.html';
+        }
+
+        document.getElementById('username').textContent = localStorage.getItem('username');
+
+        // Load repairs for approval on page load
+        loadRepairsForApproval();
+        setInterval(loadRepairsForApproval, 5000);
+
+        async function loadRepairsForApproval() {
+            try {
+                const response = await fetch(`${API_BASE}/higher-department/repairs-for-approval`, {
+                    headers: { 'token': token }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const repairs = data.repairs;
+
+                    // Update stats
+                    document.getElementById('pendingApprovals').textContent = repairs.length;
+                    
+                    const totalCost = repairs.reduce((sum, r) => sum + (r.actual_cost || 0), 0);
+                    document.getElementById('totalCost').textContent = '$' + totalCost.toFixed(2);
+
+                    displayRepairs(repairs);
+                } else if (response.status === 401) {
+                    window.location.href = '/index.html';
+                }
+            } catch (error) {
+                console.error('Error loading repairs:', error);
+            }
+        }
+
+        function displayRepairs(repairs) {
+            const container = document.getElementById('repairsContainer');
+            if (repairs.length === 0) {
+                container.innerHTML = '<p class="text-center text-muted">No repairs pending approval.</p>';
+                return;
+            }
+
+            let html = '<table><thead><tr><th>Product</th><th>Batch</th><th>Root Cause</th><th>Cost (USD)</th><th>Preventive Action</th><th>Action</th></tr></thead><tbody>';
+            repairs.forEach(repair => {
+                const cost = repair.actual_cost ? '$' + repair.actual_cost.toFixed(2) : 'N/A';
+                const rootCause = repair.root_cause ? repair.root_cause.substring(0, 40) + '...' : 'N/A';
+                const preventive = repair.preventive_action ? repair.preventive_action.substring(0, 40) + '...' : 'N/A';
+                
+                html += `<tr>
+                    <td>${repair.product_id}</td>
+                    <td>${repair.batch_number}</td>
+                    <td>${rootCause}</td>
+                    <td>${cost}</td>
+                    <td>${preventive}</td>
+                    <td><button class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.875rem;" onclick="openApprovalModal(${repair.plan_id}, '${repair.product_id}', '${repair.batch_number}', '${repair.root_cause}', '${repair.preventive_action}', '${repair.actual_cost}')">Review</button></td>
+                </tr>`;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function openApprovalModal(planId, product, batch, rootCause, preventive, cost) {
+            document.getElementById('planId').value = planId;
+            
+            const details = `
+                <div><strong>Product:</strong> ${product}</div>
+                <div><strong>Batch:</strong> ${batch}</div>
+                <div style="margin-top: 1rem;"><strong>Root Cause:</strong></div>
+                <div>${rootCause}</div>
+                <div style="margin-top: 1rem;"><strong>Preventive Action:</strong></div>
+                <div>${preventive}</div>
+                <div style="margin-top: 1rem;"><strong>Actual Cost:</strong> $${cost}</div>
+            `;
+            
+            document.getElementById('repairDetails').innerHTML = details;
+            document.getElementById('approvalModal').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('approvalModal').classList.remove('show');
+            document.getElementById('approvalForm').reset();
+        }
+
+        document.getElementById('approvalForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const planId = document.getElementById('planId').value;
+            const status = document.getElementById('approvalStatus').value;
+            const comments = document.getElementById('approvalComments').value;
+            
+            try {
+                const response = await fetch(`${API_BASE}/higher-department/approve-repair`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'token': token
+                    },
+                    body: JSON.stringify({
+                        repair_plan_id: parseInt(planId),
+                        status: status,
+                        approver_id: parseInt(userId),
+                        comments: comments
+                    })
+                });
+
+                if (response.ok) {
+                    const action = status === 'approved' ? 'Approved' : 'Rejected';
+                    showAlert(`Repair ${action} successfully`, 'success');
+                    closeModal();
+                    loadRepairsForApproval();
+                } else {
+                    showAlert('Failed to process approval', 'error');
+                }
+            } catch (error) {
+                showAlert('Error: ' + error.message, 'error');
+            }
+        });
+
+        function showAlert(message, type = 'info') {
+            const container = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            container.innerHTML = '';
+            container.appendChild(alert);
+            setTimeout(() => alert.remove(), 5000);
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('userId');
+            localStorage.removeItem('username');
+            localStorage.removeItem('role');
+            window.location.href = '/index.html';
+        }
+    </script>
+</body>
+</html>

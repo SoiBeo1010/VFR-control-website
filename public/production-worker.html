@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Production Worker - QMS System</title>
+    <link rel="stylesheet" href="/styles.css">
+    <style>
+        .workflow-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: var(--shadow-lg);
+            padding: 2.5rem;
+            max-width: 600px;
+            margin: 2.5rem auto;
+            border-top: 5px solid var(--primary-color);
+        }
+
+        /* Stepper progress */
+        .stepper {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2.5rem;
+            position: relative;
+        }
+
+        .stepper-line {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            height: 2px;
+            background: var(--border-color);
+            z-index: 1;
+            transition: background 0.3s;
+        }
+
+        .stepper-line-fill {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0%;
+            height: 100%;
+            background: var(--primary-color);
+            transition: width 0.3s;
+        }
+
+        .step {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+        }
+
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: white;
+            border: 2px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+            color: var(--text-light);
+            margin: 0 auto 8px;
+            transition: all 0.3s;
+        }
+
+        .step-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .step.active .step-circle {
+            border-color: var(--primary-color);
+            background: var(--primary-color);
+            color: white;
+            box-shadow: 0 0 0 4px rgba(27, 77, 62, 0.15);
+        }
+
+        .step.active .step-label {
+            color: var(--primary-color);
+        }
+
+        .step.completed .step-circle {
+            border-color: var(--primary-color);
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* Option cards (Step 2) */
+        .option-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.25rem;
+            margin: 2rem 0;
+        }
+
+        .option-card {
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .option-card:hover {
+            border-color: var(--primary-color);
+            background-color: var(--light-bg);
+        }
+
+        .option-card.selected {
+            border-color: var(--primary-color);
+            background-color: #e8f5e9;
+        }
+
+        .option-card input[type="radio"] {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            accent-color: var(--primary-color);
+            transform: scale(1.2);
+        }
+
+        .option-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.75rem;
+            display: block;
+        }
+
+        .option-title {
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 0.25rem;
+        }
+
+        .option-desc {
+            font-size: 12px;
+            color: var(--text-light);
+        }
+
+        /* Viewfinder barcode simulation (Step 3) */
+        .scanner-viewfinder {
+            position: relative;
+            width: 280px;
+            height: 180px;
+            border: 3px dashed var(--primary-color);
+            border-radius: 12px;
+            margin: 1.5rem auto;
+            overflow: hidden;
+            background: #fafbfc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.02);
+        }
+
+        .scanner-laser {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: #ef4444;
+            box-shadow: 0 0 12px #ef4444;
+            animation: laserScan 2.5s ease-in-out infinite;
+        }
+
+        @keyframes laserScan {
+            0% {
+                top: 10%;
+            }
+
+            50% {
+                top: 90%;
+            }
+
+            100% {
+                top: 10%;
+            }
+        }
+
+        .viewfinder-corner {
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            border: 3px solid var(--primary-color);
+        }
+
+        .tl {
+            top: 8px;
+            left: 8px;
+            border-right: none;
+            border-bottom: none;
+        }
+
+        .tr {
+            top: 8px;
+            right: 8px;
+            border-left: none;
+            border-bottom: none;
+        }
+
+        .bl {
+            bottom: 8px;
+            left: 8px;
+            border-right: none;
+            border-top: none;
+        }
+
+        .br {
+            bottom: 8px;
+            right: 8px;
+            border-left: none;
+            border-top: none;
+        }
+
+        /* Item Info layout (Step 4) */
+        .info-panel {
+            background: var(--light-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin: 1.5rem 0;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 500;
+            color: var(--text-light);
+            font-size: 13.5px;
+        }
+
+        .info-val {
+            font-weight: 600;
+            color: var(--text-color);
+            font-size: 13.5px;
+        }
+
+        /* Action buttons footer */
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .btn-flex {
+            flex: 1;
+        }
+
+        /* Inputs */
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+        .form-input:focus {
+            border-color: var(--primary-color);
+        }
+
+        /* Success screen */
+        .success-state {
+            text-align: center;
+            padding: 2rem 0;
+        }
+
+        .success-icon {
+            font-size: 4rem;
+            color: var(--success-color);
+            margin-bottom: 1.5rem;
+        }
+
+        /* Pulse dot for active repair status */
+        .pulse-dot {
+            width: 10px;
+            height: 10px;
+            background-color: var(--warning-color);
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(0.9);
+                box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7);
+            }
+            70% {
+                transform: scale(1.1);
+                box-shadow: 0 0 0 8px rgba(245, 158, 11, 0);
+            }
+            100% {
+                transform: scale(0.9);
+                box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <nav>
+        <div class="container">
+            <div class="nav-brand">
+                <img src="/logo.png" alt="VFR Logo">
+                <span>QMS System</span>
+            </div>
+            <ul class="nav-menu">
+                <li style="color: #6b7280;"><strong>Production Worker</strong> - <span id="username"></span></li>
+                <li><button class="logout-btn" onclick="logout()">Logout</button></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main>
+        <div class="container">
+            <!-- Stepper Container Card -->
+            <div class="workflow-card">
+                <!-- Stepper Progress Bar -->
+                <div class="stepper" id="stepperContainer" style="display: none;">
+                    <div class="stepper-line">
+                        <div class="stepper-line-fill" id="stepperLineFill"></div>
+                    </div>
+                    <div class="step active" id="step1-indicator">
+                        <div class="step-circle">1</div>
+                        <div class="step-label">Menu</div>
+                    </div>
+                    <div class="step" id="step2-indicator">
+                        <div class="step-circle">2</div>
+                        <div class="step-label">Mode</div>
+                    </div>
+                    <div class="step" id="step3-indicator">
+                        <div class="step-circle">3</div>
+                        <div class="step-label">Input</div>
+                    </div>
+                    <div class="step" id="step4-indicator">
+                        <div class="step-circle">4</div>
+                        <div class="step-label">Detail</div>
+                    </div>
+                    <div class="step" id="step5-indicator">
+                        <div class="step-circle">5</div>
+                        <div class="step-label">Confirm</div>
+                    </div>
+                </div>
+
+                <!-- Step Views -->
+                <div id="step-views">
+
+                    <!-- STEP 1: Main Menu -->
+                    <div id="view-step1" style="text-align: center;">
+                        <h2
+                            style="font-size: 1.6rem; color: var(--text-color); margin-bottom: 1rem; font-weight: bold;">
+                            Main Menu</h2>
+                        <p style="color: var(--text-light); margin-bottom: 2rem;">Scan a quarantine item's barcode to
+                            assign workers and start the repair operation.</p>
+
+                        <div style="font-size: 5rem; margin-bottom: 2rem;">🛠️</div>
+
+                        <button class="btn btn-primary" onclick="goToStep(2)"
+                            style="width: 100%; padding: 1rem; font-size: 1.1rem; border-radius: 8px;">
+                            Scan Repair Item
+                        </button>
+                    </div>
+
+                    <!-- STEP 2: Select Mode -->
+                    <div id="view-step2" style="display: none;">
+                        <h2
+                            style="font-size: 1.4rem; color: var(--text-color); margin-bottom: 0.5rem; font-weight: bold;">
+                            Select Mode</h2>
+                        <p style="color: var(--text-light); font-size: 0.9rem;">Choose how you want to load the repair
+                            item's information.</p>
+
+                        <div class="option-grid">
+                            <div class="option-card selected" onclick="selectMode('manual')" id="mode-manual-card">
+                                <input type="radio" name="input_mode" value="manual" checked>
+                                <span class="option-icon">⌨️</span>
+                                <div class="option-title">Manual Enter</div>
+                                <div class="option-desc">Type in the item ID / code</div>
+                            </div>
+                            <div class="option-card" onclick="selectMode('scan')" id="mode-scan-card">
+                                <input type="radio" name="input_mode" value="scan">
+                                <span class="option-icon">📷</span>
+                                <div class="option-title">Scan Barcode</div>
+                                <div class="option-desc">Use device camera scanner</div>
+                            </div>
+                        </div>
+
+                        <div class="btn-group">
+                            <button class="btn btn-secondary btn-flex" onclick="goToStep(1)">Back</button>
+                            <button class="btn btn-primary btn-flex" onclick="goToStep(3)">Next</button>
+                        </div>
+                    </div>
+
+                    <!-- STEP 3: Input / Scan Barcode -->
+                    <div id="view-step3" style="display: none;">
+                        <h2 style="font-size: 1.4rem; color: var(--text-color); margin-bottom: 0.5rem; font-weight: bold;"
+                            id="step3-title">Input Barcode</h2>
+                        <p style="color: var(--text-light); font-size: 0.9rem; margin-bottom: 1.5rem;" id="step3-desc">
+                        </p>
+
+                        <!-- Manual Input Form -->
+                        <div id="step3-manual-ui">
+                            <div style="margin-bottom: 1rem;">
+                                <label
+                                    style="display: block; font-size: 12px; font-weight: bold; margin-bottom: 6px; color: var(--text-light); text-transform: uppercase;">Barcode
+                                    / Item ID</label>
+                                <input type="text" id="barcode-input" class="form-input" placeholder="e.g. INH-3-8395"
+                                    value="INH-3-8395">
+                            </div>
+                            <div id="barcode-error" style="color: var(--danger-color); font-size: 13.5px; font-weight: 500; margin-top: -0.5rem; margin-bottom: 1rem; display: none;"></div>
+                            <button class="btn btn-primary" onclick="submitBarcode()"
+                                style="width: 100%; padding: 0.75rem;">Submit</button>
+                        </div>
+
+                        <!-- Barcode Scanner Simulation -->
+                        <div id="step3-scan-ui" style="display: none; text-align: center;">
+                            <div class="scanner-viewfinder">
+                                <div class="scanner-laser"></div>
+                                <div class="viewfinder-corner tl"></div>
+                                <div class="viewfinder-corner tr"></div>
+                                <div class="viewfinder-corner bl"></div>
+                                <div class="viewfinder-corner br"></div>
+                                <div style="font-size: 2.5rem; opacity: 0.15;">Barcode</div>
+                            </div>
+                            <button class="btn btn-primary" onclick="simulateScan()"
+                                style="width: 100%; padding: 0.75rem;">Simulate Scan</button>
+                        </div>
+
+                        <div class="btn-group">
+                            <button class="btn btn-secondary btn-flex" onclick="goToStep(2)">Back</button>
+                        </div>
+                    </div>
+
+                    <!-- STEP 4: Item Information & Worker Input -->
+                    <div id="view-step4" style="display: none;">
+                        <h2
+                            style="font-size: 1.4rem; color: var(--text-color); margin-bottom: 0.5rem; font-weight: bold;">
+                            Item Details</h2>
+                        <p style="color: var(--text-light); font-size: 0.9rem;">Review item data and input resource
+                            allocation.</p>
+
+                        <div class="info-panel">
+                            <div class="info-row">
+                                <div class="info-label">Item ID</div>
+                                <div class="info-val" id="info-id">INH-3-8395</div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Item Name</div>
+                                <div class="info-val" id="info-name">Nightstand 28 inch — Left Single Metro</div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Defect Case</div>
+                                <div class="info-val" id="info-condition" style="color: var(--danger-color);">A-04
+                                    (Crack / broken)</div>
+                            </div>
+                        </div>
+
+                        <div id="no-repair-banner" style="display: none; background-color: #e3f2fd; border-left: 4px solid #2196f3; color: #0d47a1; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; font-weight: 500; font-size: 0.95rem; text-align: left; line-height: 1.4;">
+                            📢 <strong>Announcement:</strong> This item has passed inspection (Pass Qty: 1) and does not require repair.
+                        </div>
+
+                        <div id="worker-input-group" style="margin-bottom: 1rem;">
+                            <label for="worker-count"
+                                style="display: block; font-size: 12.5px; font-weight: bold; margin-bottom: 8px; color: var(--text-color);">Enter
+                                number of repair workers</label>
+                            <input type="number" id="worker-count" class="form-input" min="1" max="10" value="1">
+                        </div>
+
+                        <div class="btn-group">
+                            <button class="btn btn-secondary btn-flex" onclick="goToStep(3)">Back</button>
+                            <button class="btn btn-primary btn-flex" id="step4-next-btn" onclick="goToStep(5)">Next</button>
+                            <button class="btn btn-primary btn-flex" id="step4-return-btn" onclick="resetWorkflow()" style="display: none;">Return to Menu</button>
+                        </div>
+                    </div>
+
+                    <!-- STEP 5: Confirm Start -->
+                    <div id="view-step5" style="display: none;">
+                        <h2
+                            style="font-size: 1.4rem; color: var(--text-color); margin-bottom: 0.5rem; font-weight: bold;">
+                            Confirm Operation</h2>
+                        <p style="color: var(--text-light); font-size: 0.9rem; margin-bottom: 1.5rem;">Review the repair
+                            summary before starting the timer.</p>
+
+                        <div class="info-panel" style="border-left: 4px solid var(--primary-color);">
+                            <div class="info-row">
+                                <div class="info-label">Operation</div>
+                                <div class="info-val" style="color: var(--primary-color);">Start Repair Process</div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Barcode / ID</div>
+                                <div class="info-val" id="summary-id"></div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Item Description</div>
+                                <div class="info-val" id="summary-name"></div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Allocated Labor</div>
+                                <div class="info-val" id="summary-workers"></div>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-primary" onclick="confirmStart()"
+                            style="width: 100%; padding: 1rem; font-size: 1.05rem; font-weight: bold; border-radius: 8px;">
+                            Confirm Start Repair
+                        </button>
+
+                        <div class="btn-group">
+                            <button class="btn btn-secondary btn-flex" onclick="goToStep(4)">Back</button>
+                        </div>
+                    </div>
+
+                    <!-- SUCCESS STATE -->
+                    <div id="view-success" style="display: none;">
+                        <div class="success-state">
+                            <div class="success-icon">✔️</div>
+                            <h2
+                                style="font-size: 1.6rem; color: var(--text-color); margin-bottom: 0.5rem; font-weight: bold;">
+                                Repair Started!</h2>
+                            <p style="color: var(--text-light); margin-bottom: 2rem;">The repair process timer has been
+                                initialized. Assigned workers have been registered successfully.</p>
+                            <button class="btn btn-primary" onclick="resetWorkflow()"
+                                style="width: 100%; padding: 0.75rem;">Return to Main Menu</button>
+                        </div>
+                    </div>
+
+                    <!-- ACTIVE REPAIR PROCESS SCREEN -->
+                    <div id="view-active-repair" style="display: none;">
+                        <h2 style="font-size: 1.4rem; color: var(--text-color); margin-bottom: 0.5rem; font-weight: bold;">
+                            Active Repair Process
+                        </h2>
+                        <p style="color: var(--text-light); font-size: 0.9rem; margin-bottom: 1.5rem;">
+                            This item is currently undergoing repair. Review details or complete the operation.
+                        </p>
+
+                        <div class="info-panel" style="border-left: 4px solid var(--warning-color);">
+                            <div class="info-row">
+                                <div class="info-label">Status</div>
+                                <div class="info-val" style="color: var(--warning-color); font-weight: bold; display: flex; align-items: center; gap: 6px;">
+                                    <span class="pulse-dot"></span> In Progress
+                                </div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Item ID</div>
+                                <div class="info-val" id="active-id"></div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Item Name</div>
+                                <div class="info-val" id="active-name"></div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Defect Case</div>
+                                <div class="info-val" id="active-defect" style="color: var(--danger-color);"></div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Assigned Workers</div>
+                                <div class="info-val" id="active-workers"></div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Start Time</div>
+                                <div class="info-val" id="active-start-time"></div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Elapsed Time</div>
+                                <div class="info-val" id="active-elapsed" style="font-family: monospace; font-size: 1.1rem; color: var(--primary-color); font-weight: bold;">00:00:00</div>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-primary" onclick="confirmEndRepair()"
+                            style="width: 100%; padding: 1rem; font-size: 1.05rem; font-weight: bold; border-radius: 8px; margin-bottom: 1rem;">
+                            End Repair
+                        </button>
+
+                        <div class="btn-group">
+                            <button class="btn btn-secondary btn-flex" onclick="goToStep(3)">Back</button>
+                        </div>
+                    </div>
+
+                    <!-- COMPLETION SUCCESS STATE -->
+                    <div id="view-completion-success" style="display: none;">
+                        <div class="success-state">
+                            <div class="success-icon" style="color: var(--success-color);">🎉</div>
+                            <h2 style="font-size: 1.6rem; color: var(--text-color); margin-bottom: 0.5rem; font-weight: bold;">
+                                Repair Completed!
+                            </h2>
+                            <p style="color: var(--text-light); margin-bottom: 2rem;" id="completion-success-msg">
+                                The repair process has been marked as done. The total duration has been recorded.
+                            </p>
+                            <button class="btn btn-primary" onclick="resetWorkflow()"
+                                style="width: 100%; padding: 0.75rem;">Return to Main Menu</button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/index.html';
+        }
+
+        document.getElementById('username').textContent = localStorage.getItem('username') || 'Production Worker';
+
+        const role = localStorage.getItem('role');
+        if (role === 'Production Manager') {
+            window.location.href = '/production-manager.html';
+        }
+
+        // Workflow States
+        let currentStep = 1;
+        let selectedInputMode = 'manual';
+        let scannedBarcode = '';
+        let workerCount = 1;
+        let elapsedTimerInterval = null;
+
+        // Load inspection data from public/inspection-data.json
+        let inspectionData = [];
+        async function fetchInspectionData() {
+            try {
+                const res = await fetch('/inspection-data.json');
+                if (res.ok) {
+                    inspectionData = await res.json();
+                    console.log('Successfully loaded inspection data:', inspectionData.length);
+                    // Update initial value of barcode input with the first item's ID from dataset
+                    if (inspectionData.length > 0) {
+                        const input = document.getElementById('barcode-input');
+                        if (input && input.value === 'INH-3-8395') {
+                            input.value = inspectionData[0].id;
+                        }
+                    }
+                } else {
+                    console.error('Failed to load inspection data');
+                }
+            } catch (err) {
+                console.error('Error loading inspection data:', err);
+            }
+        }
+        fetchInspectionData();
+
+        // Mock items database
+        const mockDatabase = {
+            'INH-3-8395': {
+                id: 'INH-3-8395',
+                name: 'Nightstand 28 inch — Left Single Metro',
+                defect: 'A-04 (Crack / broken)'
+            },
+            'INH-4-8396': {
+                id: 'INH-4-8396',
+                name: 'Dresser 6-Drawer — Metro',
+                defect: 'Oil leakage at joint seal'
+            },
+            'MOCK-PASS-123': {
+                id: 'MOCK-PASS-123',
+                name: 'Bedside Nightstand — Left Passed Unit',
+                defect: 'No defects, passed QA check',
+                passQty: 1
+            },
+            'DEFAULT': {
+                id: 'UNKNOWN-ITEM',
+                name: 'Custom Inspection Material Unit',
+                defect: 'Unspecified Surface Imperfection'
+            }
+        };
+
+        function getItemData(id) {
+            // Find item by ID or Item Code
+            const found = inspectionData.find(item => item.id === id || item.itemCode === id);
+            if (found) {
+                let passQty = 0;
+                if (found.source && found.source.passQty !== undefined) {
+                    passQty = Number(found.source.passQty);
+                } else if (found.passQty !== undefined) {
+                    passQty = Number(found.passQty);
+                }
+                return {
+                    id: found.id,
+                    name: found.itemName || found.itemCode || 'Unknown Item',
+                    defect: found.defectDescription || found.defectCode || 'No defect description',
+                    passQty: passQty
+                };
+            }
+            // Fallback to mockDatabase
+            if (mockDatabase[id]) {
+                return {
+                    ...mockDatabase[id],
+                    passQty: mockDatabase[id].passQty || 0
+                };
+            }
+            return {
+                ...mockDatabase['DEFAULT'],
+                passQty: mockDatabase['DEFAULT'].passQty || 0
+            };
+        }
+
+        function showError(message) {
+            const errDiv = document.getElementById('barcode-error');
+            if (errDiv) {
+                errDiv.textContent = message;
+                errDiv.style.display = 'block';
+            } else {
+                alert(message);
+            }
+        }
+
+        function clearError() {
+            const errDiv = document.getElementById('barcode-error');
+            if (errDiv) {
+                errDiv.textContent = '';
+                errDiv.style.display = 'none';
+            }
+        }
+
+        // Clear error message when user starts typing again
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputEl = document.getElementById('barcode-input');
+            if (inputEl) {
+                inputEl.addEventListener('input', clearError);
+            }
+        });
+
+        function goToStep(step) {
+            // Hide all views
+            for (let i = 1; i <= 5; i++) {
+                document.getElementById(`view-step${i}`).style.display = 'none';
+                document.getElementById(`step${i}-indicator`).classList.remove('active', 'completed');
+            }
+            document.getElementById('view-success').style.display = 'none';
+            document.getElementById('view-active-repair').style.display = 'none';
+            document.getElementById('view-completion-success').style.display = 'none';
+
+            if (elapsedTimerInterval) {
+                clearInterval(elapsedTimerInterval);
+                elapsedTimerInterval = null;
+            }
+
+            // Show stepper if we are past Step 1
+            if (step > 1) {
+                document.getElementById('stepperContainer').style.display = 'flex';
+                // Calculate progress line fill width
+                const fillPercent = ((step - 1) / 4) * 100;
+                document.getElementById('stepperLineFill').style.width = `${fillPercent}%`;
+            } else {
+                document.getElementById('stepperContainer').style.display = 'none';
+            }
+
+            // Set indicators
+            for (let i = 1; i <= 5; i++) {
+                const ind = document.getElementById(`step${i}-indicator`);
+                if (i < step) {
+                    ind.classList.add('completed');
+                } else if (i === step) {
+                    ind.classList.add('active');
+                }
+            }
+
+            // Render view
+            document.getElementById(`view-step${step}`).style.display = 'block';
+            currentStep = step;
+
+            // Initialize step specifics
+            if (step === 3) {
+                const title = document.getElementById('step3-title');
+                const desc = document.getElementById('step3-desc');
+
+                if (selectedInputMode === 'manual') {
+                    title.textContent = 'Manual Enter Barcode';
+                    desc.textContent = 'Enter the repair item ID/barcode manually using the text field.';
+                    document.getElementById('step3-manual-ui').style.display = 'block';
+                    document.getElementById('step3-scan-ui').style.display = 'none';
+                } else {
+                    title.textContent = 'Scan Barcode';
+                    desc.textContent = 'Position the camera viewfinder over the item barcode code.';
+                    document.getElementById('step3-manual-ui').style.display = 'none';
+                    document.getElementById('step3-scan-ui').style.display = 'block';
+                }
+            } else if (step === 5) {
+                document.getElementById('summary-id').textContent = scannedBarcode;
+
+                const item = getItemData(scannedBarcode);
+                document.getElementById('summary-name').textContent = item.name;
+
+                workerCount = document.getElementById('worker-count').value || 1;
+                document.getElementById('summary-workers').textContent = `${workerCount} Assigned Worker(s)`;
+            }
+        }
+
+        function selectMode(mode) {
+            selectedInputMode = mode;
+
+            document.getElementById('mode-manual-card').classList.remove('selected');
+            document.getElementById('mode-scan-card').classList.remove('selected');
+
+            document.querySelector('input[value="manual"]').checked = false;
+            document.querySelector('input[value="scan"]').checked = false;
+
+            document.getElementById(`mode-${mode}-card`).classList.add('selected');
+            document.querySelector(`input[value="${mode}"]`).checked = true;
+        }
+
+        function submitBarcode() {
+            const val = document.getElementById('barcode-input').value.trim();
+            if (!val) {
+                showError('Please enter a valid barcode ID or Item Code');
+                return;
+            }
+
+            clearError();
+
+            // Check if ID or item code exists in loaded inspection data
+            const exists = inspectionData.some(item => item.id === val || item.itemCode === val) || (val in mockDatabase);
+            if (!exists) {
+                showError(`ID / Item Code "${val}" does not exist in the input data.`);
+                return;
+            }
+
+            scannedBarcode = val;
+
+            // Check if item is already under repair
+            let underRepair = JSON.parse(localStorage.getItem('qms_under_repair') || '{}');
+            if (underRepair[val]) {
+                showUnderRepairScreen(val);
+                return;
+            }
+
+            loadItemDetails(val);
+            goToStep(4);
+        }
+
+        function simulateScan() {
+            let val = '';
+            if (inspectionData.length > 0) {
+                // Select a random record from loaded data
+                const randomRecord = inspectionData[Math.floor(Math.random() * inspectionData.length)];
+                // Randomly choose between using the ID or the Item Code
+                val = Math.random() > 0.5 ? randomRecord.id : randomRecord.itemCode;
+            } else {
+                const choices = ['INH-3-8395', 'INH-4-8396'];
+                val = choices[Math.floor(Math.random() * choices.length)];
+            }
+            scannedBarcode = val;
+
+            // Set values
+            document.getElementById('barcode-input').value = val;
+            clearError();
+
+            // Flash viewfinder visual effect
+            const vf = document.querySelector('.scanner-viewfinder');
+            vf.style.borderColor = 'var(--success-color)';
+            vf.style.background = '#e8f5e9';
+
+            setTimeout(() => {
+                vf.style.borderColor = 'var(--primary-color)';
+                vf.style.background = '#fafbfc';
+                
+                // Check if item is already under repair
+                let underRepair = JSON.parse(localStorage.getItem('qms_under_repair') || '{}');
+                if (underRepair[val]) {
+                    showUnderRepairScreen(val);
+                } else {
+                    loadItemDetails(val);
+                    goToStep(4);
+                }
+            }, 800);
+        }
+
+        function loadItemDetails(id) {
+            const item = getItemData(id);
+
+            document.getElementById('info-id').textContent = item.id;
+            document.getElementById('info-name').textContent = item.name;
+            document.getElementById('info-condition').textContent = item.defect;
+
+            // Handle Pass Qty = 1 announcement and button toggles
+            const banner = document.getElementById('no-repair-banner');
+            const workerInput = document.getElementById('worker-input-group');
+            const nextBtn = document.getElementById('step4-next-btn');
+            const returnBtn = document.getElementById('step4-return-btn');
+
+            if (item.passQty === 1) {
+                if (banner) banner.style.display = 'block';
+                if (workerInput) workerInput.style.display = 'none';
+                if (nextBtn) nextBtn.style.display = 'none';
+                if (returnBtn) returnBtn.style.display = 'inline-block';
+            } else {
+                if (banner) banner.style.display = 'none';
+                if (workerInput) workerInput.style.display = 'block';
+                if (nextBtn) nextBtn.style.display = 'inline-block';
+                if (returnBtn) returnBtn.style.display = 'none';
+            }
+        }
+
+        function confirmStart() {
+            // Save active repair state
+            let underRepair = JSON.parse(localStorage.getItem('qms_under_repair') || '{}');
+            const item = getItemData(scannedBarcode);
+            underRepair[scannedBarcode] = {
+                id: scannedBarcode,
+                name: item.name,
+                defect: item.defect,
+                workers: workerCount,
+                startTime: new Date().toISOString()
+            };
+            localStorage.setItem('qms_under_repair', JSON.stringify(underRepair));
+
+            // Hide stepper, show success screen
+            document.getElementById('stepperContainer').style.display = 'none';
+            document.getElementById('view-step5').style.display = 'none';
+            document.getElementById('view-success').style.display = 'block';
+        }
+
+        function showUnderRepairScreen(id) {
+            // Hide stepper and other steps
+            document.getElementById('stepperContainer').style.display = 'none';
+            for (let i = 1; i <= 5; i++) {
+                document.getElementById(`view-step${i}`).style.display = 'none';
+            }
+            document.getElementById('view-success').style.display = 'none';
+            document.getElementById('view-active-repair').style.display = 'none';
+            document.getElementById('view-completion-success').style.display = 'none';
+
+            // Load repair data from localStorage
+            let underRepair = JSON.parse(localStorage.getItem('qms_under_repair') || '{}');
+            const repairData = underRepair[id];
+            if (!repairData) return;
+
+            scannedBarcode = id; // keep tracking of the current barcode
+
+            document.getElementById('active-id').textContent = repairData.id;
+            document.getElementById('active-name').textContent = repairData.name;
+            document.getElementById('active-defect').textContent = repairData.defect;
+            document.getElementById('active-workers').textContent = `${repairData.workers} Assigned Worker(s)`;
+
+            const startTime = new Date(repairData.startTime);
+            document.getElementById('active-start-time').textContent = startTime.toLocaleString();
+
+            // Start active timer update
+            if (elapsedTimerInterval) clearInterval(elapsedTimerInterval);
+
+            function updateTimer() {
+                const now = new Date();
+                const diffMs = now - startTime;
+                if (diffMs < 0) {
+                    document.getElementById('active-elapsed').textContent = "00:00:00";
+                    return;
+                }
+                const diffSecs = Math.floor(diffMs / 1000);
+                const hours = Math.floor(diffSecs / 3600);
+                const minutes = Math.floor((diffSecs % 3600) / 60);
+                const seconds = diffSecs % 60;
+
+                const pad = (num) => String(num).padStart(2, '0');
+                document.getElementById('active-elapsed').textContent = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+            }
+
+            updateTimer();
+            elapsedTimerInterval = setInterval(updateTimer, 1000);
+
+            document.getElementById('view-active-repair').style.display = 'block';
+        }
+
+        function confirmEndRepair() {
+            if (elapsedTimerInterval) {
+                clearInterval(elapsedTimerInterval);
+                elapsedTimerInterval = null;
+            }
+
+            // Retrieve repair data before deleting it
+            let underRepair = JSON.parse(localStorage.getItem('qms_under_repair') || '{}');
+            const repairData = underRepair[scannedBarcode];
+
+            // Delete the repair process from the active list
+            delete underRepair[scannedBarcode];
+            localStorage.setItem('qms_under_repair', JSON.stringify(underRepair));
+
+            // Calculate elapsed time text
+            let elapsedText = "Unknown";
+            if (repairData && repairData.startTime) {
+                const start = new Date(repairData.startTime);
+                const end = new Date();
+                const diffMs = end - start;
+                const diffSecs = Math.max(0, Math.floor(diffMs / 1000));
+                const hours = Math.floor(diffSecs / 3600);
+                const minutes = Math.floor((diffSecs % 3600) / 60);
+                const seconds = diffSecs % 60;
+                const pad = (num) => String(num).padStart(2, '0');
+                elapsedText = `${pad(hours)}h ${pad(minutes)}m ${pad(seconds)}s`;
+            }
+
+            // Set the success message
+            document.getElementById('completion-success-msg').innerHTML = `
+                The repair process for item <strong>${scannedBarcode}</strong> has been marked as done.<br>
+                Total duration: <strong>${elapsedText}</strong>.
+            `;
+
+            // Hide active screen, show completion success screen
+            document.getElementById('view-active-repair').style.display = 'none';
+            document.getElementById('view-completion-success').style.display = 'block';
+        }
+
+        function resetWorkflow() {
+            currentStep = 1;
+            selectedInputMode = 'manual';
+            scannedBarcode = '';
+            workerCount = 1;
+
+            document.getElementById('barcode-input').value = inspectionData.length > 0 ? inspectionData[0].id : 'INH-120-8447';
+            document.getElementById('worker-count').value = 1;
+            clearError();
+
+            selectMode('manual');
+            goToStep(1);
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('userId');
+            localStorage.removeItem('username');
+            localStorage.removeItem('role');
+            window.location.href = '/index.html';
+        }
+    </script>
+</body>
+
+</html>

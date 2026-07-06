@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QC Worker - QMS System</title>
+    <link rel="stylesheet" href="/styles.css">
+    <style>
+        .inspection-form-container {
+            background: #f9fafb;
+            border-radius: 0.5rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .form-section {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid var(--primary-color);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .checkbox-group {
+            display: flex;
+            gap: 2rem;
+            margin-top: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .checkbox-item input[type="radio"],
+        .checkbox-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .defect-category-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+
+        .status-indicator.pass { background: #10b981; }
+        .status-indicator.fail { background: #ef4444; }
+        .status-indicator.pending { background: #f59e0b; }
+
+        .barcode-input-group {
+            position: relative;
+        }
+
+        .barcode-input-group input {
+            padding-right: 2.5rem;
+        }
+
+        .barcode-icon {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6b7280;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .tab-button {
+            padding: 0.75rem 1.5rem;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-weight: 500;
+            color: #6b7280;
+            transition: all 0.3s;
+        }
+
+        .tab-button.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .summary-item {
+            background: #e8f5e9;
+            border-left: 4px solid var(--primary-color);
+            padding: 1rem;
+            border-radius: 0.25rem;
+        }
+
+        .summary-label {
+            font-size: 0.875rem;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .summary-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1f2937;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="container">
+            <div class="nav-brand">
+                <img src="/logo.png" alt="VFR Logo">
+                <span>QMS System</span>
+            </div>
+            <ul class="nav-menu">
+                <li style="color: #6b7280;"><strong>QC Worker</strong> - <span id="username"></span></li>
+                <li><button class="logout-btn" onclick="logout()">Logout</button></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main>
+        <div class="container">
+            <h1 class="page-title">QC Worker - Wood Component Inspection</h1>
+            
+            <div id="alertContainer"></div>
+
+            <!-- Statistics -->
+            <div class="dashboard-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Total Inspections</div>
+                    <div class="stat-value" id="totalInspections">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Pending</div>
+                    <div class="stat-value" id="pendingInspections">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Completed</div>
+                    <div class="stat-value" id="completedInspections">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Failed</div>
+                    <div class="stat-value" id="failedInspections">0</div>
+                </div>
+            </div>
+
+            <!-- Detailed Inspection Form -->
+            <div class="inspection-form-container">
+                <h2 class="page-subtitle">QC FOR WOOD COMPONENT - Detailed Inspection</h2>
+                <form id="detailedInspectionForm">
+
+                    <!-- GENERAL INFORMATION SECTION -->
+                    <div class="form-section">
+                        <div class="form-section-title">General Information</div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="barcode">Barcode *</label>
+                                <div class="barcode-input-group">
+                                    <input type="text" id="barcode" name="barcode" required placeholder="Scan barcode here" 
+                                           onchange="fillFromBarcode()">
+                                    <span class="barcode-icon">📱</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="inspectionStatus">Inspection Status *</label>
+                                <select id="inspectionStatus" required>
+                                    <option value="">-- Select Status --</option>
+                                    <option value="In Progress">In Progress</option>
+                                    <option value="Finished">Finished</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="wo">Work Order (WO) *</label>
+                                <input type="text" id="wo" name="wo" required placeholder="From barcode" readonly style="background: #f3f4f6;">
+                            </div>
+                            <div class="form-group">
+                                <label for="componentCode">Component Code *</label>
+                                <input type="text" id="componentCode" name="componentCode" required placeholder="From barcode" readonly style="background: #f3f4f6;">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="carcassCode">Carcass Code *</label>
+                                <input type="text" id="carcassCode" name="carcassCode" required placeholder="From barcode" readonly style="background: #f3f4f6;">
+                            </div>
+                            <div class="form-group">
+                                <label for="qtyDefault">Qty Default (from barcode) *</label>
+                                <input type="number" id="qtyDefault" name="qtyDefault" required readonly style="background: #f3f4f6;">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="qtyCheck">Qty Check (Physical Count) *</label>
+                                <input type="number" id="qtyCheck" name="qtyCheck" required placeholder="Physical quantity checked">
+                            </div>
+                            <div class="form-group">
+                                <label for="inspector">Inspector Name *</label>
+                                <input type="text" id="inspector" name="inspector" required placeholder="Your name">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SPECIFICATION SECTION -->
+                    <div class="form-section">
+                        <div class="form-section-title">1. Material Standard Check</div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Defect Code *</label>
+                                <input type="text" placeholder="Enter defect code if any">
+                            </div>
+                            <div class="form-group">
+                                <label>Defect Category</label>
+                                <div class="checkbox-group">
+                                    <label class="checkbox-item"><input type="radio" name="spec_category"> Minor</label>
+                                    <label class="checkbox-item"><input type="radio" name="spec_category"> Major</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group" style="grid-column: 1 / -1;">
+                                <label>Remark</label>
+                                <textarea placeholder="Brief note about material standard" rows="2"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Status *</label>
+                                <div class="checkbox-group">
+                                    <label class="checkbox-item"><input type="radio" name="spec_status"> Pass</label>
+                                    <label class="checkbox-item"><input type="radio" name="spec_status"> Fail</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- APPEARANCE SECTION -->
+                    <div class="form-section">
+                        <div class="form-section-title">2. Appearance Check - General Surface</div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Defect Code *</label>
+                                <input type="text" placeholder="Enter defect code if any">
+                            </div>
+                            <div class="form-group">
+                                <label>Defect Category</label>
+                                <div class="checkbox-group">
+                                    <label class="checkbox-item"><input type="radio" name="app_category"> Minor</label>
+                                    <label class="checkbox-item"><input type="radio" name="app_category"> Major</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group" style="grid-column: 1 / -1;">
+                                <label>Remark</label>
+                                <textarea placeholder="Brief note about appearance (scratches, dents, etc.)" rows="2"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Status *</label>
+                                <div class="checkbox-group">
+                                    <label class="checkbox-item"><input type="radio" name="app_status"> Pass</label>
+                                    <label class="checkbox-item"><input type="radio" name="app_status"> Fail</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- MEASUREMENT SECTION -->
+                    <div class="form-section">
+                        <div class="form-section-title">3. Measurement - Critical Dimension</div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Defect Code *</label>
+                                <input type="text" placeholder="Enter defect code if any">
+                            </div>
+                            <div class="form-group">
+                                <label>Defect Category</label>
+                                <div class="checkbox-group">
+                                    <label class="checkbox-item"><input type="radio" name="mea_category"> Minor</label>
+                                    <label class="checkbox-item"><input type="radio" name="mea_category"> Major</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group" style="grid-column: 1 / -1;">
+                                <label>Remark</label>
+                                <textarea placeholder="Dimension details and measurements" rows="2"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Status *</label>
+                                <div class="checkbox-group">
+                                    <label class="checkbox-item"><input type="radio" name="mea_status"> Pass</label>
+                                    <label class="checkbox-item"><input type="radio" name="mea_status"> Fail</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TEMPLATE/DRAWING CHECK SECTION -->
+                    <div class="form-section">
+                        <div class="form-section-title">4. Check by Template/Drawing</div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Defect Code *</label>
+                                <input type="text" placeholder="Enter defect code if any">
+                            </div>
+                            <div class="form-group">
+                                <label>Defect Category</label>
+                                <div class="checkbox-group">
+                                    <label class="checkbox-item"><input type="radio" name="tpl_category"> Minor</label>
+                                    <label class="checkbox-item"><input type="radio" name="tpl_category"> Major</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group" style="grid-column: 1 / -1;">
+                                <label>Remark</label>
+                                <textarea placeholder="Template/drawing compliance notes" rows="2"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Status *</label>
+                                <div class="checkbox-group">
+                                    <label class="checkbox-item"><input type="radio" name="tpl_status"> Pass</label>
+                                    <label class="checkbox-item"><input type="radio" name="tpl_status"> Fail</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CONCLUSION SECTION -->
+                    <div class="form-section">
+                        <div class="form-section-title">5. Conclusion</div>
+                        
+                        <div class="summary-grid">
+                            <div class="summary-item">
+                                <div class="summary-label">Check Location</div>
+                                <div class="summary-value">Component</div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="summary-label">Qty Pass</div>
+                                <div class="summary-value" id="qtyPassSummary">0</div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="summary-label">Qty Fail</div>
+                                <div class="summary-value" id="qtyFailSummary">0</div>
+                            </div>
+                        </div>
+
+                        <div class="form-row" style="margin-top: 1.5rem;">
+                            <div class="form-group" style="grid-column: 1 / -1;">
+                                <label>Final Remark</label>
+                                <textarea id="finalRemark" placeholder="Summary of inspection findings" rows="3"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ERROR INFORMATION SECTION -->
+                    <div class="form-section">
+                        <div class="form-section-title">6. Error Information (If Any)</div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Defect Code</label>
+                                <input type="text" placeholder="Final defect code">
+                            </div>
+                            <div class="form-group">
+                                <label>Defect Category</label>
+                                <div class="checkbox-group">
+                                    <label class="checkbox-item"><input type="radio" name="err_category"> Minor</label>
+                                    <label class="checkbox-item"><input type="radio" name="err_category"> Major</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group" style="grid-column: 1 / -1;">
+                                <label>Remark</label>
+                                <textarea placeholder="Final error details and notes" rows="2"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- QUARANTINE SECTION -->
+                    <div class="form-section" style="background: #fef2f2; border-left: 4px solid #ef4444;">
+                        <div class="form-section-title" style="border-bottom-color: #ef4444;">7. Quarantine (Isolation)</div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="checkbox-item" style="font-size: 1rem; margin-bottom: 1rem;">
+                                    <input type="checkbox" id="quarantineCheck" name="quarantine">
+                                    <strong>☐ Quarantine this product (will create quarantine report)</strong>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div id="quarantineReason" style="display: none;">
+                            <div class="form-row">
+                                <div class="form-group" style="grid-column: 1 / -1;">
+                                    <label for="quarantineReason">Quarantine Reason</label>
+                                    <textarea id="quarantineReasonText" placeholder="Explain why this product is being quarantined" rows="3"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FORM BUTTONS -->
+                    <div class="form-buttons" style="margin-top: 2rem; justify-content: space-between;">
+                        <div>
+                            <button type="reset" class="btn btn-secondary">Clear Form</button>
+                        </div>
+                        <div style="display: flex; gap: 1rem;">
+                            <button type="button" class="btn btn-secondary" onclick="saveDraft()">Save as Draft</button>
+                            <button type="submit" class="btn btn-primary">Submit Inspection</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Inspection History -->
+            <h2 class="section-title">Recent Inspections</h2>
+            <div id="inspectionsContainer">
+                <div class="spinner"></div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const API_BASE = 'http://localhost:8000/api';
+        let token = localStorage.getItem('token');
+        let userId = localStorage.getItem('userId');
+
+        if (!token) {
+            window.location.href = '/index.html';
+        }
+
+        document.getElementById('username').textContent = localStorage.getItem('username');
+        document.getElementById('inspector').value = localStorage.getItem('username');
+
+        // Load inspections and stats
+        loadInspections();
+        setInterval(loadInspections, 5000);
+
+        // Quarantine checkbox toggle
+        document.getElementById('quarantineCheck').addEventListener('change', (e) => {
+            document.getElementById('quarantineReason').style.display = e.target.checked ? 'block' : 'none';
+        });
+
+        async function fillFromBarcode() {
+            const barcode = document.getElementById('barcode').value.trim();
+            if (!barcode) return;
+
+            // Simulate barcode data - in real scenario, this would query a database
+            const barcodeData = {
+                'C01634570': {
+                    wo: '83165',
+                    componentCode: 'C1',
+                    carcassCode: 'CAR-008463-C',
+                    qtyDefault: 12
+                }
+            };
+
+            const data = barcodeData[barcode];
+            if (data) {
+                document.getElementById('wo').value = data.wo;
+                document.getElementById('componentCode').value = data.componentCode;
+                document.getElementById('carcassCode').value = data.carcassCode;
+                document.getElementById('qtyDefault').value = data.qtyDefault;
+                showAlert('Barcode data loaded successfully', 'success');
+            } else {
+                showAlert('Barcode not found in system', 'warning');
+            }
+        }
+
+        async function loadInspections() {
+            try {
+                const response = await fetch(`${API_BASE}/qc-worker/inspections`, {
+                    headers: { 'token': token }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const inspections = data.inspections || [];
+
+                    document.getElementById('totalInspections').textContent = inspections.length;
+                    document.getElementById('pendingInspections').textContent = 
+                        inspections.filter(i => i.status === 'pending').length;
+                    document.getElementById('completedInspections').textContent = 
+                        inspections.filter(i => i.status === 'completed').length;
+                    document.getElementById('failedInspections').textContent = 
+                        inspections.filter(i => i.status === 'failed').length;
+
+                    displayInspections(inspections);
+                } else if (response.status === 401) {
+                    window.location.href = '/index.html';
+                }
+            } catch (error) {
+                console.error('Error loading inspections:', error);
+            }
+        }
+
+        function displayInspections(inspections) {
+            const container = document.getElementById('inspectionsContainer');
+            if (inspections.length === 0) {
+                container.innerHTML = '<p class="text-center text-muted">No inspections yet.</p>';
+                return;
+            }
+
+            let html = '<table><thead><tr><th>WO No.</th><th>Item Code</th><th>Partcode</th><th>Date</th><th>Status</th></tr></thead><tbody>';
+            inspections.slice(-10).forEach(inspection => {
+                const date = new Date(inspection.inspection_date).toLocaleDateString();
+                const statusClass = `status-${inspection.status}`;
+                html += `<tr>
+                    <td>${inspection.product_id || 'N/A'}</td>
+                    <td>${inspection.batch_number || 'N/A'}</td>
+                    <td>${inspection.partcode || 'N/A'}</td>
+                    <td>${date}</td>
+                    <td><span class="status-badge ${statusClass}">${inspection.status.toUpperCase()}</span></td>
+                </tr>`;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        document.getElementById('detailedInspectionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const defectCodeField = document.querySelector('input[placeholder="Enter defect code if any"]');
+            const defectCategoryField = document.querySelector('input[name="spec_category"]:checked');
+            const finalDefectCodeField = document.querySelector('input[placeholder="Final defect code"]');
+            const finalCategoryField = document.querySelector('input[name="err_category"]:checked');
+            const templateDefectCodeField = document.querySelector('input[name="tpl_category"]:checked');
+            
+            const formData = {
+                branch_itw: 'VFR2.1',
+                branch_fgw: 'VFR2.1',
+                wo_no: document.getElementById('wo').value,
+                item_code: document.getElementById('componentCode').value,
+                partcode: document.getElementById('carcassCode').value,
+                wo_quantity: parseInt(document.getElementById('qtyDefault').value) || 0,
+                inspector: userId,
+                inspector_name: document.getElementById('inspector').value,
+                inspector_dept: 'QC Worker',
+                inspection_stage: document.getElementById('inspectionStatus').value || 'QC Worker',
+                inspected_date: new Date().toISOString(),
+                inspected_time: new Date().toISOString(),
+                inspected_qty: parseInt(document.getElementById('qtyCheck').value) || 0,
+                pass_qty: document.getElementById('quarantineCheck').checked ? 0 : (parseInt(document.getElementById('qtyCheck').value) || 0),
+                fail_qty: document.getElementById('quarantineCheck').checked ? (parseInt(document.getElementById('qtyCheck').value) || 0) : 0,
+                quarantine: document.getElementById('quarantineCheck').checked,
+                defect_code: defectCodeField ? defectCodeField.value : (finalDefectCodeField ? finalDefectCodeField.value : ''),
+                defect_category: defectCategoryField ? defectCategoryField.parentElement.textContent.trim() : (finalCategoryField ? finalCategoryField.parentElement.textContent.trim() : ''),
+                defect_owner: document.getElementById('inspector').value,
+                inspector_recommend: document.getElementById('finalRemark').value,
+                repair_department: '',
+                remark: document.getElementById('quarantineReasonText').value || document.getElementById('finalRemark').value,
+                check_pass_date: '',
+                check_pass_minutes: '',
+                check_pass_hours: '',
+                status: document.getElementById('quarantineCheck').checked ? 'Fail' : 'Pass'
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/qc-worker/inspection`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'token': token
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (response.ok) {
+                    showAlert('Inspection submitted successfully!', 'success');
+                    document.getElementById('detailedInspectionForm').reset();
+                    document.getElementById('inspector').value = localStorage.getItem('username');
+                    loadInspections();
+                } else {
+                    showAlert('Failed to submit inspection', 'error');
+                }
+            } catch (error) {
+                showAlert('Error: ' + error.message, 'error');
+            }
+        });
+
+        function saveDraft() {
+            const formData = new FormData(document.getElementById('detailedInspectionForm'));
+            const data = Object.fromEntries(formData);
+            localStorage.setItem('inspectionDraft', JSON.stringify(data));
+            showAlert('Inspection saved as draft', 'success');
+        }
+
+        function showAlert(message, type = 'info') {
+            const container = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            container.innerHTML = '';
+            container.appendChild(alert);
+            setTimeout(() => alert.remove(), 5000);
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('userId');
+            localStorage.removeItem('username');
+            localStorage.removeItem('role');
+            window.location.href = '/index.html';
+        }
+    </script>
+</body>
+</html>

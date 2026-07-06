@@ -1,0 +1,235 @@
+╔════════════════════════════════════════════════════════════════════════╗
+║                  QC WORKER ENHANCEMENT - UPDATE GUIDE                  ║
+╚════════════════════════════════════════════════════════════════════════╝
+
+WHAT'S CHANGED?
+═════════════════════════════════════════════════════════════════════════
+
+Your QC Worker dashboard has been COMPLETELY REBUILT based on your Word 
+document specification. It now includes:
+
+✅ 7 Detailed Inspection Sections:
+   1. General Information (with barcode scanning)
+   2. Material Standard Check
+   3. Appearance Check
+   4. Measurement Check
+   5. Template/Drawing Check
+   6. Conclusion & Summary
+   7. Error Information & Quarantine Option
+
+✅ Enhanced Features:
+   - Barcode scanning with auto-fill
+   - Save as Draft functionality
+   - Multiple pass/fail checks per section
+   - Defect code and category tracking
+   - Quarantine isolation option
+   - Real-time statistics
+   - Professional form layout
+
+═════════════════════════════════════════════════════════════════════════
+
+HOW TO UPDATE:
+═════════════════════════════════════════════════════════════════════════
+
+STEP 1: Download the latest ZIP
+   - Click the three dots (...) in v0 top right
+   - Select "Download ZIP"
+   - Extract to a new folder
+
+STEP 2: Stop the current server
+   - In VS Code terminal, press Ctrl+C
+   - This stops the running python server
+
+STEP 3: Copy the new qc-worker.html
+   - From downloaded ZIP: public/qc-worker.html
+   - Replace the old one in your current project
+   - OR delete the old folder and use the new extracted folder
+
+STEP 4: Restart the server
+   - In terminal, run: python main.py
+   - Wait for: "INFO:     Uvicorn running on http://0.0.0.0:8000"
+
+STEP 5: Test the new form
+   - Open browser: http://localhost:8000
+   - Login as QC Worker: qc_worker_1 / password123
+   - You'll see the new inspection form
+
+═════════════════════════════════════════════════════════════════════════
+
+NEW QC WORKER WORKFLOW:
+═════════════════════════════════════════════════════════════════════════
+
+1. SCAN BARCODE
+   └─ System auto-fills: WO, Component Code, Carcass Code, Qty
+
+2. FILL 6 SECTIONS
+   ├─ Material Standard → Pass/Fail
+   ├─ Appearance → Pass/Fail
+   ├─ Measurement → Pass/Fail
+   ├─ Template/Drawing → Pass/Fail
+   ├─ Conclusion → Summary
+   └─ Error Information → If any defects
+
+3. DECIDE QUARANTINE
+   └─ Check if product should be isolated
+   └─ Provide reason
+   └─ Auto-creates quarantine report
+
+4. SUBMIT
+   └─ Data saved to database
+   └─ QC Manager sees immediately
+
+═════════════════════════════════════════════════════════════════════════
+
+WHY NO DATA SHOWS IN QC MANAGER?
+═════════════════════════════════════════════════════════════════════════
+
+POSSIBLE REASONS:
+
+1. ❌ OLD FORM - Data format incompatible
+   ✅ FIX: Update to the new qc-worker.html (just downloaded)
+
+2. ❌ API NOT FETCHING - Backend not querying correctly
+   ✅ FIX: Check HOTFIX_NEEDED.txt (if it exists)
+
+3. ❌ DATABASE ISSUE - Data not saving properly
+   ✅ FIX: Delete qms_system.db, restart server (fresh database)
+
+4. ❌ ROLE PERMISSIONS - QC Manager role not loading data
+   ✅ FIX: Check browser console (F12) for errors
+
+═════════════════════════════════════════════════════════════════════════
+
+TESTING INSTRUCTIONS:
+═════════════════════════════════════════════════════════════════════════
+
+TEST 1: QC Worker Form
+─────────────────────
+1. Login: qc_worker_1 / password123
+2. See the new 7-section form
+3. Fill out completely
+4. Click "Submit Inspection"
+5. Should see success message
+
+TEST 2: Barcode Scanning
+─────────────────────
+1. In "Barcode" field, enter: C01634570
+2. Click outside the field
+3. Should auto-populate: WO, Component, Carcass, Qty
+
+TEST 3: Quarantine
+─────────────────
+1. Check the "Quarantine" checkbox at bottom
+2. A text field appears below
+3. Enter quarantine reason
+4. Submit form
+
+TEST 4: QC Manager Sees Data
+───────────────────────────
+1. Submit inspection as QC Worker
+2. Logout
+3. Login as QC Manager: qc_manager_1 / password123
+4. Go to QC Manager dashboard
+5. Should see the quarantine report
+
+═════════════════════════════════════════════════════════════════════════
+
+QUICK REFERENCE - NEW FORM SECTIONS:
+═════════════════════════════════════════════════════════════════════════
+
+┌─ GENERAL INFORMATION ──────────────────────────────┐
+│ Barcode, Status, WO, Component Code, Carcass Code │
+│ Qty Default, Qty Check, Inspector Name            │
+└────────────────────────────────────────────────────┘
+
+┌─ MATERIAL STANDARD ────────────────────────────────┐
+│ Defect Code, Category (Minor/Major)                │
+│ Remarks, Status (Pass/Fail)                        │
+└────────────────────────────────────────────────────┘
+
+┌─ APPEARANCE ────────────────────────────────────────┐
+│ General Surface Check                               │
+│ Defect Code, Category, Remarks, Status              │
+└─────────────────────────────────────────────────────┘
+
+┌─ MEASUREMENT ──────────────────────────────────────┐
+│ Critical Dimension Check                            │
+│ Defect Code, Category, Remarks, Status              │
+└────────────────────────────────────────────────────┘
+
+┌─ TEMPLATE/DRAWING ────────────────────────────────┐
+│ Template Compliance Check                           │
+│ Defect Code, Category, Remarks, Status              │
+└────────────────────────────────────────────────────┘
+
+┌─ CONCLUSION ────────────────────────────────────────┐
+│ Summary with Qty Pass/Fail                          │
+│ Final Remarks                                       │
+└─────────────────────────────────────────────────────┘
+
+┌─ ERROR INFORMATION ───────────────────────────────┐
+│ Final Defect Code, Category, Details                │
+└────────────────────────────────────────────────────┘
+
+┌─ QUARANTINE (RED BORDER) ──────────────────────────┐
+│ ☐ Quarantine this product?                          │
+│ ✓ If checked → creates quarantine report            │
+└────────────────────────────────────────────────────┘
+
+═════════════════════════════════════════════════════════════════════════
+
+FILES MODIFIED:
+═════════════════════════════════════════════════════════════════════════
+
+✅ public/qc-worker.html (656 lines)
+   - Complete rebuild with 7 inspection sections
+   - Barcode scanning integration
+   - Enhanced UI and validation
+   - Save as draft feature
+
+✅ QC_WORKER_ENHANCED.md (New)
+   - Detailed documentation of all features
+   - Customization guide
+   - Field descriptions
+
+═════════════════════════════════════════════════════════════════════════
+
+IF SOMETHING IS BROKEN:
+═════════════════════════════════════════════════════════════════════════
+
+1. Check Browser Console (F12 → Console)
+   Look for red error messages
+
+2. Check Server Terminal
+   Look for Python error messages
+
+3. Check if server is running
+   Terminal should show: "Uvicorn running on http://0.0.0.0:8000"
+
+4. Try deleting database and restarting
+   - Stop server (Ctrl+C)
+   - Delete: qms_system.db file
+   - Run: python main.py
+   - Test again
+
+5. Contact support with error message
+
+═════════════════════════════════════════════════════════════════════════
+
+NEXT STEPS:
+═════════════════════════════════════════════════════════════════════════
+
+1. Download the new ZIP
+2. Update qc-worker.html
+3. Restart server
+4. Test the new form
+5. Fill out a complete inspection
+6. Check QC Manager dashboard for data
+
+═════════════════════════════════════════════════════════════════════════
+
+Version: 2.0
+Updated: June 26, 2026
+Status: Ready for production use
+
+═════════════════════════════════════════════════════════════════════════

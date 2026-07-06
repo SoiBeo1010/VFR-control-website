@@ -1,0 +1,138 @@
+================================================================================
+                    QMS SYSTEM - READY TO RUN!
+                         (SQLite Version)
+================================================================================
+
+NO MYSQL NEEDED! NO DATABASE SETUP NEEDED!
+
+Just follow these commands in VS Code terminal:
+
+================================================================================
+                         STEP-BY-STEP
+================================================================================
+
+STEP 1: Make sure terminal is in the project folder
+   (you should see: qms-web-system-flow>)
+
+STEP 2: Create virtual environment
+   Command:
+   python -m venv venv
+
+   Wait 30 seconds...
+
+STEP 3: Activate virtual environment
+
+   IF YOU'RE ON WINDOWS (PowerShell/CMD):
+   venv\Scripts\activate
+
+   IF YOU'RE ON MAC/LINUX:
+   source venv/bin/activate
+
+   You should see: (venv) at the beginning of your terminal line
+
+STEP 4: Install dependencies
+   Command:
+   pip install -r requirements.txt
+
+   This takes 1-2 minutes. Let it finish!
+
+STEP 5: Run the server
+   Command:
+   python main.py
+
+   You should see:
+   ✓ Server running at http://127.0.0.1:8000
+
+STEP 6: Open browser
+   Go to: http://localhost:8000
+
+STEP 7: Login with:
+   Username: qc_worker_1
+   Password: password123
+
+================================================================================
+                      WHAT HAPPENS AUTOMATICALLY
+================================================================================
+
+When you run the app:
+✓ qms_system.db file is created (the database)
+✓ All tables are created automatically
+✓ Default users are added automatically
+✓ Everything is ready to use!
+
+You don't have to do anything else!
+
+================================================================================
+                           DEFAULT USERS
+================================================================================
+
+Login as any of these:
+
+1. QC Worker
+   Username: qc_worker_1
+   Password: password123
+
+2. QC Manager
+   Username: qc_manager_1
+   Password: password123
+
+3. Production Manager
+   Username: prod_manager_1
+   Password: password123
+
+4. Production Worker
+   Username: prod_worker_1
+   Password: password123
+
+5. Higher Department
+   Username: higher_dept_1
+   Password: password123
+
+================================================================================
+                        IF SOMETHING GOES WRONG
+================================================================================
+
+ERROR: "ModuleNotFoundError: No module named 'sqlalchemy'"
+→ Run: pip install -r requirements.txt
+
+ERROR: "Address already in use"
+→ Close the other terminal or press Ctrl+C first
+
+ERROR: "No module named 'fastapi'"
+→ Make sure (venv) shows in your terminal
+→ If not, run activation command again
+
+ERROR: Database issues
+→ Just delete qms_system.db file
+→ Run the app again - new database created
+
+================================================================================
+                            FIRST TEST
+================================================================================
+
+After logging in as qc_worker_1:
+
+1. Click "Create Inspection"
+2. Fill in product ID and batch number
+3. Add defects
+4. Create quarantine report
+
+That's it! The workflow is working!
+
+Try other roles to test their dashboards.
+
+================================================================================
+                          HELPFUL FILES
+================================================================================
+
+READ THESE:
+- SQLITE_SETUP.md (setup guide)
+- SQLITE_MIGRATION.md (what changed)
+- README.md (complete documentation)
+- QUICKSTART.md (fast tutorial)
+
+================================================================================
+
+GOOD LUCK! Your QMS system is ready! 🚀
+
+Bạn không cần cài MySQL nữa - chỉ cần copy code này và chạy thôi!

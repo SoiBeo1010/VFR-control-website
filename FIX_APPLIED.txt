@@ -1,0 +1,64 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                         FIXES APPLIED - READ THIS!                         ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+✅ WHAT WAS FIXED:
+
+1. SQLAlchemy 2.0 Warning
+   - Changed: from sqlalchemy.ext.declarative import declarative_base
+   - To: from sqlalchemy.orm import declarative_base
+   
+2. Uvicorn Run Command
+   - Changed: uvicorn.run(app, ..., reload=True)
+   - To: uvicorn.run("main:app", ..., reload=False)
+
+════════════════════════════════════════════════════════════════════════════
+
+🚀 NOW YOU CAN RUN:
+
+In VS Code terminal:
+
+1. Activate venv:
+   # Windows:
+   venv\Scripts\activate
+   
+   # Mac/Linux:
+   source venv/bin/activate
+
+2. Install dependencies (if not already done):
+   pip install -r requirements.txt
+
+3. Run server:
+   python main.py
+
+4. You should see:
+   ✓ INFO: Uvicorn running on http://0.0.0.0:8000
+   ✓ INFO: Application startup complete
+
+5. Open browser:
+   http://localhost:8000
+
+════════════════════════════════════════════════════════════════════════════
+
+🔑 LOGIN CREDENTIALS (for testing):
+
+QC Worker:        qc_worker_1 / password123
+QC Manager:       qc_manager_1 / password123
+Production Manager: prod_manager_1 / password123
+Production Worker:  prod_worker_1 / password123
+Higher Department:  higher_dept_1 / password123
+
+════════════════════════════════════════════════════════════════════════════
+
+⚠️ IMPORTANT:
+
+- Keep the terminal RUNNING - don't close it
+- The database (qms_system.db) will create automatically on first run
+- No MySQL needed!
+- Everything is SQLite now
+
+════════════════════════════════════════════════════════════════════════════
+
+If you see any errors, copy the entire error message and show me!
+
+Ready to try again? 👍
