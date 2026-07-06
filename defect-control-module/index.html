@@ -1,0 +1,1803 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QMS — Defect Control</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --ink: #14213D;
+      --steel: #2D4A6B;
+      --steel-light: #4A6C8F;
+      --steel-dark: #0F1B2E;
+      --amber: #E8A33D;
+      --amber-dark: #C7841F;
+      --red: #C0483B;
+      --red-bg: #FBEAE8;
+      --green: #2F8F6E;
+      --green-bg: #E7F3EF;
+      --bg: #EEF1F5;
+      --card: #FFFFFF;
+      --border: #DCE1E8;
+      --muted: #6B7686;
+      --muted-2: #9AA4B2;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    .disp {
+      font-family: 'Oswald', sans-serif;
+      letter-spacing: .02em;
+      text-transform: none;
+      color: var(--ink);
+      margin: 0;
+    }
+
+    .mono {
+      font-family: 'IBM Plex Mono', monospace;
+    }
+
+    button {
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+    }
+
+    a {
+      color: inherit;
+    }
+
+    ::selection {
+      background: var(--amber);
+      color: #fff;
+    }
+
+    /* ---------- LOGIN ---------- */
+    #loginScreen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background:
+        linear-gradient(160deg, rgba(15, 27, 46, .94), rgba(15, 27, 46, .85)),
+        repeating-linear-gradient(135deg, rgba(232, 163, 61, .06) 0 2px, transparent 2px 24px);
+      background-color: var(--steel-dark);
+    }
+
+    .login-card {
+      width: 380px;
+      background: var(--card);
+      border-radius: 4px;
+      padding: 40px 36px 32px;
+      box-shadow: 0 30px 60px rgba(0, 0, 0, .35);
+      position: relative;
+    }
+
+    .login-card:before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 6px;
+      background: linear-gradient(90deg, var(--amber), var(--steel));
+      border-radius: 4px 4px 0 0;
+    }
+
+    .brand-mark {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+
+    .brand-mark .sq {
+      width: 34px;
+      height: 34px;
+      background: var(--steel);
+      border-radius: 3px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-family: 'Oswald';
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .brand-mark .name {
+      font-family: 'Oswald';
+      font-weight: 600;
+      font-size: 20px;
+      letter-spacing: .06em;
+    }
+
+    .login-sub {
+      color: var(--muted);
+      font-size: 12.5px;
+      margin-bottom: 28px;
+      letter-spacing: .03em;
+      text-transform: uppercase;
+    }
+
+    .field {
+      margin-bottom: 16px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 11.5px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+
+    .field input {
+      width: 100%;
+      padding: 11px 12px;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      font-size: 14px;
+      background: #FAFBFC;
+      transition: .15s;
+    }
+
+    .field input:focus {
+      outline: none;
+      border-color: var(--steel);
+      background: #fff;
+    }
+
+    .login-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12.5px;
+      color: var(--muted);
+      margin: 14px 0 20px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 3px;
+      padding: 12px 18px;
+      font-size: 13.5px;
+      font-weight: 600;
+      letter-spacing: .02em;
+      transition: .15s;
+    }
+
+    .btn-primary {
+      background: var(--steel);
+      color: #fff;
+      width: 100%;
+    }
+
+    .btn-primary:hover {
+      background: var(--ink);
+    }
+
+    .login-err {
+      background: var(--red-bg);
+      color: var(--red);
+      font-size: 12.5px;
+      padding: 8px 10px;
+      border-radius: 3px;
+      margin-bottom: 14px;
+      display: none;
+    }
+
+    .login-foot {
+      text-align: center;
+      color: var(--muted-2);
+      font-size: 11px;
+      margin-top: 22px;
+      letter-spacing: .03em;
+    }
+
+    /* ---------- APP SHELL ---------- */
+    #appShell {
+      display: none;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      width: 220px;
+      background: var(--steel-dark);
+      color: #cfd8e3;
+      flex-shrink: 0;
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sb-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 20px 18px;
+      border-bottom: 1px solid rgba(255, 255, 255, .08);
+    }
+
+    .sb-brand .sq {
+      width: 28px;
+      height: 28px;
+      background: var(--amber);
+      border-radius: 3px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--steel-dark);
+      font-family: 'Oswald';
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .sb-brand .name {
+      font-family: 'Oswald';
+      font-weight: 600;
+      font-size: 16px;
+      color: #fff;
+      letter-spacing: .04em;
+    }
+
+    .sb-nav {
+      flex: 1;
+      padding: 14px 10px;
+    }
+
+    .sb-item {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 10px 12px;
+      border-radius: 4px;
+      font-size: 13.5px;
+      color: #aab6c6;
+      margin-bottom: 2px;
+      cursor: pointer;
+      transition: .12s;
+      position: relative;
+    }
+
+    .sb-item:hover {
+      background: rgba(255, 255, 255, .06);
+      color: #fff;
+    }
+
+    .sb-item.active {
+      background: var(--steel);
+      color: #fff;
+    }
+
+    .sb-item.active:before {
+      content: "";
+      position: absolute;
+      left: -10px;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: var(--amber);
+    }
+
+    .sb-item .ic {
+      width: 16px;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    .sb-item .bd {
+      margin-left: auto;
+      background: var(--amber);
+      color: var(--steel-dark);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 8px;
+    }
+
+    .sb-foot {
+      padding: 14px;
+      border-top: 1px solid rgba(255, 255, 255, .08);
+    }
+
+    .sb-user {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 8px;
+      border-radius: 4px;
+    }
+
+    .sb-user .av {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: var(--amber);
+      color: var(--steel-dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-family: 'Oswald';
+      font-size: 12px;
+    }
+
+    .sb-user .nm {
+      font-size: 12.5px;
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .sb-user .rl {
+      font-size: 10.5px;
+      color: #8b96a8;
+    }
+
+    .sb-logout {
+      margin-top: 10px;
+      font-size: 12px;
+      color: #8b96a8;
+      cursor: pointer;
+      padding: 6px 8px;
+    }
+
+    .sb-logout:hover {
+      color: #fff;
+    }
+
+    .main {
+      margin-left: 220px;
+      flex: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      width: calc(100% - 220px);
+    }
+
+    .topbar {
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .tb-title {
+      font-family: 'Oswald';
+      font-size: 19px;
+      font-weight: 600;
+    }
+
+    .tb-crumb {
+      font-size: 11.5px;
+      color: var(--muted-2);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      margin-bottom: 2px;
+    }
+
+    .tb-right {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .icon-btn {
+      position: relative;
+      width: 34px;
+      height: 34px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      color: var(--muted);
+    }
+
+    .icon-btn .dot {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      width: 15px;
+      height: 15px;
+      background: var(--red);
+      color: #fff;
+      font-size: 9px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+    }
+
+    .content {
+      padding: 26px 28px 50px;
+      flex: 1;
+    }
+
+    /* ---------- SHARED COMPONENTS ---------- */
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+
+    .kpi {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 16px 18px;
+      border-left: 4px solid var(--steel);
+    }
+
+    .kpi.amber {
+      border-left-color: var(--amber);
+    }
+
+    .kpi.green {
+      border-left-color: var(--green);
+    }
+
+    .kpi.red {
+      border-left-color: var(--red);
+    }
+
+    .kpi .num {
+      font-family: 'Oswald';
+      font-size: 30px;
+      font-weight: 600;
+      line-height: 1;
+    }
+
+    .kpi .lbl {
+      font-size: 11.5px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      margin-top: 6px;
+    }
+
+    .panel {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+    }
+
+    .panel-head {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .panel-head h3 {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .panel-head .link {
+      font-size: 12px;
+      color: var(--steel);
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .panel-body {
+      padding: 16px 18px;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    /* work-order tag card (signature element) */
+    .wo-tag {
+      position: relative;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      background: #fff;
+      padding: 16px 16px 16px 22px;
+      margin-bottom: 10px;
+      overflow: hidden;
+      transition: .15s;
+      cursor: pointer;
+    }
+
+    .wo-tag:hover {
+      box-shadow: 0 4px 14px rgba(20, 33, 61, .08);
+      transform: translateY(-1px);
+    }
+
+    .wo-tag:before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 6px;
+      background: var(--steel);
+    }
+
+    .wo-tag.p-high:before {
+      background: var(--red);
+    }
+
+    .wo-tag.p-medium:before {
+      background: var(--amber);
+    }
+
+    .wo-tag.p-low:before {
+      background: var(--muted-2);
+    }
+
+    .wo-tag:after {
+      content: "";
+      position: absolute;
+      left: -1px;
+      top: 50%;
+      width: 12px;
+      height: 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .wo-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 10px;
+    }
+
+    .wo-ids {
+      display: flex;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+
+    .wo-id .k {
+      font-size: 10px;
+      color: var(--muted-2);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    .wo-id .v {
+      font-family: 'IBM Plex Mono';
+      font-size: 13.5px;
+      font-weight: 600;
+    }
+
+    .status-chip {
+      font-size: 10.5px;
+      font-weight: 700;
+      padding: 4px 9px;
+      border-radius: 11px;
+      text-transform: uppercase;
+      letter-spacing: .03em;
+      white-space: nowrap;
+    }
+
+    .st-wait {
+      background: #FDF1DE;
+      color: var(--amber-dark);
+    }
+
+    .st-progress {
+      background: #E4EBF3;
+      color: var(--steel);
+    }
+
+    .st-paused {
+      background: #F1E9FB;
+      color: #6C4BB6;
+    }
+
+    .st-completed {
+      background: var(--green-bg);
+      color: var(--green);
+    }
+
+    .st-overdue {
+      background: var(--red-bg);
+      color: var(--red);
+    }
+
+    .wo-meta {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      font-size: 12.5px;
+      color: var(--muted);
+      border-top: 1px dashed var(--border);
+      padding-top: 10px;
+      margin-top: 2px;
+    }
+
+    .wo-meta b {
+      color: var(--ink);
+      font-weight: 600;
+    }
+
+    .barcode {
+      height: 22px;
+      background: repeating-linear-gradient(90deg, var(--ink) 0 2px, transparent 2px 4px, var(--ink) 4px 5px, transparent 5px 8px);
+      opacity: .55;
+      margin-top: 10px;
+      width: 140px;
+    }
+
+    .btn-sm {
+      padding: 7px 13px;
+      font-size: 12.5px;
+      border-radius: 3px;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--ink);
+    }
+
+    .btn-sm:hover {
+      background: var(--bg);
+    }
+
+    .btn-steel {
+      background: var(--steel);
+      color: #fff;
+      border-color: var(--steel);
+    }
+
+    .btn-steel:hover {
+      background: var(--ink);
+    }
+
+    .btn-green {
+      background: var(--green);
+      color: #fff;
+      border-color: var(--green);
+    }
+
+    .btn-green:hover {
+      background: #256e56;
+    }
+
+    .btn-red {
+      background: #fff;
+      color: var(--red);
+      border-color: var(--red);
+    }
+
+    .btn-red:hover {
+      background: var(--red-bg);
+    }
+
+    .btn-amber {
+      background: var(--amber);
+      color: #fff;
+      border-color: var(--amber);
+    }
+
+    .btn-amber:hover {
+      background: var(--amber-dark);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+
+    .search-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .search-bar input,
+    .search-bar select {
+      padding: 9px 11px;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      font-size: 13px;
+      background: #fff;
+    }
+
+    .search-bar input {
+      flex: 1;
+      min-width: 200px;
+    }
+
+    /* detail screen */
+    .back-link {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12.5px;
+      color: var(--muted);
+      cursor: pointer;
+      margin-bottom: 14px;
+      font-weight: 600;
+    }
+
+    .back-link:hover {
+      color: var(--steel);
+    }
+
+    .detail-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .detail-head .idline {
+      font-family: 'Oswald';
+      font-size: 22px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .field-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px 20px;
+    }
+
+    .field-grid .fk {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: var(--muted-2);
+      margin-bottom: 3px;
+    }
+
+    .field-grid .fv {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    .field-grid .fv.mono {
+      font-family: 'IBM Plex Mono';
+    }
+
+    .field-grid .fv.warn {
+      color: var(--red);
+    }
+
+    .field-grid .fv.ok {
+      color: var(--green);
+    }
+
+    .sect-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--steel);
+      font-weight: 700;
+      margin: 0 0 12px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--bg);
+    }
+
+    .stack {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .img-thumbs {
+      display: flex;
+      gap: 8px;
+    }
+
+    .img-thumb {
+      width: 64px;
+      height: 64px;
+      border-radius: 4px;
+      background: linear-gradient(135deg, #c9d2dc, #a9b6c4);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    /* repair working */
+    .timer-box {
+      background: var(--steel-dark);
+      color: #fff;
+      border-radius: 6px;
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+
+    .timer-box .tval {
+      font-family: 'IBM Plex Mono';
+      font-size: 34px;
+      font-weight: 600;
+      letter-spacing: .03em;
+    }
+
+    .timer-box .tlbl {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: #9fb0c4;
+      margin-top: 2px;
+    }
+
+    .checklist-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 0;
+      border-bottom: 1px solid var(--bg);
+      font-size: 13.5px;
+    }
+
+    .checklist-item input {
+      width: 17px;
+      height: 17px;
+      accent-color: var(--steel);
+    }
+
+    .checklist-item.done label {
+      text-decoration: line-through;
+      color: var(--muted-2);
+    }
+
+    textarea {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 10px;
+      font-family: 'Inter';
+      font-size: 13.5px;
+      resize: vertical;
+    }
+
+    .mat-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .mat-row input {
+      flex: 1;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      font-size: 13px;
+    }
+
+    .radio-line {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 8px 0;
+      font-size: 13.5px;
+    }
+
+    .radio-line input {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--steel);
+    }
+
+    /* history table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th {
+      text-align: left;
+      font-size: 10.5px;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: var(--muted-2);
+      padding: 9px 10px;
+      border-bottom: 2px solid var(--bg);
+    }
+
+    td {
+      padding: 11px 10px;
+      font-size: 13px;
+      border-bottom: 1px solid var(--bg);
+    }
+
+    tr:hover td {
+      background: #FAFBFC;
+    }
+
+    .pass-tag {
+      color: var(--green);
+      font-weight: 700;
+      font-size: 11.5px;
+    }
+
+    /* modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 27, 46, .55);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-overlay.open {
+      display: flex;
+    }
+
+    .modal-box {
+      background: #fff;
+      border-radius: 6px;
+      max-width: 480px;
+      width: 100%;
+      padding: 26px;
+      max-height: 88vh;
+      overflow-y: auto;
+    }
+
+    .modal-box.wide {
+      max-width: 640px;
+    }
+
+    .modal-title {
+      font-family: 'Oswald';
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-close {
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 18px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+      justify-content: flex-end;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--ink);
+      color: #fff;
+      padding: 13px 20px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: 600;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .25);
+      z-index: 200;
+      display: none;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .toast .tk {
+      color: var(--green);
+    }
+
+    /* ---------- QUARANTINE REPORT (print form) ---------- */
+    .qr-doc {
+      background: #fff;
+      font-family: 'Inter';
+      color: #111;
+    }
+
+    .qr-h1 {
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: .02em;
+    }
+
+    .qr-topline {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 3px solid var(--ink);
+      padding-bottom: 14px;
+      margin-bottom: 18px;
+    }
+
+    .qr-meta-box {
+      text-align: right;
+      font-size: 12.5px;
+    }
+
+    .qr-meta-box .row {
+      margin-bottom: 3px;
+    }
+
+    .qr-meta-box b {
+      display: inline-block;
+      min-width: 80px;
+      text-align: left;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .qr-section-title {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      background: var(--ink);
+      color: #fff;
+      padding: 5px 10px;
+      margin: 18px 0 10px;
+    }
+
+    .qr-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      border: 1px solid var(--border);
+    }
+
+    .qr-cell {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+    }
+
+    .qr-cell:nth-child(2n) {
+      border-right: none;
+    }
+
+    .qr-cell.full {
+      grid-column: 1/3;
+      border-right: none;
+    }
+
+    .qr-cell .en {
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .qr-cell .vn {
+      font-style: italic;
+      color: var(--muted);
+      font-size: 11.5px;
+      margin-bottom: 4px;
+    }
+
+    .qr-cell .val {
+      font-size: 14px;
+      margin-top: 2px;
+    }
+
+    .qr-photos {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .qr-photo {
+      aspect-ratio: 1;
+      background: #F2F4F7;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted-2);
+      font-size: 10px;
+      text-align: center;
+      padding: 6px;
+    }
+
+    .qr-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+
+      .quarantine-print,
+      .quarantine-print * {
+        visibility: visible;
+      }
+
+      .quarantine-print {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        padding: 20px;
+      }
+
+      .qr-actions {
+        display: none;
+      }
+
+      .modal-overlay {
+        position: absolute;
+        background: none;
+      }
+
+      .modal-box {
+        box-shadow: none;
+        max-height: none;
+        overflow: visible;
+      }
+    }
+
+    @media (max-width:900px) {
+      .sidebar {
+        display: none;
+      }
+
+      .main {
+        margin-left: 0;
+        width: 100%;
+      }
+
+      .grid-4 {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .two-col {
+        grid-template-columns: 1fr;
+      }
+
+      .field-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .qr-photos {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ============ LOGIN ============ -->
+  <div id="loginScreen">
+    <div class="login-card">
+      <div class="brand-mark">
+        <div class="sq">Q</div>
+        <div class="name">QMS</div>
+      </div>
+      <div class="login-sub">QC Manager — Defect Control</div>
+      <div class="login-err" id="loginErr">Sai tài khoản hoặc mật khẩu. Vui lòng thử lại.</div>
+      <div class="field"><label>Username</label><input id="loginUser" value="qcmgr01" placeholder="Nhập tên đăng nhập">
+      </div>
+      <div class="field"><label>Password</label><input id="loginPass" type="password" value="••••••••"
+          placeholder="Nhập mật khẩu"></div>
+      <div class="login-row">
+        <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" checked> Remember me</label>
+        <span style="color:var(--steel);font-weight:600;cursor:pointer;">Forgot password?</span>
+      </div>
+      <button class="btn btn-primary" onclick="doLogin()">Sign In</button>
+      <div class="login-foot">© 2026 QMS · Defect Control Portal</div>
+    </div>
+  </div>
+
+  <!-- ============ APP SHELL ============ -->
+  <div id="appShell" style="display:flex;">
+    <div class="sidebar">
+      <div class="sb-brand">
+        <div class="sq">Q</div>
+        <div class="name">QMS</div>
+      </div>
+      <div class="sb-nav">
+        <div class="sb-item active" data-view="dashboard" onclick="go('dashboard')"><span class="ic">&#9635;</span>
+          Dashboard</div>
+        <div class="sb-item" data-view="tickets" onclick="go('tickets')"><span class="ic">&#128203;</span> Defect
+          Tickets <span class="bd" id="navTicketBadge">3</span></div>
+        <div class="sb-item" data-view="history" onclick="go('history')"><span class="ic">&#128337;</span> Defect
+          History</div>
+        <div class="sb-item" data-view="notif" onclick="go('notif')"><span class="ic">&#128276;</span> Notifications
+          <span class="bd">2</span>
+        </div>
+        <div class="sb-item" data-view="profile" onclick="go('profile')"><span class="ic">&#128100;</span> Profile</div>
+      </div>
+      <div class="sb-foot">
+        <div class="sb-user">
+          <div class="av">QC</div>
+          <div>
+            <div class="nm">QC Manager</div>
+            <div class="rl">Defect Control</div>
+          </div>
+        </div>
+        <div class="sb-logout" onclick="doLogout()">&#8592; Sign out</div>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="topbar">
+        <div>
+          <div class="tb-crumb" id="tbCrumb">Overview</div>
+          <div class="tb-title" id="tbTitle">Dashboard</div>
+        </div>
+        <div class="tb-right">
+          <div class="icon-btn">&#128276;<span class="dot">2</span></div>
+          <div class="icon-btn">&#9881;</div>
+          <div class="sb-user" style="background:transparent;">
+            <div class="av" style="background:var(--steel);color:#fff;">QC</div>
+          </div>
+        </div>
+      </div>
+      <div class="content" id="content"></div>
+    </div>
+  </div>
+
+  <!-- ============ MODALS ============ -->
+  <div class="modal-overlay" id="modalPause">
+    <div class="modal-box">
+      <div class="modal-title">Hold Defect Review <span class="modal-close"
+          onclick="closeModal('modalPause')">&times;</span></div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:4px;">Hold Reason</div>
+      <div id="pauseReasons">
+        <label class="radio-line"><input type="radio" name="pr" checked> Waiting Additional Evidence</label>
+        <label class="radio-line"><input type="radio" name="pr"> Pending Lab Result</label>
+        <label class="radio-line"><input type="radio" name="pr"> Need Supervisor Sign-off</label>
+        <label class="radio-line"><input type="radio" name="pr"> Awaiting Re-inspection</label>
+        <label class="radio-line"><input type="radio" name="pr"> Other</label>
+      </div>
+      <div class="field" style="margin-top:10px;"><label>Notes</label><textarea rows="2"
+          placeholder="Ghi chú thêm..."></textarea></div>
+      <div class="modal-actions">
+        <button class="btn-sm btn-ghost" onclick="closeModal('modalPause')">Cancel</button>
+        <button class="btn-sm btn-amber" onclick="confirmPause()">Hold Review</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modalComplete">
+    <div class="modal-box wide">
+      <div class="modal-title">Close Defect Case <span class="modal-close"
+          onclick="closeModal('modalComplete')">&times;</span></div>
+      <div class="field"><label>Resolution Summary</label><textarea rows="3"
+          placeholder="Mô tả kết quả xử lý lỗi...">Defect verified and corrective action confirmed. Product re-inspected and cleared.</textarea>
+      </div>
+      <div class="field"><label>Final Verdict</label>
+        <div style="display:flex;gap:16px;">
+          <label class="radio-line"><input type="radio" name="rr" checked> Accepted — Pass</label>
+          <label class="radio-line"><input type="radio" name="rr"> Rejected — Rework Required</label>
+        </div>
+      </div>
+      <div class="field"><label>Review Duration</label>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input type="number" value="01"
+            style="width:64px;padding:8px;border:1px solid var(--border);border-radius:3px;text-align:center;font-family:'IBM Plex Mono';">
+          <span style="font-size:12px;color:var(--muted);">hrs</span>
+          <input type="number" value="30"
+            style="width:64px;padding:8px;border:1px solid var(--border);border-radius:3px;text-align:center;font-family:'IBM Plex Mono';">
+          <span style="font-size:12px;color:var(--muted);">min</span>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-sm btn-ghost" onclick="closeModal('modalComplete')">Back</button>
+        <button class="btn-sm btn-green" onclick="confirmComplete()">Submit &amp; Close Case</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- QUARANTINE REPORT MODAL -->
+  <div class="modal-overlay" id="modalQuarantine">
+    <div class="modal-box wide quarantine-print">
+      <div class="qr-actions">
+        <button class="btn-sm btn-steel" onclick="window.print()">&#128424; Print</button>
+        <button class="btn-sm btn-ghost" onclick="closeModal('modalQuarantine')">Close</button>
+      </div>
+      <div class="qr-doc" id="qrDocBody"><!-- filled by JS --></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"><span class="tk">&#10003;</span><span id="toastMsg">Saved</span></div>
+
+  <script>
+    /* ================= MOCK DATA ================= */
+    const tickets = [
+      {
+        id: "61100", branchITW: "VFR2.1", branchFGW: "FGW-02", itemCode: "022296-AA", partcode: "01832496-WP",
+        woQty: 225, inspector: "6683", inspectorName: "Lê Thị Xuân", inspectorDept: "2QCD", stage: "Final",
+        inspectedDate: "30 Jun 2026", inspectedTime: "14:25:30", inspectedQty: 1, passQty: 0, failQty: 1, quarantine: "YES",
+        defectCode: "D-001", defectCategory: "Scratch", defectOwner: "Mechanical", inspectorRecommend: "Repair",
+        repairDept: "Mechanical", remark: "Surface damage on shaft housing.", priority: "High", deadline: "Today 16:00",
+        status: "Waiting Review", repairMethod: "Replace Shaft", repairType: "Repair", defectName: "Broken Shaft",
+        quarantineReportNo: "TR2606-05494", quarantineDate: "26 Jun 2026", customerName: "Fleetwood Fine Furniture",
+        itemName: "Nightstand 28 inch — Left Single Metro", totalOrder: 123, qtyQuarantine: 4, whereDetected: "Final — CAR2-S5",
+        defectDescCode: "F-04", defectDescText: "Adhesion not good enough"
+      },
+      {
+        id: "61082", branchITW: "VFR2.1", branchFGW: "FGW-01", itemCode: "012345-AB", partcode: "91122344-ZZ",
+        woQty: 180, inspector: "6701", inspectorName: "Trần Văn Hùng", inspectorDept: "1QCD", stage: "IPQC",
+        inspectedDate: "29 Jun 2026", inspectedTime: "09:12:00", inspectedQty: 2, passQty: 0, failQty: 2, quarantine: "YES",
+        defectCode: "D-014", defectCategory: "Leakage", defectOwner: "Assembly", inspectorRecommend: "Repair",
+        repairDept: "Assembly", remark: "Oil leakage at joint seal.", priority: "Medium", deadline: "Today 17:00",
+        status: "Under Review", repairMethod: "Reseal Joint", repairType: "Repair", defectName: "Oil Leakage",
+        quarantineReportNo: "TR2606-05471", quarantineDate: "29 Jun 2026", customerName: "Fleetwood Fine Furniture",
+        itemName: "Dresser 6-Drawer — Metro", totalOrder: 180, qtyQuarantine: 2, whereDetected: "IPQC — CAR1-S2",
+        defectDescCode: "F-11", defectDescText: "Seal joint leakage detected"
+      },
+      {
+        id: "61075", branchITW: "VFR2.1", branchFGW: "FGW-02", itemCode: "066577-BB", partcode: "33221100-YY",
+        woQty: 96, inspector: "6683", inspectorName: "Lê Thị Xuân", inspectorDept: "2QCD", stage: "Incoming",
+        inspectedDate: "25 May 2026", inspectedTime: "11:40:00", inspectedQty: 3, passQty: 0, failQty: 3, quarantine: "YES",
+        defectCode: "D-022", defectCategory: "Surface Scratch", defectOwner: "Mechanical", inspectorRecommend: "Repair",
+        repairDept: "Mechanical", remark: "Multiple scratches on veneer surface.", priority: "High", deadline: "25 May 18:00",
+        status: "Under Review", repairMethod: "Sand & Refinish", repairType: "Repair", defectName: "Surface Scratch",
+        quarantineReportNo: "TR2605-04982", quarantineDate: "25 May 2026", customerName: "Fleetwood Fine Furniture",
+        itemName: "Bedside Table 24 inch", totalOrder: 96, qtyQuarantine: 3, whereDetected: "Incoming — RCV-04",
+        defectDescCode: "F-02", defectDescText: "Surface scratch beyond tolerance"
+      },
+      {
+        id: "61050", branchITW: "VFR2.1", branchFGW: "FGW-03", itemCode: "055555-CC", partcode: "55443322-XX",
+        woQty: 60, inspector: "6710", inspectorName: "Phạm Thị Mai", inspectorDept: "3QCD", stage: "Final",
+        inspectedDate: "28 May 2026", inspectedTime: "15:02:00", inspectedQty: 1, passQty: 1, failQty: 0, quarantine: "NO",
+        defectCode: "D-030", defectCategory: "Noise", defectOwner: "Mechanical", inspectorRecommend: "Repair",
+        repairDept: "Mechanical", remark: "Minor operational noise, resolved.", priority: "Low", deadline: "28 May 16:00",
+        status: "Closed", repairMethod: "Lubrication", repairType: "Repair", defectName: "Noise",
+        quarantineReportNo: "TR2605-04910", quarantineDate: "28 May 2026", customerName: "Fleetwood Fine Furniture",
+        itemName: "Nightstand 24 inch", totalOrder: 60, qtyQuarantine: 1, whereDetected: "Final — CAR3-S1",
+        defectDescCode: "F-07", defectDescText: "Drawer slide operational noise"
+      },
+      {
+        id: "61010", branchITW: "VFR2.1", branchFGW: "FGW-01", itemCode: "022211-DA", partcode: "98887766-WW",
+        woQty: 200, inspector: "6683", inspectorName: "Lê Thị Xuân", inspectorDept: "2QCD", stage: "Final",
+        inspectedDate: "24 May 2026", inspectedTime: "08:55:00", inspectedQty: 2, passQty: 0, failQty: 2, quarantine: "YES",
+        defectCode: "D-041", defectCategory: "Overheating", defectOwner: "Electrical", inspectorRecommend: "Repair",
+        repairDept: "Electrical", remark: "Motor overheating under load.", priority: "High", deadline: "24 May 17:00",
+        status: "Overdue", repairMethod: "Replace Motor", repairType: "Repair", defectName: "Overheating",
+        quarantineReportNo: "TR2605-04850", quarantineDate: "24 May 2026", customerName: "Fleetwood Fine Furniture",
+        itemName: "Motorized Lift Table", totalOrder: 200, qtyQuarantine: 2, whereDetected: "Final — CAR1-S6",
+        defectDescCode: "F-19", defectDescText: "Motor temperature exceeds spec"
+      },
+    ];
+
+    const historyList = [
+      { id: "61050", itemCode: "055555-CC", part: "55443322-XX", defect: "Noise", closed: "30 Jun 2026", duration: "1.8h", verdict: "PASS" },
+      { id: "61010", itemCode: "022211-DA", part: "98887766-WW", defect: "Overheating", closed: "30 Jun 2026", duration: "2.1h", verdict: "PASS" },
+      { id: "60980", itemCode: "099968-AA", part: "77665544-ZZ", defect: "Leakage", closed: "29 Jun 2026", duration: "2.5h", verdict: "PASS" },
+      { id: "60970", itemCode: "011122-BB", part: "66554433-YY", defect: "Scratch", closed: "29 Jun 2026", duration: "1.5h", verdict: "PASS" },
+      { id: "60960", itemCode: "033344-CC", part: "88779900-XX", defect: "Broken", closed: "28 Jun 2026", duration: "3.0h", verdict: "PASS" },
+    ];
+
+    let currentTicketId = null;
+
+    /* ================= AUTH ================= */
+    function doLogin() {
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('appShell').style.display = 'flex';
+      go('dashboard');
+    }
+    function doLogout() {
+      document.getElementById('appShell').style.display = 'none';
+      document.getElementById('loginScreen').style.display = 'flex';
+    }
+
+    /* ================= ROUTER ================= */
+    const viewMeta = {
+      dashboard: { crumb: "Overview", title: "Dashboard" },
+      tickets: { crumb: "Defect Queue", title: "Defect Tickets" },
+      detail: { crumb: "Defect Tickets", title: "Defect Ticket Detail" },
+      working: { crumb: "Defect Ticket", title: "Defect Review" },
+      history: { crumb: "Records", title: "Defect History" },
+      notif: { crumb: "Inbox", title: "Notifications" },
+      profile: { crumb: "Account", title: "Profile" }
+    };
+
+    function go(view, ticketId) {
+      if (ticketId) currentTicketId = ticketId;
+      document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('active'));
+      const navItem = document.querySelector('.sb-item[data-view="' + view + '"]');
+      if (navItem) navItem.classList.add('active');
+      document.getElementById('tbCrumb').textContent = viewMeta[view].crumb;
+      document.getElementById('tbTitle').textContent = viewMeta[view].title;
+      const c = document.getElementById('content');
+      if (view === 'dashboard') c.innerHTML = renderDashboard();
+      else if (view === 'tickets') c.innerHTML = renderTickets();
+      else if (view === 'detail') c.innerHTML = renderDetail(currentTicketId);
+      else if (view === 'working') c.innerHTML = renderWorking(currentTicketId);
+      else if (view === 'history') c.innerHTML = renderHistory();
+      else if (view === 'notif') c.innerHTML = renderNotif();
+      else if (view === 'profile') c.innerHTML = renderProfile();
+      window.scrollTo(0, 0);
+    }
+
+    function statusClass(s) {
+      return { "Waiting Review": "st-wait", "Under Review": "st-progress", "Hold": "st-paused", "Closed": "st-completed", "Overdue": "st-overdue" }[s] || "st-wait";
+    }
+    function prClass(p) { return { "High": "p-high", "Medium": "p-medium", "Low": "p-low" }[p] || "p-low"; }
+
+    /* ================= DASHBOARD ================= */
+    function renderDashboard() {
+      const wait = tickets.filter(t => t.status === "Waiting Review").length;
+      const prog = tickets.filter(t => t.status === "Under Review").length;
+      const done = tickets.filter(t => t.status === "Closed").length;
+      const over = tickets.filter(t => t.status === "Overdue").length;
+      const next = tickets.find(t => t.status === "Waiting Review") || tickets[0];
+      return `
+  <div style="margin-bottom:4px;font-size:13px;color:var(--muted);">Good Morning, <b style="color:var(--ink);">QC Manager</b> — here's the defect queue for today.</div>
+  <div style="height:14px;"></div>
+  <div class="grid-4">
+    <div class="kpi amber"><div class="num">${wait}</div><div class="lbl">Waiting Review</div></div>
+    <div class="kpi"><div class="num">${prog}</div><div class="lbl">Under Review</div></div>
+    <div class="kpi green"><div class="num">${done}</div><div class="lbl">Closed Today</div></div>
+    <div class="kpi red"><div class="num">${over}</div><div class="lbl">Overdue</div></div>
+  </div>
+  <div class="two-col">
+    <div class="panel">
+      <div class="panel-head"><h3>Upcoming Defect Review</h3><span class="link" onclick="go('tickets')">View all</span></div>
+      <div class="panel-body">
+        <div class="wo-tag ${prClass(next.priority)}" onclick="go('detail','${next.id}')">
+          <div class="wo-head">
+            <div class="wo-ids">
+              <div class="wo-id"><div class="k">WO No.</div><div class="v">${next.id}</div></div>
+              <div class="wo-id"><div class="k">Item Code</div><div class="v">${next.itemCode}</div></div>
+              <div class="wo-id"><div class="k">Partcode</div><div class="v">${next.partcode}</div></div>
+            </div>
+            <span class="status-chip ${statusClass(next.status)}">${next.status}</span>
+          </div>
+          <div class="wo-meta">
+            <span>Defect: <b>${next.defectName}</b></span>
+            <span>Priority: <b>${next.priority}</b></span>
+            <span>Deadline: <b>${next.deadline}</b></span>
+          </div>
+          <div class="barcode"></div>
+        </div>
+        <button class="btn-sm btn-steel" onclick="go('detail','${next.id}')">Open Defect Ticket &#8594;</button>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h3>Recent Notifications</h3><span class="link" onclick="go('notif')">View all</span></div>
+      <div class="panel-body" style="display:flex;flex-direction:column;gap:12px;">
+        <div style="font-size:13px;"><b>Defect Ticket Assigned</b><div style="color:var(--muted);font-size:12px;">WO${tickets[0].id} — Final Inspection Failed · 5m ago</div></div>
+        <div style="font-size:13px;border-top:1px solid var(--bg);padding-top:12px;"><b>Re-inspection Requested</b><div style="color:var(--muted);font-size:12px;">WO${tickets[1].id} · 30m ago</div></div>
+        <div style="font-size:13px;border-top:1px solid var(--bg);padding-top:12px;"><b>Defect Case Closed</b><div style="color:var(--muted);font-size:12px;">Cleared by QC · 1h ago</div></div>
+      </div>
+    </div>
+  </div>`;
+    }
+
+    /* ================= TICKETS LIST ================= */
+    function renderTickets() {
+      const rows = tickets.map(t => `
+    <div class="wo-tag ${prClass(t.priority)}" onclick="go('detail','${t.id}')">
+      <div class="wo-head">
+        <div class="wo-ids">
+          <div class="wo-id"><div class="k">WO No.</div><div class="v">${t.id}</div></div>
+          <div class="wo-id"><div class="k">Item Code</div><div class="v">${t.itemCode}</div></div>
+          <div class="wo-id"><div class="k">Partcode</div><div class="v">${t.partcode}</div></div>
+          <div class="wo-id"><div class="k">Stage</div><div class="v" style="font-family:'Inter';">${t.stage}</div></div>
+        </div>
+        <span class="status-chip ${statusClass(t.status)}">${t.status}</span>
+      </div>
+      <div class="wo-meta">
+        <span>Defect: <b>${t.defectName}</b></span>
+        <span>Department: <b>${t.repairDept}</b></span>
+        <span>Priority: <b>${t.priority}</b></span>
+        <span>Inspector: <b>${t.inspectorName}</b></span>
+      </div>
+    </div>`).join('');
+      return `
+  <div class="search-bar">
+    <input placeholder="Search WO No, Item Code, Partcode...">
+    <select><option>All Status</option><option>Waiting Review</option><option>Under Review</option><option>Overdue</option><option>Closed</option></select>
+    <select><option>All Stages</option><option>Incoming</option><option>IPQC</option><option>Final</option></select>
+  </div>
+  ${rows}`;
+    }
+
+    /* ================= TICKET DETAIL ================= */
+    function renderDetail(id) {
+      const t = tickets.find(x => x.id === id) || tickets[0];
+      return `
+  <div class="back-link" onclick="go('tickets')">&#8592; Back to Defect Tickets</div>
+  <div class="detail-head">
+    <div class="idline">WO ${t.id} <span class="status-chip ${statusClass(t.status)}">${t.status}</span></div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn-sm btn-ghost" onclick="openQuarantine('${t.id}')">&#128196; View Quarantine Report</button>
+      <button class="btn-sm btn-red" onclick="showToast('Ticket rejected — returned to inspector')">Reject</button>
+      <button class="btn-sm btn-green" onclick="acceptTicket('${t.id}')">Approve &amp; Start Review</button>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="stack">
+      <div class="panel"><div class="panel-body">
+        <div class="sect-title">Product Information</div>
+        <div class="field-grid">
+          <div><div class="fk">Branch (ITW)</div><div class="fv mono">${t.branchITW}</div></div>
+          <div><div class="fk">Branch (FGW)</div><div class="fv mono">${t.branchFGW}</div></div>
+          <div><div class="fk">WO No.</div><div class="fv mono">${t.id}</div></div>
+          <div><div class="fk">Item Code</div><div class="fv mono">${t.itemCode}</div></div>
+          <div><div class="fk">Partcode</div><div class="fv mono">${t.partcode}</div></div>
+          <div><div class="fk">WO Quantity</div><div class="fv">${t.woQty} pcs</div></div>
+          <div><div class="fk">Inspection Stage</div><div class="fv">${t.stage}</div></div>
+        </div>
+      </div></div>
+
+      <div class="panel"><div class="panel-body">
+        <div class="sect-title">QC Information</div>
+        <div class="field-grid">
+          <div><div class="fk">Inspector ID</div><div class="fv mono">${t.inspector}</div></div>
+          <div><div class="fk">Inspector Name</div><div class="fv">${t.inspectorName}</div></div>
+          <div><div class="fk">Inspector Dept</div><div class="fv">${t.inspectorDept}</div></div>
+          <div><div class="fk">Inspected Date</div><div class="fv">${t.inspectedDate}</div></div>
+          <div><div class="fk">Inspected Time</div><div class="fv mono">${t.inspectedTime}</div></div>
+        </div>
+      </div></div>
+
+      <div class="panel"><div class="panel-body">
+        <div class="sect-title">Inspection Result</div>
+        <div class="field-grid">
+          <div><div class="fk">Inspected Qty</div><div class="fv">${t.inspectedQty}</div></div>
+          <div><div class="fk">Pass Qty</div><div class="fv ok">${t.passQty}</div></div>
+          <div><div class="fk">Fail Qty</div><div class="fv warn">${t.failQty}</div></div>
+          <div><div class="fk">Quarantine</div><div class="fv ${t.quarantine === 'YES' ? 'warn' : ''}">${t.quarantine}</div></div>
+        </div>
+      </div></div>
+
+      <div class="panel"><div class="panel-body">
+        <div class="sect-title">Defect Information</div>
+        <div class="field-grid">
+          <div><div class="fk">Defect Code</div><div class="fv mono">${t.defectCode}</div></div>
+          <div><div class="fk">Defect Category</div><div class="fv">${t.defectCategory}</div></div>
+          <div><div class="fk">Defect Owner</div><div class="fv">${t.defectOwner}</div></div>
+          <div><div class="fk">Inspector Recommend</div><div class="fv">${t.inspectorRecommend}</div></div>
+          <div><div class="fk">Repair Department</div><div class="fv">${t.repairDept}</div></div>
+          <div><div class="fk">Remark</div><div class="fv" style="font-weight:500;">${t.remark}</div></div>
+        </div>
+      </div></div>
+    </div>
+
+    <div class="stack">
+      <div class="panel"><div class="panel-body">
+        <div class="sect-title">Repair Instruction</div>
+        <div style="font-size:11.5px;color:var(--muted);margin-bottom:10px;">From Production Manager</div>
+        <div class="field-grid">
+          <div><div class="fk">Repair Method</div><div class="fv">${t.repairMethod}</div></div>
+          <div><div class="fk">Repair Type</div><div class="fv">${t.repairType}</div></div>
+          <div><div class="fk">Priority</div><div class="fv" style="color:${t.priority === 'High' ? 'var(--red)' : t.priority === 'Medium' ? 'var(--amber-dark)' : 'var(--muted)'};">${t.priority}</div></div>
+          <div><div class="fk">Deadline</div><div class="fv">${t.deadline}</div></div>
+        </div>
+      </div></div>
+
+      <div class="panel"><div class="panel-body">
+        <div class="sect-title">Defect Images</div>
+        <div class="img-thumbs">
+          <div class="img-thumb">&#128247;</div><div class="img-thumb">&#128247;</div><div class="img-thumb">&#128247;</div>
+        </div>
+      </div></div>
+
+      <div class="panel"><div class="panel-body">
+        <div class="sect-title">Quarantine Report</div>
+        <div style="font-size:12.5px;color:var(--muted);margin-bottom:10px;line-height:1.6;">
+          Report No. <b class="mono" style="color:var(--ink);">${t.quarantineReportNo}</b><br>
+          Dated ${t.quarantineDate} · Qty quarantined: <b style="color:var(--ink);">${t.qtyQuarantine}</b>
+        </div>
+        <button class="btn-sm btn-ghost" style="width:100%;" onclick="openQuarantine('${t.id}')">&#128196; View / Print Quarantine Report</button>
+      </div></div>
+    </div>
+  </div>`;
+    }
+
+    function acceptTicket(id) {
+      const t = tickets.find(x => x.id === id);
+      if (t) t.status = "Under Review";
+      go('working', id);
+    }
+
+    /* ================= QUARANTINE REPORT ================= */
+    function openQuarantine(id) {
+      const t = tickets.find(x => x.id === id);
+      const photos = Array.from({ length: 5 }).map(() => `<div class="qr-photo">MC%, Sheen,<br>Adhesion</div>`).join('');
+      document.getElementById('qrDocBody').innerHTML = `
+    <div class="qr-topline">
+      <div class="qr-h1">QUARANTINE REPORT</div>
+      <div class="qr-meta-box">
+        <div class="row"><b>Report No.</b> ${t.quarantineReportNo}</div>
+        <div class="row"><b>Date</b> ${t.quarantineDate}</div>
+      </div>
+    </div>
+    <div class="qr-section-title">GENERAL INFORMATION</div>
+    <div class="qr-grid">
+      <div class="qr-cell full"><div class="en">Customer Name</div><div class="vn">Tên khách hàng</div><div class="val">${t.customerName}</div></div>
+      <div class="qr-cell"><div class="en">Branch Name</div><div class="vn">Tên chi nhánh</div><div class="val">${t.branchITW}</div></div>
+      <div class="qr-cell"><div class="en">Item Name</div><div class="vn">Tên sản phẩm</div><div class="val">${t.itemName}</div></div>
+      <div class="qr-cell"><div class="en">Works Order No.</div><div class="vn">Số đơn hàng</div><div class="val mono">${t.id}</div></div>
+      <div class="qr-cell"><div class="en">Item Code</div><div class="vn">Mã sản phẩm</div><div class="val mono">${t.itemCode}</div></div>
+      <div class="qr-cell"><div class="en">Total Order</div><div class="vn">Số lượng đơn hàng</div><div class="val">${t.totalOrder}</div></div>
+      <div class="qr-cell"><div class="en">Qty's Quarantine</div><div class="vn">Số lượng lỗi</div><div class="val">${t.qtyQuarantine}</div></div>
+      <div class="qr-cell"><div class="en">Defect Owner</div><div class="vn">Bộ phận chịu trách nhiệm</div><div class="val">${t.defectOwner}</div></div>
+      <div class="qr-cell"><div class="en">Where Detected</div><div class="vn">Xảy ra tại</div><div class="val">${t.whereDetected}</div></div>
+      <div class="qr-cell full"><div class="en">Defects Description</div><div class="vn">Mô tả vấn đề không phù hợp</div><div class="val">${t.defectDescCode} (${t.defectDescText})</div></div>
+    </div>
+
+    <div class="qr-section-title">PHOTOS REFERENCE / THAM KHẢO HÌNH ẢNH</div>
+    <div class="qr-photos">${photos}</div>
+
+    <div class="qr-section-title">CORRECTIVE &amp; PREVENTIVE ACTIONS</div>
+    <div class="qr-grid">
+      <div class="qr-cell"><div class="en">Corrective Action Plan</div><div class="vn">Repair (Sửa hàng - kiểm lại)</div><div class="val">${t.repairMethod} — assigned to ${t.repairDept}</div></div>
+      <div class="qr-cell"><div class="en">Preventive Action</div><div class="vn">Hành động phòng ngừa</div><div class="val">Reinforce process check at ${t.whereDetected.split(' — ')[0]} stage.</div></div>
+    </div>
+  `;
+      document.getElementById('modalQuarantine').classList.add('open');
+    }
+
+    /* ================= DEFECT REVIEW (working screen) ================= */
+    function renderWorking(id) {
+      const t = tickets.find(x => x.id === id) || tickets[0];
+      const checklistItems = ["Verify Defect Description", "Review Photos Evidence", "Check Inspector Recommendation", "Assess Repair Feasibility", "Confirm Defect Owner"];
+      const cl = checklistItems.map((c, i) => `
+    <label class="checklist-item ${i < 3 ? 'done' : ''}">
+      <input type="checkbox" ${i < 3 ? 'checked' : ''}> <span>${c}</span>
+    </label>`).join('');
+      return `
+  <div class="back-link" onclick="go('detail','${t.id}')">&#8592; Back to detail</div>
+  <div style="display:flex;gap:18px;font-size:13px;color:var(--muted);margin-bottom:14px;">
+    <span>WO <b class="mono" style="color:var(--ink);">${t.id}</b></span>
+    <span>Item <b class="mono" style="color:var(--ink);">${t.itemCode}</b></span>
+    <span>Part <b class="mono" style="color:var(--ink);">${t.partcode}</b></span>
+  </div>
+  <div class="timer-box">
+    <div><div class="tval" id="timerVal">00:32:10</div><div class="tlbl">Review Timer — Running</div></div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn-sm btn-amber" onclick="openModal('modalPause')">&#10074;&#10074; Hold</button>
+      <button class="btn-sm btn-green" onclick="openModal('modalComplete')">&#10003; Close Case</button>
+    </div>
+  </div>
+  <div class="two-col">
+    <div class="stack">
+      <div class="panel"><div class="panel-body">
+        <div class="sect-title">Review Checklist</div>
+        ${cl}
+      </div></div>
+      <div class="panel"><div class="panel-body">
+        <div class="sect-title">QC Review Notes</div>
+        <textarea rows="3" placeholder="Enter review notes...">Defect confirmed. Surface adhesion failure at final coating stage. Recommend full re-coat of affected area.</textarea>
+      </div></div>
+    </div>
+    <div class="stack">
+      <div class="panel"><div class="panel-body">
+        <div class="sect-title">Corrective Action</div>
+        <div class="mat-row"><input value="Re-coat Surface" placeholder="Action"><input value="All units" style="max-width:80px;" placeholder="Scope"></div>
+        <div class="mat-row"><input value="Re-inspect after repair" placeholder="Action"><input value="100%" style="max-width:80px;" placeholder="Scope"></div>
+        <button class="btn-sm btn-ghost" style="width:100%;">+ Add Action</button>
+      </div></div>
+      <div class="panel"><div class="panel-body">
+        <div class="sect-title">Defect Evidence Photos</div>
+        <div style="display:flex;gap:10px;">
+          <div style="text-align:center;"><div class="img-thumb">Before</div></div>
+          <div style="text-align:center;"><div class="img-thumb">After</div></div>
+          <div style="text-align:center;"><div class="img-thumb" style="background:var(--bg);color:var(--muted-2);border-style:dashed;">+</div></div>
+        </div>
+      </div></div>
+    </div>
+  </div>`;
+    }
+
+    /* ================= HISTORY ================= */
+    function renderHistory() {
+      const rows = historyList.map(h => `
+    <tr>
+      <td class="mono">${h.id}</td><td class="mono">${h.itemCode}</td><td class="mono">${h.part}</td>
+      <td>${h.defect}</td><td>${h.closed}</td><td>${h.duration}</td><td><span class="pass-tag">${h.verdict}</span></td>
+    </tr>`).join('');
+      return `
+  <div class="grid-4">
+    <div class="kpi"><div class="num">45</div><div class="lbl">Cases Closed</div></div>
+    <div class="kpi"><div class="num">1.6h</div><div class="lbl">Avg Review Time</div></div>
+    <div class="kpi green"><div class="num">92%</div><div class="lbl">On-time Rate</div></div>
+    <div class="kpi red"><div class="num">8%</div><div class="lbl">Escalation Rate</div></div>
+  </div>
+  <div class="panel"><div class="panel-body" style="padding:0;">
+    <table>
+      <thead><tr><th>WO</th><th>Item</th><th>Part</th><th>Defect</th><th>Closed</th><th>Review Time</th><th>Verdict</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div></div>`;
+    }
+
+    function renderNotif() {
+      return `<div class="panel"><div class="panel-body" style="display:flex;flex-direction:column;gap:14px;">
+    <div><b>Defect Ticket Assigned</b> — WO61100, Final Inspection Failed <div style="font-size:12px;color:var(--muted);">5 minutes ago</div></div>
+    <div style="border-top:1px solid var(--bg);padding-top:14px;"><b>Re-inspection Requested</b> — WO61082 <div style="font-size:12px;color:var(--muted);">30 minutes ago</div></div>
+    <div style="border-top:1px solid var(--bg);padding-top:14px;"><b>Defect Case Closed</b> — Cleared by QC review <div style="font-size:12px;color:var(--muted);">1 hour ago</div></div>
+  </div></div>`;
+    }
+    function renderProfile() {
+      return `<div class="panel"><div class="panel-body">
+    <div class="field-grid">
+      <div><div class="fk">Full Name</div><div class="fv">QC Manager</div></div>
+      <div><div class="fk">Role</div><div class="fv">Defect Control</div></div>
+      <div><div class="fk">Department</div><div class="fv">Quality Control</div></div>
+      <div><div class="fk">Employee ID</div><div class="fv mono">EMP-2201</div></div>
+    </div>
+  </div></div>`;
+    }
+
+    /* ================= MODALS / TOAST ================= */
+    function openModal(id) { document.getElementById(id).classList.add('open'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+    function confirmPause() { closeModal('modalPause'); showToast('Review on hold'); }
+    function confirmComplete() {
+      closeModal('modalComplete');
+      const t = tickets.find(x => x.id === currentTicketId);
+      if (t) t.status = "Closed";
+      showToast('Defect case closed — sent for final approval');
+      go('tickets');
+    }
+    function showToast(msg) {
+      document.getElementById('toastMsg').textContent = msg;
+      const el = document.getElementById('toast');
+      el.style.display = 'flex';
+      clearTimeout(window._toastTimer);
+      window._toastTimer = setTimeout(() => { el.style.display = 'none'; }, 2600);
+    }
+
+    // close modal on overlay click
+    document.querySelectorAll('.modal-overlay').forEach(ov => {
+      ov.addEventListener('click', e => { if (e.target === ov) ov.classList.remove('open'); });
+    });
+  </script>
+</body>
+
+</html>
