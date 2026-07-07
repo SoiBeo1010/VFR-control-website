@@ -480,7 +480,47 @@
                             📢 <strong>Announcement:</strong> This item has passed inspection (Pass Qty: 1) and does not require repair.
                         </div>
 
-                        <div id="worker-input-group" style="margin-bottom: 1rem;">
+                        <!-- Location scanning/updating section -->
+                        <div id="location-input-group" style="margin-bottom: 1.5rem; padding: 1.25rem; background: var(--light-bg); border: 1px solid var(--border-color); border-radius: 8px;">
+                            <label style="display: block; font-size: 12.5px; font-weight: bold; margin-bottom: 8px; color: var(--text-color);">
+                                📍 Scan Location Barcode
+                            </label>
+                            
+                            <!-- Location Input Selection Mode -->
+                            <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                                <button type="button" class="btn btn-primary" id="loc-btn-scan" onclick="setLocInputMode('scan')" style="flex: 1; padding: 6px; font-size: 11px; border-radius: 4px;">📷 Scan Barcode</button>
+                                <button type="button" class="btn btn-secondary" id="loc-btn-manual" onclick="setLocInputMode('manual')" style="flex: 1; padding: 6px; font-size: 11px; border-radius: 4px;">⌨️ Manual Enter</button>
+                            </div>
+
+                            <!-- Location Manual Entry -->
+                            <div id="loc-manual-ui" style="display: none; margin-bottom: 10px;">
+                                <input type="text" id="location-input" class="form-input" placeholder="e.g. LOC-CAR2-S5" style="padding: 8px; font-size: 13px;">
+                                <button type="button" class="btn btn-primary" onclick="submitLocationManual()" style="width: 100%; padding: 6px; font-size: 12px; margin-top: 8px; border-radius: 4px;">Update Location</button>
+                            </div>
+
+                            <!-- Location Scanner Simulation -->
+                            <div id="loc-scan-ui" style="text-align: center; margin-bottom: 10px;">
+                                <div class="scanner-viewfinder" style="width: 100%; height: 100px; margin: 8px 0; border-radius: 6px; border-width: 2px;">
+                                    <div class="scanner-laser" style="animation-duration: 2s;"></div>
+                                    <div class="viewfinder-corner tl" style="width: 10px; height: 10px; border-width: 2px;"></div>
+                                    <div class="viewfinder-corner tr" style="width: 10px; height: 10px; border-width: 2px;"></div>
+                                    <div class="viewfinder-corner bl" style="width: 10px; height: 10px; border-width: 2px;"></div>
+                                    <div class="viewfinder-corner br" style="width: 10px; height: 10px; border-width: 2px;"></div>
+                                    <div style="font-size: 13px; opacity: 0.25; font-weight: bold;">Location Barcode</div>
+                                </div>
+                                <button type="button" class="btn btn-primary" onclick="simulateLocationScan()" style="width: 100%; padding: 6px; font-size: 12px; border-radius: 4px;">Simulate Scan</button>
+                            </div>
+                            
+                            <div id="location-error" style="color: var(--danger-color); font-size: 12.5px; font-weight: 500; margin-top: 4px; display: none;"></div>
+                        </div>
+
+                        <!-- Location Success Display -->
+                        <div id="location-success-group" style="display: none; margin-bottom: 1.5rem; padding: 0.75rem 1rem; background-color: #e8f5e9; border-left: 4px solid var(--success-color); border-radius: 8px; font-size: 13.5px; align-items: center; justify-content: space-between;">
+                            <span>📍 Location Updated: <strong id="active-location-name" style="color: var(--primary-color);"></strong></span>
+                            <button type="button" class="btn btn-ghost" onclick="resetLocationInput()" style="font-size: 10px; padding: 4px 8px; border-radius: 3px; border: 1px solid var(--border-color); background: white;">Change</button>
+                        </div>
+
+                        <div id="worker-input-group" style="margin-bottom: 1rem; display: none;">
                             <label for="worker-count"
                                 style="display: block; font-size: 12.5px; font-weight: bold; margin-bottom: 8px; color: var(--text-color);">Enter
                                 number of repair workers</label>
@@ -489,7 +529,7 @@
 
                         <div class="btn-group">
                             <button class="btn btn-secondary btn-flex" onclick="goToStep(3)">Back</button>
-                            <button class="btn btn-primary btn-flex" id="step4-next-btn" onclick="goToStep(5)">Next</button>
+                            <button class="btn btn-primary btn-flex" id="step4-next-btn" onclick="goToStep(5)" style="display: none;">Next</button>
                             <button class="btn btn-primary btn-flex" id="step4-return-btn" onclick="resetWorkflow()" style="display: none;">Return to Menu</button>
                         </div>
                     </div>
@@ -518,6 +558,10 @@
                             <div class="info-row">
                                 <div class="info-label">Allocated Labor</div>
                                 <div class="info-val" id="summary-workers"></div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Allocated Location</div>
+                                <div class="info-val" id="summary-location"></div>
                             </div>
                         </div>
 
@@ -578,6 +622,10 @@
                                 <div class="info-val" id="active-workers"></div>
                             </div>
                             <div class="info-row">
+                                <div class="info-label">Repair Location</div>
+                                <div class="info-val" id="active-location" style="color: var(--primary-color); font-weight: bold;"></div>
+                            </div>
+                            <div class="info-row">
                                 <div class="info-label">Start Time</div>
                                 <div class="info-val" id="active-start-time"></div>
                             </div>
@@ -636,6 +684,8 @@
         let scannedBarcode = '';
         let workerCount = 1;
         let elapsedTimerInterval = null;
+        let activeLocation = '';
+        let locInputMode = 'scan';
 
         // Load inspection data from public/inspection-data.json
         let inspectionData = [];
@@ -805,6 +855,7 @@
 
                 workerCount = document.getElementById('worker-count').value || 1;
                 document.getElementById('summary-workers').textContent = `${workerCount} Assigned Worker(s)`;
+                document.getElementById('summary-location').textContent = activeLocation || 'Not Assigned';
             }
         }
 
@@ -894,23 +945,144 @@
             document.getElementById('info-name').textContent = item.name;
             document.getElementById('info-condition').textContent = item.defect;
 
-            // Handle Pass Qty = 1 announcement and button toggles
+            // Reset location state for the new item
+            activeLocation = '';
+            document.getElementById('location-input').value = '';
+            document.getElementById('location-error').style.display = 'none';
+
             const banner = document.getElementById('no-repair-banner');
+            const returnBtn = document.getElementById('step4-return-btn');
+            
+            const locInputGroup = document.getElementById('location-input-group');
+            const locSuccessGroup = document.getElementById('location-success-group');
             const workerInput = document.getElementById('worker-input-group');
             const nextBtn = document.getElementById('step4-next-btn');
-            const returnBtn = document.getElementById('step4-return-btn');
 
             if (item.passQty === 1) {
                 if (banner) banner.style.display = 'block';
+                if (locInputGroup) locInputGroup.style.display = 'none';
+                if (locSuccessGroup) locSuccessGroup.style.display = 'none';
                 if (workerInput) workerInput.style.display = 'none';
                 if (nextBtn) nextBtn.style.display = 'none';
                 if (returnBtn) returnBtn.style.display = 'inline-block';
             } else {
                 if (banner) banner.style.display = 'none';
-                if (workerInput) workerInput.style.display = 'block';
-                if (nextBtn) nextBtn.style.display = 'inline-block';
+                if (locInputGroup) locInputGroup.style.display = 'block';
+                if (locSuccessGroup) locSuccessGroup.style.display = 'none';
+                if (workerInput) workerInput.style.display = 'none';
+                if (nextBtn) nextBtn.style.display = 'none';
                 if (returnBtn) returnBtn.style.display = 'none';
+                
+                // Set default mode for location input
+                setLocInputMode('scan');
             }
+        }
+
+        function setLocInputMode(mode) {
+            locInputMode = mode;
+            const scanBtn = document.getElementById('loc-btn-scan');
+            const manualBtn = document.getElementById('loc-btn-manual');
+            const scanUI = document.getElementById('loc-scan-ui');
+            const manualUI = document.getElementById('loc-manual-ui');
+
+            if (mode === 'scan') {
+                scanBtn.classList.remove('btn-secondary');
+                scanBtn.classList.add('btn-primary');
+                manualBtn.classList.remove('btn-primary');
+                manualBtn.classList.add('btn-secondary');
+                scanUI.style.display = 'block';
+                manualUI.style.display = 'none';
+            } else {
+                scanBtn.classList.remove('btn-primary');
+                scanBtn.classList.add('btn-secondary');
+                manualBtn.classList.remove('btn-secondary');
+                manualBtn.classList.add('btn-primary');
+                scanUI.style.display = 'none';
+                manualUI.style.display = 'block';
+            }
+            document.getElementById('location-error').style.display = 'none';
+        }
+
+        function simulateLocationScan() {
+            const locPresets = ['LOC-CAR2-S5', 'LOC-CAR1-S2', 'LOC-RCV-04', 'LOC-CAR3-S1', 'LOC-CAR1-S6'];
+            // Try to extract from item whereDetected
+            const item = getItemData(scannedBarcode);
+            let targetLoc = '';
+            if (item && item.id) {
+                // Find in inspectionData
+                const found = inspectionData.find(x => x.id === item.id);
+                if (found && found.whereDetected) {
+                    const parts = found.whereDetected.split(' — ');
+                    if (parts.length > 1) {
+                        targetLoc = 'LOC-' + parts[1];
+                    } else {
+                        targetLoc = 'LOC-' + found.whereDetected;
+                    }
+                }
+            }
+            if (!targetLoc) {
+                targetLoc = locPresets[Math.floor(Math.random() * locPresets.length)];
+            }
+            
+            // Clean up name format (e.g., spaces to dashes)
+            targetLoc = targetLoc.replace(/\s+/g, '-');
+
+            // Flash visual effect
+            const vf = document.querySelector('#loc-scan-ui .scanner-viewfinder');
+            if (vf) {
+                vf.style.borderColor = 'var(--success-color)';
+                vf.style.background = '#e8f5e9';
+            }
+
+            setTimeout(() => {
+                if (vf) {
+                    vf.style.borderColor = 'var(--primary-color)';
+                    vf.style.background = '#fafbfc';
+                }
+                updateActiveLocation(targetLoc);
+            }, 800);
+        }
+
+        function submitLocationManual() {
+            const val = document.getElementById('location-input').value.trim();
+            if (!val) {
+                showLocationError('Please enter a location code');
+                return;
+            }
+            updateActiveLocation(val);
+        }
+
+        function updateActiveLocation(loc) {
+            activeLocation = loc;
+            
+            document.getElementById('active-location-name').textContent = loc;
+            
+            // Hide input UI, show success UI
+            document.getElementById('location-input-group').style.display = 'none';
+            document.getElementById('location-success-group').style.display = 'flex';
+            
+            // Show worker input group and next button
+            document.getElementById('worker-input-group').style.display = 'block';
+            document.getElementById('step4-next-btn').style.display = 'inline-block';
+        }
+
+        function showLocationError(msg) {
+            const errDiv = document.getElementById('location-error');
+            if (errDiv) {
+                errDiv.textContent = msg;
+                errDiv.style.display = 'block';
+            }
+        }
+
+        function resetLocationInput() {
+            activeLocation = '';
+            document.getElementById('location-input').value = '';
+            document.getElementById('location-error').style.display = 'none';
+            
+            document.getElementById('location-input-group').style.display = 'block';
+            document.getElementById('location-success-group').style.display = 'none';
+            document.getElementById('worker-input-group').style.display = 'none';
+            document.getElementById('step4-next-btn').style.display = 'none';
         }
 
         function confirmStart() {
@@ -922,6 +1094,7 @@
                 name: item.name,
                 defect: item.defect,
                 workers: workerCount,
+                location: activeLocation,
                 startTime: new Date().toISOString()
             };
             localStorage.setItem('qms_under_repair', JSON.stringify(underRepair));
@@ -953,6 +1126,7 @@
             document.getElementById('active-name').textContent = repairData.name;
             document.getElementById('active-defect').textContent = repairData.defect;
             document.getElementById('active-workers').textContent = `${repairData.workers} Assigned Worker(s)`;
+            document.getElementById('active-location').textContent = repairData.location || 'Not Assigned';
 
             const startTime = new Date(repairData.startTime);
             document.getElementById('active-start-time').textContent = startTime.toLocaleString();
@@ -1026,6 +1200,7 @@
             selectedInputMode = 'manual';
             scannedBarcode = '';
             workerCount = 1;
+            activeLocation = '';
 
             document.getElementById('barcode-input').value = inspectionData.length > 0 ? inspectionData[0].id : 'INH-120-8447';
             document.getElementById('worker-count').value = 1;

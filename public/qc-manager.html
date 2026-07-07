@@ -656,6 +656,33 @@
                 opacity: 1;
             }
         }
+
+        .back-btn-custom {
+            display: flex;
+            align-items: center;
+            padding: 8px 18px;
+            background: white;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            color: #374151;
+            font-size: 13.5px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease-in-out;
+            margin-bottom: 12px;
+            outline: none;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        .back-btn-custom:hover {
+            background: #f9fafb;
+            border-color: #9ca3af;
+            color: #111827;
+        }
+
+        .back-btn-custom:active {
+            background: #f3f4f6;
+        }
     </style>
 </head>
 
@@ -666,7 +693,7 @@
             <img src="/logo.png" alt="VFR Logo" style="height: 38px; border-radius: 4px;">
             <span>QMS</span>
         </div>
-        <ul class="sidebar-menu">
+        <ul class="sidebar-menu" id="qc-sidebar-menu">
             <li><a href="#" class="sidebar-link active" onclick="switchSection('inspection-control', this)">
                     <span class="sidebar-icon">📋</span>
                     <span>Inspection Control</span>
@@ -675,9 +702,9 @@
                     <span class="sidebar-icon">📊</span>
                     <span>Quality Control</span>
                 </a></li>
-            <li><a href="#" class="sidebar-link" onclick="switchSection('owner-assignment', this)">
-                    <span class="sidebar-icon">👤</span>
-                    <span>Owner Assignment</span>
+            <li><a href="#" class="sidebar-link" onclick="switchSection('defect-control', this)">
+                    <span class="sidebar-icon">🛠️</span>
+                    <span>Defect Control</span>
                 </a></li>
             <li><a href="#" class="sidebar-link" onclick="switchSection('notification-center', this)">
                     <span class="sidebar-icon">🔔</span>
@@ -686,6 +713,34 @@
             <li><a href="#" class="sidebar-link" onclick="switchSection('cost-management', this)">
                     <span class="sidebar-icon">💰</span>
                     <span>Cost Management</span>
+                </a></li>
+        </ul>
+        <ul class="sidebar-menu" id="defect-sidebar-menu" style="display: none;">
+            <li><a href="#" class="sidebar-link active" onclick="switchDefectView('tickets', this)">
+                    <span class="sidebar-icon">📝</span>
+                    <span>My Repair Tickets</span>
+                    <span class="inline-badge" id="outerTicketBadge" style="margin-left: auto; background: #e6f4ea; color: #137333; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px;">0</span>
+                </a></li>
+            <li><a href="#" class="sidebar-link" onclick="switchDefectView('history', this)">
+                    <span class="sidebar-icon">🕒</span>
+                    <span>Repair History</span>
+                </a></li>
+            <li><a href="#" class="sidebar-link" onclick="switchDefectView('notif', this)">
+                    <span class="sidebar-icon">🔔</span>
+                    <span>Notifications</span>
+                    <span class="inline-badge" id="outerNotifBadge" style="margin-left: auto; background: #137333; color: white; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px;">2</span>
+                </a></li>
+            <li><a href="#" class="sidebar-link" onclick="switchDefectView('dashboard', this)">
+                    <span class="sidebar-icon">📊</span>
+                    <span>Dashboard</span>
+                </a></li>
+            <li><a href="#" class="sidebar-link" onclick="switchDefectView('profile', this)">
+                    <span class="sidebar-icon">👤</span>
+                    <span>Profile</span>
+                </a></li>
+            <li><a href="#" class="sidebar-link" onclick="logout()" style="color: #ef4444; margin-top: 1.5rem; border-top: 1px solid #e5e7eb; padding-top: 1rem;">
+                    <span class="sidebar-icon">🔒</span>
+                    <span>Logout</span>
                 </a></li>
         </ul>
     </aside>
@@ -783,12 +838,11 @@
                                 <th>Severity</th>
                                 <th>Assignment</th>
                                 <th>Created</th>
-                                <th>Action</th>
                             </tr>
                         </thead>
                         <tbody id="quarantineReportBody">
                             <tr>
-                                <td colspan="9" class="empty-state">Loading quarantine reports...</td>
+                                <td colspan="8" class="empty-state">Loading quarantine reports...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -796,7 +850,7 @@
             </div>
         </div>
 
-        <div id="owner-assignment" class="section">
+        <div id="owner-assignment" class="section" style="display: none !important;">
             <div class="section-title">Owner Assignment</div>
 
             <div class="section-grid">
@@ -871,6 +925,16 @@
                         </tbody>
                     </table>
                 </div>
+            </div>
+        </div>
+
+        <!-- Defect Control Section -->
+        <div id="defect-control" class="section" style="padding: 0; background: transparent; box-shadow: none;">
+            <button class="back-btn-custom" onclick="goBackToQc()">
+                <span style="font-size: 16px; margin-right: 4px;">&larr;</span> Back
+            </button>
+            <div style="background: transparent; overflow: hidden; height: calc(100vh - 130px);">
+                <iframe id="defect-control-iframe" src="/defect-control.html?v=2" style="width: 100%; height: 100%; border: none; background: transparent;"></iframe>
             </div>
         </div>
 
@@ -1205,7 +1269,60 @@
 
             // Show selected section
             document.getElementById(sectionId).classList.add('active');
-            element.classList.add('active');
+            if (element) {
+                element.classList.add('active');
+            }
+
+            // Check if switching to defect-control
+            if (sectionId === 'defect-control') {
+                // Show defect sidebar, hide main sidebar
+                document.getElementById('qc-sidebar-menu').style.display = 'none';
+                document.getElementById('defect-sidebar-menu').style.display = 'block';
+                // Hide top bar
+                document.querySelector('.top-bar').style.display = 'none';
+                
+                // Set default active view inside iframe to tickets
+                switchDefectView('tickets', document.querySelector('#defect-sidebar-menu a'));
+            } else {
+                // Show main sidebar, hide defect sidebar
+                document.getElementById('qc-sidebar-menu').style.display = 'block';
+                document.getElementById('defect-sidebar-menu').style.display = 'none';
+                // Show top bar
+                document.querySelector('.top-bar').style.display = 'flex';
+            }
+        }
+
+        function switchDefectView(view, element) {
+            if (typeof event !== 'undefined' && event.preventDefault) {
+                event.preventDefault();
+            }
+
+            // Remove active class from all links in defect-sidebar-menu
+            document.querySelectorAll('#defect-sidebar-menu .sidebar-link').forEach(link => link.classList.remove('active'));
+
+            // Add active class to clicked element
+            if (element) {
+                element.classList.add('active');
+            }
+
+            // Communicate view change to the iframe
+            const iframe = document.getElementById('defect-control-iframe');
+            if (iframe && iframe.contentWindow && typeof iframe.contentWindow.go === 'function') {
+                iframe.contentWindow.go(view);
+            }
+        }
+
+        function goBackToQc() {
+            // Switch back to inspection-control section and show main sidebar
+            const firstLink = document.querySelector('#qc-sidebar-menu a');
+            switchSection('inspection-control', firstLink);
+        }
+
+        function updateOuterDefectBadges(ticketCount, notifCount) {
+            const ticketBadge = document.getElementById('outerTicketBadge');
+            if (ticketBadge) ticketBadge.textContent = ticketCount;
+            const notifBadge = document.getElementById('outerNotifBadge');
+            if (notifBadge) notifBadge.textContent = notifCount;
         }
 
         function toggleNotificationPanel() {
@@ -1299,7 +1416,7 @@
                 if (!body) return;
 
                 if (reports.length === 0) {
-                    body.innerHTML = '<tr><td colspan="9" class="empty-state">No quarantine reports found</td></tr>';
+                    body.innerHTML = '<tr><td colspan="8" class="empty-state">No quarantine reports found</td></tr>';
                     return;
                 }
 
@@ -1316,7 +1433,6 @@
                             <td>${report.severity || 'N/A'}</td>
                             <td><span class="inline-badge ${assignmentClass}">${report.assignment_status}</span></td>
                             <td>${createdDate}</td>
-                            <td><button class="action-btn" type="button" onclick="prefillAssignmentForm(${report.quarantine_id})">Assign</button></td>
                         </tr>
                     `;
                 }).join('');
