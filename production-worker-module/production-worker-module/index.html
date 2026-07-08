@@ -387,14 +387,42 @@ const tickets = [
 ];
 
 const historyList = [
-  {id:"61050", itemCode:"055555-CC", part:"55443322-XX", defect:"Noise", completed:"30 Jun 2026", time:"1.8h", result:"PASS"},
-  {id:"61010", itemCode:"022211-DA", part:"98887766-WW", defect:"Overheating", completed:"30 Jun 2026", time:"2.1h", result:"PASS"},
-  {id:"60980", itemCode:"099968-AA", part:"77665544-ZZ", defect:"Leakage", completed:"29 Jun 2026", time:"2.5h", result:"PASS"},
-  {id:"60970", itemCode:"011122-BB", part:"66554433-YY", defect:"Scratch", completed:"29 Jun 2026", time:"1.5h", result:"PASS"},
-  {id:"60960", itemCode:"033344-CC", part:"88779900-XX", defect:"Broken", completed:"28 Jun 2026", time:"3.0h", result:"PASS"},
+  {id:"61050", itemCode:"055555-CC", part:"55443322-XX", defect:"Noise", completed:"30 Jun 2026", time:"1.8h", result:"PASS",
+   startRepair:"28 May 2026 15:02", endRepair:"28 May 2026 16:50"},
+  {id:"61010", itemCode:"022211-DA", part:"98887766-WW", defect:"Overheating", completed:"30 Jun 2026", time:"2.1h", result:"PASS",
+   startRepair:"24 May 2026 08:55", endRepair:"24 May 2026 11:01"},
+  {id:"60980", itemCode:"099968-AA", part:"77665544-ZZ", defect:"Leakage", completed:"29 Jun 2026", time:"2.5h", result:"PASS",
+   startRepair:"28 Jun 2026 09:00", endRepair:"28 Jun 2026 11:30"},
+  {id:"60970", itemCode:"011122-BB", part:"66554433-YY", defect:"Scratch", completed:"29 Jun 2026", time:"1.5h", result:"PASS",
+   startRepair:"28 Jun 2026 13:00", endRepair:"28 Jun 2026 14:30"},
+  {id:"60960", itemCode:"033344-CC", part:"88779900-XX", defect:"Broken", completed:"28 Jun 2026", time:"3.0h", result:"PASS",
+   startRepair:"27 Jun 2026 08:00", endRepair:"27 Jun 2026 11:00"},
 ];
 
 let currentTicketId = null;
+let repairStartTime = null;
+let repairEndTime = null;
+let timerInterval = null;
+
+const API_BASE = 'http://localhost:8000';
+const TOKEN_KEY = 'qms_token';
+const WORKER_ID_KEY = 'qms_worker_id';
+
+function getToken() { return localStorage.getItem(TOKEN_KEY) || ''; }
+function getWorkerId() { return localStorage.getItem(WORKER_ID_KEY) || ''; }
+
+async function apiPost(path, body) {
+  try {
+    const resp = await fetch(API_BASE + path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'token': getToken() },
+      body: JSON.stringify(body)
+    });
+    return await resp.json();
+  } catch(e) {
+    return { error: e.message };
+  }
+}
 
 /* ================= AUTH ================= */
 function doLogin(){
@@ -674,11 +702,17 @@ function renderWorking(id){
     <span>Part <b class="mono" style="color:var(--ink);">${t.partcode}</b></span>
   </div>
   <div class="timer-box">
-    <div><div class="tval" id="timerVal">01:12:35</div><div class="tlbl">Repair Timer — Running</div></div>
+    <div><div class="tval" id="timerVal">${repairStartTime ? '00:00:00' : '--:--:--'}</div><div class="tlbl" id="timerLbl">${repairStartTime ? 'Repair Timer — Running' : 'Not Started'}</div></div>
     <div style="display:flex;gap:8px;">
-      <button class="btn-sm btn-amber" onclick="openModal('modalPause')">&#10074;&#10074; Pause</button>
-      <button class="btn-sm btn-green" onclick="openModal('modalComplete')">&#10003; Complete Repair</button>
+      <button class="btn-sm btn-green" id="btnStartRepair" onclick="doStartRepair('${t.id}')" ${repairStartTime ? 'disabled style="opacity:.45;cursor:not-allowed;"' : ''}>&#9654; Start Repair</button>
+      <button class="btn-sm btn-amber" onclick="openModal('modalPause')" ${!repairStartTime ? 'disabled style="opacity:.45;cursor:not-allowed;"' : ''}>&#10074;&#10074; Pause</button>
+      <button class="btn-sm btn-steel" id="btnEndRepair" onclick="doEndRepair('${t.id}')" ${!repairStartTime || repairEndTime ? 'disabled style="opacity:.45;cursor:not-allowed;"' : ''}>&#9724; End Repair</button>
+      <button class="btn-sm btn-green" onclick="openModal('modalComplete')" ${!repairEndTime ? 'disabled style="opacity:.45;cursor:not-allowed;"' : ''}>&#10003; Complete Repair</button>
     </div>
+  </div>
+  <div id="repairTimestamps" style="display:flex;gap:24px;font-size:12.5px;color:var(--muted);margin-bottom:18px;padding:10px 14px;background:#fff;border:1px solid var(--border);border-radius:5px;">
+    <span>&#128198; Start Repair: <b id="lblStartRepair" style="color:var(--ink);">${repairStartTime ? new Date(repairStartTime).toLocaleString() : '—'}</b></span>
+    <span>&#128198; End Repair: <b id="lblEndRepair" style="color:var(--ink);">${repairEndTime ? new Date(repairEndTime).toLocaleString() : '—'}</b></span>
   </div>
   <div class="two-col">
     <div class="stack">
@@ -715,7 +749,10 @@ function renderHistory(){
   const rows = historyList.map(h=>`
     <tr>
       <td class="mono">${h.id}</td><td class="mono">${h.itemCode}</td><td class="mono">${h.part}</td>
-      <td>${h.defect}</td><td>${h.completed}</td><td>${h.time}</td><td><span class="pass-tag">${h.result}</span></td>
+      <td>${h.defect}</td>
+      <td style="font-size:11.5px;color:var(--steel);white-space:nowrap;">${h.startRepair || '<span style="color:var(--muted-2);">—</span>'}</td>
+      <td style="font-size:11.5px;color:var(--green);white-space:nowrap;">${h.endRepair || '<span style="color:var(--muted-2);">—</span>'}</td>
+      <td>${h.completed}</td><td>${h.time}</td><td><span class="pass-tag">${h.result}</span></td>
     </tr>`).join('');
   return `
   <div class="grid-4">
@@ -726,7 +763,7 @@ function renderHistory(){
   </div>
   <div class="panel"><div class="panel-body" style="padding:0;">
     <table>
-      <thead><tr><th>WO</th><th>Item</th><th>Part</th><th>Defect</th><th>Completed</th><th>Repair Time</th><th>QC Result</th></tr></thead>
+      <thead><tr><th>WO</th><th>Item</th><th>Part</th><th>Defect</th><th style="color:var(--steel);">Start Repair</th><th style="color:var(--green);">End Repair</th><th>Completed</th><th>Repair Time</th><th>QC Result</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
   </div></div>`;
@@ -758,8 +795,82 @@ function confirmComplete(){
   closeModal('modalComplete');
   const t = tickets.find(x=>x.id===currentTicketId);
   if(t) t.status = "Completed";
+  // Add to history with timestamps
+  historyList.unshift({
+    id: t.id,
+    itemCode: t.itemCode,
+    part: t.partcode,
+    defect: t.defectName,
+    completed: new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}),
+    time: repairStartTime && repairEndTime ? ((new Date(repairEndTime)-new Date(repairStartTime))/3600000).toFixed(1)+'h' : 'N/A',
+    result: 'PASS',
+    startRepair: repairStartTime ? new Date(repairStartTime).toLocaleString() : '—',
+    endRepair: repairEndTime ? new Date(repairEndTime).toLocaleString() : '—'
+  });
+  repairStartTime = null;
+  repairEndTime = null;
+  clearInterval(timerInterval);
   showToast('Repair completed — sent for QC verification');
   go('tickets');
+}
+
+async function doStartRepair(ticketId){
+  const now = new Date().toISOString();
+  repairStartTime = now;
+  repairEndTime = null;
+
+  // Update UI immediately
+  const lbl = document.getElementById('lblStartRepair');
+  if(lbl) lbl.textContent = new Date(now).toLocaleString();
+  const btnStart = document.getElementById('btnStartRepair');
+  if(btnStart){ btnStart.disabled = true; btnStart.style.opacity = '.45'; btnStart.style.cursor = 'not-allowed'; }
+  const btnEnd = document.getElementById('btnEndRepair');
+  if(btnEnd){ btnEnd.disabled = false; btnEnd.style.opacity = ''; btnEnd.style.cursor = ''; }
+  document.getElementById('timerLbl').textContent = 'Repair Timer — Running';
+
+  // Start live timer
+  clearInterval(timerInterval);
+  timerInterval = setInterval(()=>{
+    const elapsed = Math.floor((Date.now() - new Date(repairStartTime).getTime()) / 1000);
+    const h = String(Math.floor(elapsed/3600)).padStart(2,'0');
+    const m = String(Math.floor((elapsed%3600)/60)).padStart(2,'0');
+    const s = String(elapsed%60).padStart(2,'0');
+    const el = document.getElementById('timerVal');
+    if(el) el.textContent = `${h}:${m}:${s}`;
+  }, 1000);
+
+  // Persist to backend
+  const result = await apiPost('/api/production-worker/start-repair', { ticket_id: ticketId });
+  if(result && result.start_repair) {
+    showToast('Start Repair recorded: ' + new Date(result.start_repair).toLocaleTimeString());
+  } else {
+    showToast('Start Repair saved locally (offline mode)');
+  }
+}
+
+async function doEndRepair(ticketId){
+  const now = new Date().toISOString();
+  repairEndTime = now;
+
+  // Update UI
+  const lbl = document.getElementById('lblEndRepair');
+  if(lbl) lbl.textContent = new Date(now).toLocaleString();
+  const btnEnd = document.getElementById('btnEndRepair');
+  if(btnEnd){ btnEnd.disabled = true; btnEnd.style.opacity = '.45'; btnEnd.style.cursor = 'not-allowed'; }
+  clearInterval(timerInterval);
+  document.getElementById('timerLbl').textContent = 'Repair Timer — Stopped';
+
+  // Enable complete button
+  const completeBtn = document.querySelector('.btn-sm.btn-green[onclick*="modalComplete"]');
+  if(completeBtn){ completeBtn.disabled = false; completeBtn.style.opacity = ''; }
+
+  // Persist to backend
+  const result = await apiPost('/api/production-worker/end-repair', { ticket_id: ticketId });
+  if(result && result.end_repair) {
+    showToast('End Repair recorded: ' + new Date(result.end_repair).toLocaleTimeString());
+  } else {
+    showToast('End Repair saved locally (offline mode)');
+  }
 }
 function showToast(msg){
   document.getElementById('toastMsg').textContent = msg;

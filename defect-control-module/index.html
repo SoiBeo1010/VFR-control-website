@@ -1411,11 +1411,16 @@
     ];
 
     const historyList = [
-      { id: "61050", itemCode: "055555-CC", part: "55443322-XX", defect: "Noise", closed: "30 Jun 2026", duration: "1.8h", verdict: "PASS" },
-      { id: "61010", itemCode: "022211-DA", part: "98887766-WW", defect: "Overheating", closed: "30 Jun 2026", duration: "2.1h", verdict: "PASS" },
-      { id: "60980", itemCode: "099968-AA", part: "77665544-ZZ", defect: "Leakage", closed: "29 Jun 2026", duration: "2.5h", verdict: "PASS" },
-      { id: "60970", itemCode: "011122-BB", part: "66554433-YY", defect: "Scratch", closed: "29 Jun 2026", duration: "1.5h", verdict: "PASS" },
-      { id: "60960", itemCode: "033344-CC", part: "88779900-XX", defect: "Broken", closed: "28 Jun 2026", duration: "3.0h", verdict: "PASS" },
+      { id: "61050", itemCode: "055555-CC", part: "55443322-XX", defect: "Noise", closed: "30 Jun 2026", duration: "1.8h", verdict: "PASS",
+        startRepair: "28 May 2026 15:02", endRepair: "28 May 2026 16:50" },
+      { id: "61010", itemCode: "022211-DA", part: "98887766-WW", defect: "Overheating", closed: "30 Jun 2026", duration: "2.1h", verdict: "PASS",
+        startRepair: "24 May 2026 08:55", endRepair: "24 May 2026 11:01" },
+      { id: "60980", itemCode: "099968-AA", part: "77665544-ZZ", defect: "Leakage", closed: "29 Jun 2026", duration: "2.5h", verdict: "PASS",
+        startRepair: "28 Jun 2026 09:00", endRepair: "28 Jun 2026 11:30" },
+      { id: "60970", itemCode: "011122-BB", part: "66554433-YY", defect: "Scratch", closed: "29 Jun 2026", duration: "1.5h", verdict: "PASS",
+        startRepair: "28 Jun 2026 13:00", endRepair: "28 Jun 2026 14:30" },
+      { id: "60960", itemCode: "033344-CC", part: "88779900-XX", defect: "Broken", closed: "28 Jun 2026", duration: "3.0h", verdict: "PASS",
+        startRepair: "27 Jun 2026 08:00", endRepair: "27 Jun 2026 11:00" },
     ];
 
     let currentTicketId = null;
@@ -1739,7 +1744,10 @@
       const rows = historyList.map(h => `
     <tr>
       <td class="mono">${h.id}</td><td class="mono">${h.itemCode}</td><td class="mono">${h.part}</td>
-      <td>${h.defect}</td><td>${h.closed}</td><td>${h.duration}</td><td><span class="pass-tag">${h.verdict}</span></td>
+      <td>${h.defect}</td>
+      <td style="font-size:11.5px;color:var(--steel);white-space:nowrap;">${h.startRepair || '<span style="color:var(--muted-2);">\u2014</span>'}</td>
+      <td style="font-size:11.5px;color:var(--green);white-space:nowrap;">${h.endRepair || '<span style="color:var(--muted-2);">\u2014</span>'}</td>
+      <td>${h.closed}</td><td>${h.duration}</td><td><span class="pass-tag">${h.verdict}</span></td>
     </tr>`).join('');
       return `
   <div class="grid-4">
@@ -1750,7 +1758,7 @@
   </div>
   <div class="panel"><div class="panel-body" style="padding:0;">
     <table>
-      <thead><tr><th>WO</th><th>Item</th><th>Part</th><th>Defect</th><th>Closed</th><th>Review Time</th><th>Verdict</th></tr></thead>
+      <thead><tr><th>WO</th><th>Item</th><th>Part</th><th>Defect</th><th style="color:var(--steel);">Start Repair</th><th style="color:var(--green);">End Repair</th><th>Closed</th><th>Review Time</th><th>Verdict</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
   </div></div>`;

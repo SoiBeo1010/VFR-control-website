@@ -297,6 +297,7 @@
             width: 16px;
             text-align: center;
             font-size: 14px;
+            color: var(--good);
         }
 
         .sb-item .bd {
@@ -1531,26 +1532,41 @@
 
     function initializeTickets() {
         inspectionData.forEach((ticket, index) => {
-            // Assign diverse initial status states for demonstration
             let status = 'Waiting Accept';
             let repairSeconds = 0;
             let repairRunning = false;
             let checklist = ['Check defect area', 'Perform corrective action', 'Functional inspection', 'Clean item'];
             
-            if (index === 0) {
-                status = 'Waiting Accept';
-            } else if (index === 1) {
-                status = 'In Progress';
-                repairSeconds = 4325; // 01:12:05
-                repairRunning = true;
-            } else if (index === 2) {
-                status = 'Paused';
-                repairSeconds = 1800; // 00:30:00
-            } else if (index === 3) {
+            if (ticket.end_repair) {
                 status = 'Completed';
-                repairSeconds = 3600;
-            } else if (index === 4) {
-                status = 'Overdue';
+                if (ticket.start_repair) {
+                    const diffMs = new Date(ticket.end_repair) - new Date(ticket.start_repair);
+                    repairSeconds = Math.max(0, Math.floor(diffMs / 1000));
+                } else {
+                    repairSeconds = 3600;
+                }
+            } else if (ticket.start_repair) {
+                status = 'In Progress';
+                repairRunning = true;
+                const diffMs = new Date() - new Date(ticket.start_repair);
+                repairSeconds = Math.max(0, Math.floor(diffMs / 1000));
+            } else {
+                // Fallback to legacy index-based demo statuses
+                if (index === 0) {
+                    status = 'Waiting Accept';
+                } else if (index === 1) {
+                    status = 'In Progress';
+                    repairSeconds = 4325; // 01:12:05
+                    repairRunning = true;
+                } else if (index === 2) {
+                    status = 'Paused';
+                    repairSeconds = 1800; // 00:30:00
+                } else if (index === 3) {
+                    status = 'Completed';
+                    repairSeconds = 3600;
+                } else if (index === 4) {
+                    status = 'Overdue';
+                }
             }
 
             ticketsState[ticket.id] = {
@@ -1837,6 +1853,12 @@
                             <div class="wo-id"><div class="k">Ticket ID</div><div class="v">${t.id}</div></div>
                             <div class="wo-id"><div class="k">Item Code</div><div class="v">${t.itemCode}</div></div>
                             <div class="wo-id"><div class="k">Stage</div><div class="v" style="font-family:'Inter';">${t.source ? t.source.inspectionStage : 'Final'}</div></div>
+                            ${t.supplement_request_code ? `
+                                <div class="wo-id" style="background:#1b4d3e; color:#fff; cursor:pointer;" onclick="event.stopPropagation(); if (parent && parent.viewSupplementRequestDetail) { parent.viewSupplementRequestDetail('${t.supplement_request_code}'); } else { alert('Supplement request: ${t.supplement_request_code}'); }">
+                                    <div class="k" style="color:#fff;">Supplement</div>
+                                    <div class="v" style="color:#fff; font-weight:700;">🔗 ${t.supplement_request_code}</div>
+                                </div>
+                            ` : ''}
                         </div>
                         <span class="status-chip ${statusClass(state.status)}">${state.status}</span>
                     </div>
@@ -2020,21 +2042,43 @@
                     <div class="panel">
                         <div class="panel-body">
                             <div class="sect-title">Supplement Part Status</div>
-                            ${t.supplement && t.supplement.needed ? `
+                            ${(t.supplement_request_code || (t.supplement && t.supplement.needed)) ? `
                                 <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
-                                    <div style="width:10px; height:10px; border-radius:50%; background:${t.supplement.status === 'waiting' ? '#f59e0b' : 'var(--good)'};"></div>
-                                    <span style="font-size:13px; font-weight:700; color:${t.supplement.status === 'waiting' ? '#d97706' : 'var(--good)'};">
-                                        ${t.supplement.status === 'waiting' ? 'Awaiting stock' : 'Stock arrived'}
+                                    <div style="width:10px; height:10px; border-radius:50%; background:${(t.repair_status === 'IN_REPAIR' || (t.supplement && t.supplement.status !== 'waiting')) ? 'var(--good)' : '#f59e0b'};"></div>
+                                    <span style="font-size:13px; font-weight:700; color:${(t.repair_status === 'IN_REPAIR' || (t.supplement && t.supplement.status !== 'waiting')) ? 'var(--good)' : '#d97706'}; font-family: 'Oswald', sans-serif; letter-spacing: 0.02em;">
+                                        ${t.repair_status === 'IN_REPAIR' ? 'ĐÃ CÓ HÀNG - BẮT ĐẦU SỬA (IN_REPAIR)' : 
+                                          t.repair_status === 'WAITING_MATERIAL' ? 'ĐANG CHỜ NVL (WAITING_MATERIAL)' : 
+                                          (t.supplement && t.supplement.status === 'waiting' ? 'Awaiting stock' : 'Stock arrived')}
                                     </span>
                                 </div>
                                 <div class="field-grid" style="grid-template-columns: 1fr; gap:6px;">
-                                    <div><div class="fk">Supplement Part</div><div class="fv" style="font-size:13px;">${t.supplement.partName}</div></div>
-                                    <div><div class="fk">Qty Requested</div><div class="fv">${t.supplement.qty} pcs</div></div>
-                                    <div><div class="fk">${t.supplement.status === 'waiting' ? 'ETA' : 'Storage Bin'}</div><div class="fv mono" style="font-size:13px;">${t.supplement.status === 'waiting' ? (t.supplement.eta || 'Pending') : (t.supplement.location || 'Bin B-12')}</div></div>
+                                    ${t.supplement_request_code ? `
+                                        <div>
+                                            <div class="fk">Supplement Request Code</div>
+                                            <div class="fv">
+                                                <a href="#" style="color:var(--amber); font-weight:700; text-decoration:underline; cursor:pointer;" onclick="if (parent && parent.viewSupplementRequestDetail) { parent.viewSupplementRequestDetail('${t.supplement_request_code}'); } else { alert('Supplement request: ${t.supplement_request_code}'); } return false;">
+                                                    ${t.supplement_request_code}
+                                                </a>
+                                            </div>
+                                        </div>
+                                    ` : ''}
+                                    ${t.supplement && t.supplement.partName ? `<div><div class="fk">Supplement Part</div><div class="fv" style="font-size:13px;">${t.supplement.partName}</div></div>` : ''}
+                                    ${t.supplement && t.supplement.qty ? `<div><div class="fk">Qty Requested</div><div class="fv">${t.supplement.qty} pcs</div></div>` : ''}
+                                    ${t.repair_status_updated_at ? `<div><div class="fk">Last Synced</div><div class="fv mono" style="font-size:12px;">${t.repair_status_updated_at.replace('T', ' ').substring(0,19)}</div></div>` : ''}
                                 </div>
                             ` : `
                                 <div style="font-size:13px; color:var(--txt-dim);">No supplementary material parts needed for this repair task.</div>
                             `}
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <div class="panel-body">
+                            <div class="sect-title">Repair Process Logs</div>
+                            <div class="field-grid">
+                                <div><div class="fk">Start Repair</div><div class="fv mono" style="font-size:12px; color:var(--primary-color); font-weight: 600;">${t.start_repair ? t.start_repair.replace('T', ' ').substring(0, 19) : '—'}</div></div>
+                                <div><div class="fk">End Repair</div><div class="fv mono" style="font-size:12px; color:var(--good); font-weight: 600;">${t.end_repair ? t.end_repair.replace('T', ' ').substring(0, 19) : '—'}</div></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -2069,16 +2113,36 @@
         showToast(`Location successfully updated at ${loc}`);
     }
 
-    function scanStartRepair(id) {
+    async function scanStartRepair(id) {
         const ticket = ticketsState[id];
         if (!ticket) return;
         
-        ticket.status = "In Progress";
-        ticket.repairRunning = true;
-        updateSidebarBadges();
-        
-        showToast('Repair started. Time tracking is running.');
-        go('working', id);
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch('/api/production-worker/start-repair', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ ticket_id: id })
+            });
+            if (response.ok) {
+                const resData = await response.json();
+                ticket.meta.start_repair = resData.start_repair;
+                ticket.status = "In Progress";
+                ticket.repairRunning = true;
+                updateSidebarBadges();
+                showToast('Repair started. Time tracking is running.');
+                go('working', id);
+            } else {
+                const err = await response.json();
+                showToast('Error starting repair: ' + (err.detail || 'unknown'));
+            }
+        } catch (e) {
+            console.error(e);
+            showToast('Network error starting repair.');
+        }
     }
 
     function stopRepair(id) {
@@ -2406,7 +2470,7 @@
         }
     }
 
-    function confirmComplete() {
+    async function confirmComplete() {
         closeModal('modalComplete');
         const ticket = ticketsState[currentTicketId];
         if (ticket) {
@@ -2415,14 +2479,34 @@
             const hours = parseInt(document.getElementById('completeHours').value) || 0;
             const mins = parseInt(document.getElementById('completeMinutes').value) || 0;
             
-            ticket.repairRunning = false;
-            ticket.status = 'Completed';
-            ticket.summary = summary;
-            ticket.result = resultVal;
-            ticket.repairSeconds = (hours * 3600) + (mins * 60);
-
-            showToast('Ticket completed.');
-            go('tickets');
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/production-worker/end-repair', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ ticket_id: currentTicketId })
+                });
+                if (response.ok) {
+                    const resData = await response.json();
+                    ticket.meta.end_repair = resData.end_repair;
+                    ticket.repairRunning = false;
+                    ticket.status = 'Completed';
+                    ticket.summary = summary;
+                    ticket.result = resultVal;
+                    ticket.repairSeconds = (hours * 3600) + (mins * 60);
+                    showToast('Ticket completed.');
+                    go('tickets');
+                } else {
+                    const err = await response.json();
+                    showToast('Error completing repair: ' + (err.detail || 'unknown'));
+                }
+            } catch (e) {
+                console.error(e);
+                showToast('Network error completing repair.');
+            }
         }
     }
 

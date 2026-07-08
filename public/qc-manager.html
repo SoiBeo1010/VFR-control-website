@@ -80,6 +80,7 @@
             margin-right: 1rem;
             width: 24px;
             text-align: center;
+            color: #10b981;
         }
 
         main {
@@ -1058,6 +1059,7 @@
             { field: 'wo_no', label: 'WO No.', type: 'text' },
             { field: 'item_code', label: 'Item Code', type: 'text' },
             { field: 'partcode', label: 'Partcode', type: 'text' },
+            { field: 'carcass_code', label: 'Carcass Code', type: 'text' },
             { field: 'wo_quantity', label: 'WO Quantity', type: 'number' },
             { field: 'inspector', label: 'Inspector', type: 'text' },
             { field: 'inspector_name', label: 'Inspector Name', type: 'text' },
@@ -1076,6 +1078,10 @@
             { field: 'repair_department', label: 'Repair Department', type: 'text' },
             { field: 'remark', label: 'Remark', type: 'text' },
             { field: 'status', label: 'Status', type: 'text' },
+            { field: 'repair_status', label: 'Repair Status', type: 'text' },
+            { field: 'supplement_request_code', label: 'Supplement Request Code', type: 'text' },
+            { field: 'start_repair', label: 'Start Repair', type: 'text' },
+            { field: 'end_repair', label: 'End Repair', type: 'text' },
         ];
 
         const inspectionPageSize = 50;
@@ -1602,39 +1608,55 @@
 
             if (!inspections || inspections.length === 0) {
                 if (!append) {
-                    container.innerHTML = '<tr><td colspan="24" class="empty-state">No inspections found</td></tr>';
+                    container.innerHTML = '<tr><td colspan="27" class="empty-state">No inspections found</td></tr>';
                 }
                 return;
             }
 
-            const rowsHtml = inspections.map(inspection => `
-                <tr>
-                    <td>${inspection.id ?? 'N/A'}</td>
-                    <td>${inspection.branch_itw || 'N/A'}</td>
-                    <td>${inspection.branch_fgw || 'N/A'}</td>
-                    <td>${inspection.wo_no || 'N/A'}</td>
-                    <td>${inspection.item_code || 'N/A'}</td>
-                    <td>${inspection.partcode || 'N/A'}</td>
-                    <td>${inspection.wo_quantity ?? 0}</td>
-                    <td>${inspection.inspector || 'N/A'}</td>
-                    <td>${inspection.inspector_name || 'N/A'}</td>
-                    <td>${inspection.inspector_dept || 'N/A'}</td>
-                    <td>${inspection.inspection_stage || 'N/A'}</td>
-                    <td>${inspection.inspected_date || 'N/A'}</td>
-                    <td>${inspection.inspected_time || 'N/A'}</td>
-                    <td>${inspection.inspected_qty ?? 0}</td>
-                    <td>${inspection.pass_qty ?? 0}</td>
-                    <td>${inspection.fail_qty ?? 0}</td>
-                    <td><span class="inline-badge ${Number(inspection.quarantine) ? 'badge-fail' : 'badge-pass'}">${Number(inspection.quarantine) ? '1' : '0'}</span></td>
-                    <td>${inspection.defect_code || 'N/A'}</td>
-                    <td>${inspection.defect_category || 'N/A'}</td>
-                    <td>${inspection.defect_owner || 'N/A'}</td>
-                    <td>${inspection.inspector_recommend || 'N/A'}</td>
-                    <td>${inspection.repair_department || 'N/A'}</td>
-                    <td>${inspection.remark || ''}</td>
-                    <td><span class="inline-badge ${inspection.status === 'Fail' ? 'badge-fail' : inspection.status === 'Pending' ? 'badge-pending' : 'badge-pass'}">${inspection.status || 'Pass'}</span></td>
-                </tr>
-            `).join('');
+            const rowsHtml = inspections.map(inspection => {
+                let repairStatusBadge = '<span class="inline-badge" style="background:#e5e7eb; color:#4b5563;">Chưa yêu cầu</span>';
+                if (inspection.repair_status === 'WAITING_MATERIAL') {
+                    repairStatusBadge = '<span class="inline-badge badge-pending">Đang chờ NVL</span>';
+                } else if (inspection.repair_status === 'IN_REPAIR') {
+                    repairStatusBadge = '<span class="inline-badge badge-pass">Đã có hàng - Bắt đầu sửa</span>';
+                }
+                
+                const supplementRequestLink = inspection.supplement_request_code ?
+                    `<a href="#" style="color:var(--amber); font-weight:bold; text-decoration:underline;" onclick="viewSupplementRequestDetail('${inspection.supplement_request_code}')">${inspection.supplement_request_code}</a>` :
+                    'N/A';
+
+                return `
+                    <tr>
+                        <td>${inspection.id ?? 'N/A'}</td>
+                        <td>${inspection.branch_itw || 'N/A'}</td>
+                        <td>${inspection.branch_fgw || 'N/A'}</td>
+                        <td>${inspection.wo_no || 'N/A'}</td>
+                        <td>${inspection.item_code || 'N/A'}</td>
+                        <td>${inspection.partcode || 'N/A'}</td>
+                        <td>${inspection.carcass_code || 'N/A'}</td>
+                        <td>${inspection.wo_quantity ?? 0}</td>
+                        <td>${inspection.inspector || 'N/A'}</td>
+                        <td>${inspection.inspector_name || 'N/A'}</td>
+                        <td>${inspection.inspector_dept || 'N/A'}</td>
+                        <td>${inspection.inspection_stage || 'N/A'}</td>
+                        <td>${inspection.inspected_date || 'N/A'}</td>
+                        <td>${inspection.inspected_time || 'N/A'}</td>
+                        <td>${inspection.inspected_qty ?? 0}</td>
+                        <td>${inspection.pass_qty ?? 0}</td>
+                        <td>${inspection.fail_qty ?? 0}</td>
+                        <td><span class="inline-badge ${Number(inspection.quarantine) ? 'badge-fail' : 'badge-pass'}">${Number(inspection.quarantine) ? '1' : '0'}</span></td>
+                        <td>${inspection.defect_code || 'N/A'}</td>
+                        <td>${inspection.defect_category || 'N/A'}</td>
+                        <td>${inspection.defect_owner || 'N/A'}</td>
+                        <td>${inspection.inspector_recommend || 'N/A'}</td>
+                        <td>${inspection.repair_department || 'N/A'}</td>
+                        <td>${inspection.remark || ''}</td>
+                        <td><span class="inline-badge ${inspection.status === 'Fail' ? 'badge-fail' : inspection.status === 'Pending' ? 'badge-pending' : 'badge-pass'}">${inspection.status || 'Pass'}</span></td>
+                        <td>${repairStatusBadge}</td>
+                        <td>${supplementRequestLink}</td>
+                    </tr>
+                `;
+            }).join('');
 
             if (append) {
                 container.insertAdjacentHTML('beforeend', rowsHtml);
@@ -2418,6 +2440,118 @@
                 </div>
             );
         }
+
+        async function viewSupplementRequestDetail(requestCode) {
+            const existing = document.getElementById('supplementDetailModal');
+            if (existing) existing.remove();
+
+            const modal = document.createElement('div');
+            modal.id = 'supplementDetailModal';
+            modal.style.position = 'fixed';
+            modal.style.top = '0';
+            modal.style.left = '0';
+            modal.style.width = '100vw';
+            modal.style.height = '100vh';
+            modal.style.backgroundColor = 'rgba(0, 0, 0, 0.4)';
+            modal.style.backdropFilter = 'blur(4px)';
+            modal.style.display = 'flex';
+            modal.style.alignItems = 'center';
+            modal.style.justifyContent = 'center';
+            modal.style.zIndex = '99999';
+
+            modal.innerHTML = `
+                <div style="background: white; border-radius: 12px; width: 800px; max-width: 90%; max-height: 85vh; display: flex; flex-direction: column; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); overflow: hidden; color: #1f2937;">
+                    <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; background: #1b4d3e; color: white;">
+                        <h3 style="margin: 0; font-size: 1.25rem; font-family: 'Oswald', sans-serif;">Supplement Request Details: ${requestCode}</h3>
+                        <button onclick="document.getElementById('supplementDetailModal').remove()" style="background: transparent; border: none; color: white; font-size: 1.5rem; cursor: pointer; display: flex; align-items: center; justify-content: center;">&times;</button>
+                    </div>
+                    <div id="supplementModalBody" style="padding: 1.5rem; overflow-y: auto; flex: 1;">
+                        <div style="text-align: center; padding: 2rem; color: #6b7280;">
+                            <span style="display:inline-block; animation: modal-pulse 1.5s infinite;">⏳</span> Loading request details...
+                        </div>
+                    </div>
+                    <div style="padding: 1rem 1.5rem; border-top: 1px solid #e5e7eb; background: #f9fafb; display: flex; justify-content: flex-end;">
+                        <button onclick="document.getElementById('supplementDetailModal').remove()" style="padding: 0.5rem 1rem; background: #374151; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">Close</button>
+                    </div>
+                </div>
+                <style>
+                    @keyframes modal-pulse {
+                        0% { opacity: 0.5; }
+                        50% { opacity: 1; }
+                        100% { opacity: 0.5; }
+                    }
+                </style>
+            `;
+            document.body.appendChild(modal);
+
+            try {
+                const res = await fetch(`/api/supplement-requests/${requestCode}`);
+                if (!res.ok) throw new Error('Failed to fetch supplement request details');
+                const data = await res.json();
+                
+                const m = data.master || {};
+                const items = data.items || [];
+                
+                let itemsHtml = '';
+                if (items.length === 0) {
+                    itemsHtml = '<tr><td colspan="8" style="text-align:center; padding: 1.5rem; color:#6b7280;">No materials listed</td></tr>';
+                } else {
+                    items.forEach((item, idx) => {
+                        itemsHtml += `
+                            <tr>
+                                <td style="padding: 0.75rem 1rem; border-bottom: 1px solid #e5e7eb;">${idx + 1}</td>
+                                <td style="padding: 0.75rem 1rem; border-bottom: 1px solid #e5e7eb; font-family: monospace;">${item['Material Code'] || 'N/A'}</td>
+                                <td style="padding: 0.75rem 1rem; border-bottom: 1px solid #e5e7eb;">${item['Material Name'] || 'N/A'}</td>
+                                <td style="padding: 0.75rem 1rem; border-bottom: 1px solid #e5e7eb; text-align: center;">${item['Unit'] || 'N/A'}</td>
+                                <td style="padding: 0.75rem 1rem; border-bottom: 1px solid #e5e7eb; text-align: right; font-weight: 600;">${item['Supplement Qty'] || 0}</td>
+                                <td style="padding: 0.75rem 1rem; border-bottom: 1px solid #e5e7eb; text-align: center; font-weight: 600;">${item['HOD'] || 'Pending'}</td>
+                                <td style="padding: 0.75rem 1rem; border-bottom: 1px solid #e5e7eb; text-align: center; font-weight: 600;">${item['Related HOD'] || 'Pending'}</td>
+                                <td style="padding: 0.75rem 1rem; border-bottom: 1px solid #e5e7eb; text-align: center; font-weight: 600;">${item['BOD'] || 'Pending'}</td>
+                            </tr>
+                        `;
+                    });
+                }
+                
+                document.getElementById('supplementModalBody').innerHTML = `
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1.5rem; background: #f3f4f6; padding: 1rem; border-radius: 8px; font-size: 0.875rem;">
+                        <div><strong>Request Code:</strong> ${m.requestCode || requestCode}</div>
+                        <div><strong>Status:</strong> <span style="font-weight:700; color: #1b4d3e;">${m.status || 'Pending'}</span></div>
+                        <div><strong>Request Dept:</strong> ${m.requestDept || 'N/A'}</div>
+                        <div><strong>Related Dept:</strong> ${m.relatedDept || 'N/A'}</div>
+                        <div><strong>Create By:</strong> ${m.createBy || 'N/A'}</div>
+                        <div><strong>Create Date:</strong> ${m.createDate || 'N/A'}</div>
+                        <div style="grid-column: 1 / -1;"><strong>Reason:</strong> ${m.reasonToRequest || 'N/A'}</div>
+                    </div>
+                    <div style="font-weight: bold; margin-bottom: 0.5rem; font-family: 'Oswald', sans-serif;">Materials Required:</div>
+                    <div style="overflow-x: auto; border: 1px solid #e5e7eb; border-radius: 8px;">
+                        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.875rem;">
+                            <thead>
+                                <tr style="background: #f9fafb; border-bottom: 2px solid #e5e7eb;">
+                                    <th style="padding: 0.75rem 1rem;">No.</th>
+                                    <th style="padding: 0.75rem 1rem;">Material Code</th>
+                                    <th style="padding: 0.75rem 1rem;">Material Name</th>
+                                    <th style="padding: 0.75rem 1rem; text-align: center;">Unit</th>
+                                    <th style="padding: 0.75rem 1rem; text-align: right;">Qty</th>
+                                    <th style="padding: 0.75rem 1rem; text-align: center;">HOD</th>
+                                    <th style="padding: 0.75rem 1rem; text-align: center;">Rel HOD</th>
+                                    <th style="padding: 0.75rem 1rem; text-align: center;">BOD</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${itemsHtml}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            } catch (err) {
+                document.getElementById('supplementModalBody').innerHTML = `
+                    <div style="padding: 1.5rem; background: #fee2e2; color: #ef4444; border-radius: 8px; font-weight: 600;">
+                        Error loading supplement request details: ${err.message}
+                    </div>
+                `;
+            }
+        }
+        window.viewSupplementRequestDetail = viewSupplementRequestDetail;
 
         function initializeQcDashboard() {
             const root = document.getElementById('qc-dashboard-root');

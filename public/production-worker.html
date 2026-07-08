@@ -890,9 +890,10 @@
 
             scannedBarcode = val;
 
-            // Check if item is already under repair
+            // Check if item is already under repair locally or on the backend
             let underRepair = JSON.parse(localStorage.getItem('qms_under_repair') || '{}');
-            if (underRepair[val]) {
+            const found = inspectionData.find(item => item.id === val || item.itemCode === val);
+            if (underRepair[val] || (found && found.start_repair && !found.end_repair)) {
                 showUnderRepairScreen(val);
                 return;
             }
@@ -927,9 +928,10 @@
                 vf.style.borderColor = 'var(--primary-color)';
                 vf.style.background = '#fafbfc';
                 
-                // Check if item is already under repair
+                // Check if item is already under repair locally or on the backend
                 let underRepair = JSON.parse(localStorage.getItem('qms_under_repair') || '{}');
-                if (underRepair[val]) {
+                const foundScan = inspectionData.find(item => item.id === val || item.itemCode === val);
+                if (underRepair[val] || (foundScan && foundScan.start_repair && !foundScan.end_repair)) {
                     showUnderRepairScreen(val);
                 } else {
                     loadItemDetails(val);
@@ -1085,19 +1087,42 @@
             document.getElementById('step4-next-btn').style.display = 'none';
         }
 
-        function confirmStart() {
-            // Save active repair state
+        async function confirmStart() {
+            // Save active repair state locally
             let underRepair = JSON.parse(localStorage.getItem('qms_under_repair') || '{}');
             const item = getItemData(scannedBarcode);
+            const startTimeStr = new Date().toISOString();
             underRepair[scannedBarcode] = {
                 id: scannedBarcode,
                 name: item.name,
                 defect: item.defect,
                 workers: workerCount,
                 location: activeLocation,
-                startTime: new Date().toISOString()
+                startTime: startTimeStr
             };
             localStorage.setItem('qms_under_repair', JSON.stringify(underRepair));
+
+            // Call backend API to record start timestamp
+            try {
+                const response = await fetch('/api/production-worker/start-repair', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ ticket_id: scannedBarcode })
+                });
+                if (!response.ok) {
+                    const errData = await response.json();
+                    console.error('Failed to save start repair to backend:', errData);
+                } else {
+                    console.log('Successfully saved start repair to backend');
+                    // Reload data
+                    await fetchInspectionData();
+                }
+            } catch (err) {
+                console.error('Network error saving start repair to backend:', err);
+            }
 
             // Hide stepper, show success screen
             document.getElementById('stepperContainer').style.display = 'none';
@@ -1115,9 +1140,24 @@
             document.getElementById('view-active-repair').style.display = 'none';
             document.getElementById('view-completion-success').style.display = 'none';
 
-            // Load repair data from localStorage
+            // Load repair data from localStorage with inspectionData fallback
             let underRepair = JSON.parse(localStorage.getItem('qms_under_repair') || '{}');
-            const repairData = underRepair[id];
+            let repairData = underRepair[id];
+            
+            if (!repairData) {
+                const found = inspectionData.find(item => item.id === id || item.itemCode === id);
+                if (found && found.start_repair) {
+                    repairData = {
+                        id: found.id,
+                        name: found.itemName || found.itemCode || 'Unknown Item',
+                        defect: found.defectDescription || found.defectCode || 'No defect description',
+                        workers: 1,
+                        location: found.location || 'Not Assigned',
+                        startTime: found.start_repair
+                    };
+                }
+            }
+            
             if (!repairData) return;
 
             scannedBarcode = id; // keep tracking of the current barcode
@@ -1156,7 +1196,7 @@
             document.getElementById('view-active-repair').style.display = 'block';
         }
 
-        function confirmEndRepair() {
+        async function confirmEndRepair() {
             if (elapsedTimerInterval) {
                 clearInterval(elapsedTimerInterval);
                 elapsedTimerInterval = null;
@@ -1182,6 +1222,28 @@
                 const seconds = diffSecs % 60;
                 const pad = (num) => String(num).padStart(2, '0');
                 elapsedText = `${pad(hours)}h ${pad(minutes)}m ${pad(seconds)}s`;
+            }
+
+            // Call backend API to record end timestamp
+            try {
+                const response = await fetch('/api/production-worker/end-repair', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ ticket_id: scannedBarcode })
+                });
+                if (!response.ok) {
+                    const errData = await response.json();
+                    console.error('Failed to save end repair to backend:', errData);
+                } else {
+                    console.log('Successfully saved end repair to backend');
+                    // Reload data
+                    await fetchInspectionData();
+                }
+            } catch (err) {
+                console.error('Network error saving end repair to backend:', err);
             }
 
             // Set the success message
