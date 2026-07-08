@@ -1529,36 +1529,43 @@
         go('dashboard');
     }
 
+    function getDefaultStatus(index) {
+        let status = 'Waiting Accept';
+        let repairSeconds = 0;
+        let repairRunning = false;
+        
+        if (index === 0) {
+            status = 'Waiting Accept';
+        } else if (index === 1) {
+            status = 'In Progress';
+            repairSeconds = 4325; // 01:12:05
+            repairRunning = true;
+        } else if (index === 2) {
+            status = 'Paused';
+            repairSeconds = 1800; // 00:30:00
+        } else if (index === 3) {
+            status = 'Completed';
+            repairSeconds = 3600;
+        } else if (index === 4) {
+            status = 'Overdue';
+        }
+        return { status, repairSeconds, repairRunning };
+    }
+
     function initializeTickets() {
+        const storedStatuses = readStoredRepairTicketStatuses();
+
         inspectionData.forEach((ticket, index) => {
-            // Assign diverse initial status states for demonstration
-            let status = 'Waiting Accept';
-            let repairSeconds = 0;
-            let repairRunning = false;
-            let checklist = ['Check defect area', 'Perform corrective action', 'Functional inspection', 'Clean item'];
-            
-            if (index === 0) {
-                status = 'Waiting Accept';
-            } else if (index === 1) {
-                status = 'In Progress';
-                repairSeconds = 4325; // 01:12:05
-                repairRunning = true;
-            } else if (index === 2) {
-                status = 'Paused';
-                repairSeconds = 1800; // 00:30:00
-            } else if (index === 3) {
-                status = 'Completed';
-                repairSeconds = 3600;
-            } else if (index === 4) {
-                status = 'Overdue';
-            }
+            const defaultState = getDefaultStatus(index);
+            const saved = storedStatuses[ticket.id] || storedStatuses[ticket.itemCode];
+            const storedStatus = applyStoredRepairStatus(saved, defaultState.status, defaultState.repairSeconds, defaultState.repairRunning);
 
             ticketsState[ticket.id] = {
                 meta: ticket,
-                status: status,
-                repairSeconds: repairSeconds,
-                repairRunning: repairRunning,
-                checklist: checklist,
+                status: storedStatus.status,
+                repairSeconds: storedStatus.repairSeconds,
+                repairRunning: storedStatus.repairRunning,
+                checklist: ['Check defect area', 'Perform corrective action', 'Functional inspection', 'Clean item'],
                 checklistChecked: [true, false, false, false],
                 notes: index === 1 ? "Disassembled casing. Rubber seal looks worn out. Awaiting replacement to finish installation." : "",
                 materials: [
@@ -1626,6 +1633,25 @@
     function go(view, ticketId) {
         if (ticketId) currentTicketId = ticketId;
         currentView = view;
+
+        // Re-sync with local storage to ensure fresh status when navigating
+        try {
+            const storedStatuses = readStoredRepairTicketStatuses();
+            inspectionData.forEach((ticket, index) => {
+                const defaultState = getDefaultStatus(index);
+                const saved = storedStatuses[ticket.id] || storedStatuses[ticket.itemCode];
+                const storedStatus = applyStoredRepairStatus(saved, defaultState.status, defaultState.repairSeconds, defaultState.repairRunning);
+                
+                const tState = ticketsState[ticket.id];
+                if (tState) {
+                    tState.status = storedStatus.status;
+                    tState.repairSeconds = storedStatus.repairSeconds;
+                    tState.repairRunning = storedStatus.repairRunning;
+                }
+            });
+        } catch (err) {
+            console.error('Failed to sync statuses on navigation:', err);
+        }
 
         // Update active sidebar nav
         document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('active'));
@@ -2553,6 +2579,40 @@
         localStorage.removeItem('role');
         window.location.href = '/index.html';
     }
+
+    // Listen to storage changes to update ticket status in real-time
+    window.addEventListener('storage', (e) => {
+        if (e.key === REPAIR_TICKET_STATUS_KEY) {
+            try {
+                const storedStatuses = readStoredRepairTicketStatuses();
+                inspectionData.forEach((ticket, index) => {
+                    const defaultState = getDefaultStatus(index);
+                    const saved = storedStatuses[ticket.id] || storedStatuses[ticket.itemCode];
+                    const storedStatus = applyStoredRepairStatus(saved, defaultState.status, defaultState.repairSeconds, defaultState.repairRunning);
+                    
+                    const tState = ticketsState[ticket.id];
+                    if (tState) {
+                        tState.status = storedStatus.status;
+                        tState.repairSeconds = storedStatus.repairSeconds;
+                        tState.repairRunning = storedStatus.repairRunning;
+                    }
+                });
+                updateSidebarBadges();
+                
+                // If the user is currently viewing the updated list/detail/working, refresh it
+                if (currentView === 'tickets') {
+                    const listContainer = document.getElementById('ticketsListContainer');
+                    if (listContainer) listContainer.innerHTML = renderTicketsListContent();
+                } else if (currentView === 'detail' && currentTicketId) {
+                    go('detail', currentTicketId);
+                } else if (currentView === 'working' && currentTicketId) {
+                    go('working', currentTicketId);
+                }
+            } catch (err) {
+                console.error('Failed to sync statuses on storage event:', err);
+            }
+        }
+    });
 
     loadInspectionData();
 </script>

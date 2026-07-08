@@ -1255,7 +1255,7 @@
             </div>
             <div class="sb-item" data-view="notif" onclick="go('notif')">
                 <span class="ic">&#128276;</span> Notifications 
-                <span class="bd">2</span>
+                <span class="bd" id="navNotifBadge">0</span>
             </div>
             <div class="sb-item" data-view="profile" onclick="go('profile')">
                 <span class="ic">&#128100;</span> Profile
@@ -1375,6 +1375,7 @@
     let stageFilter = "All Stages";
     let priorityFilter = "All Priorities";
     let sortOption = "default";
+    let timeFilter = "all";
 
     // User profile state
     let userProfile = {
@@ -1395,6 +1396,169 @@
         notif: { crumb: "Inbox", title: "Notifications" },
         profile: { crumb: "Account", title: "Profile" }
     };
+
+    const REPAIR_TICKET_STATUS_KEY = 'qms_repair_ticket_statuses';
+    const REPAIR_TICKET_STATUSES = new Set(['Waiting Accept', 'In Progress', 'Paused', 'Completed', 'Overdue']);
+    const REPAIR_STATUS_ALIASES = {
+        pending: 'Waiting Accept',
+        created: 'Waiting Accept',
+        assigned: 'Waiting Accept',
+        waiting: 'Waiting Accept',
+        'waiting accept': 'Waiting Accept',
+        inprogress: 'In Progress',
+        'in progress': 'In Progress',
+        paused: 'Paused',
+        completed: 'Completed',
+        complete: 'Completed',
+        overdue: 'Overdue'
+    };
+
+    function readStoredRepairTicketStatuses() {
+        try {
+            return JSON.parse(localStorage.getItem(REPAIR_TICKET_STATUS_KEY) || '{}');
+        } catch (error) {
+            console.error('Failed to read repair ticket statuses:', error);
+            return {};
+        }
+    }
+
+    function writeStoredRepairTicketStatuses(statuses) {
+        localStorage.setItem(REPAIR_TICKET_STATUS_KEY, JSON.stringify(statuses));
+    }
+
+    function readNotifications() {
+        try {
+            return JSON.parse(localStorage.getItem('qms_notifications') || '[]');
+        } catch(e) {
+            return [];
+        }
+    }
+
+    function addNotification(title, text) {
+        const list = readNotifications();
+        list.unshift({
+            title,
+            text,
+            timestamp: new Date().toISOString()
+        });
+        localStorage.setItem('qms_notifications', JSON.stringify(list));
+    }
+
+    function formatTimeAgo(timestamp) {
+        if (!timestamp) return 'Just now';
+        try {
+            const diffMs = Date.now() - new Date(timestamp);
+            const diffMins = Math.floor(diffMs / 60000);
+            if (diffMins < 1) return 'Just now';
+            if (diffMins < 60) return `${diffMins}m ago`;
+            const diffHours = Math.floor(diffMins / 60);
+            if (diffHours < 24) return `${diffHours}h ago`;
+            return new Date(timestamp).toLocaleDateString();
+        } catch(e) {
+            return 'Just now';
+        }
+    }
+
+    function clearNotifs() {
+        localStorage.removeItem('qms_notifications');
+        updateSidebarBadges();
+        if (currentView === 'notif') {
+            const container = document.getElementById('content');
+            if (container) container.innerHTML = renderNotif();
+        }
+    }
+
+    function normalizeRepairStatus(status) {
+        const raw = String(status || '').trim();
+        if (!raw) return null;
+        const key = raw.toLowerCase().replace(/[-_]+/g, ' ');
+        return REPAIR_STATUS_ALIASES[key] || (REPAIR_TICKET_STATUSES.has(raw) ? raw : null);
+    }
+
+    function secondsSince(isoDate) {
+        const timestamp = Date.parse(isoDate);
+        if (!Number.isFinite(timestamp)) return 0;
+        return Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
+    }
+
+    function startTimeFromSeconds(seconds) {
+        return new Date(Date.now() - Math.max(0, Number(seconds) || 0) * 1000).toISOString();
+    }
+
+    function applyStoredRepairStatus(saved, fallbackStatus, fallbackSeconds, fallbackRunning) {
+        if (!saved) {
+            return {
+                status: fallbackStatus,
+                repairSeconds: fallbackSeconds,
+                repairRunning: fallbackRunning,
+                updatedAt: null
+            };
+        }
+
+        const status = normalizeRepairStatus(saved.status) || fallbackStatus;
+        const repairRunning = typeof saved.repairRunning === 'boolean'
+            ? saved.repairRunning
+            : status === 'In Progress';
+        let repairSeconds = Number.isFinite(Number(saved.repairSeconds))
+            ? Math.max(0, Math.floor(Number(saved.repairSeconds)))
+            : fallbackSeconds;
+
+        if (repairRunning && saved.startedAt) {
+            repairSeconds = Math.max(repairSeconds, secondsSince(saved.startedAt));
+        }
+
+        return { status, repairSeconds, repairRunning, updatedAt: saved.updatedAt || null };
+    }
+
+    function persistTicketStatus(id, extra = {}) {
+        const ticket = ticketsState[id];
+        if (!ticket) return;
+
+        const statuses = readStoredRepairTicketStatuses();
+        const previous = statuses[id] || {};
+        const oldStatus = previous.status || 'Waiting Accept';
+        const newStatus = ticket.status;
+
+        const next = {
+            ...previous,
+            ...extra,
+            status: ticket.status,
+            repairRunning: ticket.repairRunning,
+            repairSeconds: ticket.repairSeconds,
+            updatedAt: new Date().toISOString()
+        };
+
+        if (ticket.repairRunning) {
+            next.startedAt = extra.startedAt || startTimeFromSeconds(ticket.repairSeconds);
+        }
+        if (ticket.status === 'Completed') {
+            next.completedAt = extra.completedAt || new Date().toISOString();
+        }
+
+        statuses[id] = next;
+        
+        // Also persist under itemCode if available
+        if (ticket.meta && ticket.meta.itemCode) {
+            statuses[ticket.meta.itemCode] = next;
+        }
+
+        writeStoredRepairTicketStatuses(statuses);
+        
+        // Also update local ticket state
+        ticket.updatedAt = next.updatedAt;
+        if (ticket.status === 'Completed') {
+            ticket.completedAt = next.completedAt;
+        }
+
+        // Add notification if status changed
+        if (oldStatus !== newStatus) {
+            addNotification(
+                `Ticket ${id} Status Changed`,
+                `Ticket status updated from "${oldStatus}" to "${newStatus}" by Production Manager.`
+            );
+            updateSidebarBadges();
+        }
+    }
 
     /* ================= MOCK/COMPLETED HISTORY DATA ================= */
     const staticHistory = [
@@ -1496,36 +1660,44 @@
         go('dashboard');
     }
 
+    function getDefaultStatus(index) {
+        let status = 'Waiting Accept';
+        let repairSeconds = 0;
+        let repairRunning = false;
+        
+        if (index === 0) {
+            status = 'Waiting Accept';
+        } else if (index === 1) {
+            status = 'In Progress';
+            repairSeconds = 4325; // 01:12:05
+            repairRunning = true;
+        } else if (index === 2) {
+            status = 'Paused';
+            repairSeconds = 1800; // 00:30:00
+        } else if (index === 3) {
+            status = 'Completed';
+            repairSeconds = 3600;
+        } else if (index === 4) {
+            status = 'Overdue';
+        }
+        return { status, repairSeconds, repairRunning };
+    }
+
     function initializeTickets() {
+        const storedStatuses = readStoredRepairTicketStatuses();
+
         inspectionData.forEach((ticket, index) => {
-            // Assign diverse initial status states for demonstration
-            let status = 'Waiting Accept';
-            let repairSeconds = 0;
-            let repairRunning = false;
-            let checklist = ['Check defect area', 'Perform corrective action', 'Functional inspection', 'Clean item'];
-            
-            if (index === 0) {
-                status = 'Waiting Accept';
-            } else if (index === 1) {
-                status = 'In Progress';
-                repairSeconds = 4325; // 01:12:05
-                repairRunning = true;
-            } else if (index === 2) {
-                status = 'Paused';
-                repairSeconds = 1800; // 00:30:00
-            } else if (index === 3) {
-                status = 'Completed';
-                repairSeconds = 3600;
-            } else if (index === 4) {
-                status = 'Overdue';
-            }
+            const defaultState = getDefaultStatus(index);
+            const saved = storedStatuses[ticket.id] || storedStatuses[ticket.itemCode];
+            const storedStatus = applyStoredRepairStatus(saved, defaultState.status, defaultState.repairSeconds, defaultState.repairRunning);
 
             ticketsState[ticket.id] = {
                 meta: ticket,
-                status: status,
-                repairSeconds: repairSeconds,
-                repairRunning: repairRunning,
-                checklist: checklist,
+                status: storedStatus.status,
+                repairSeconds: storedStatus.repairSeconds,
+                repairRunning: storedStatus.repairRunning,
+                updatedAt: storedStatus.updatedAt,
+                checklist: ['Check defect area', 'Perform corrective action', 'Functional inspection', 'Clean item'],
                 checklistChecked: [true, false, false, false],
                 notes: index === 1 ? "Disassembled casing. Rubber seal looks worn out. Awaiting replacement to finish installation." : "",
                 materials: [
@@ -1545,6 +1717,10 @@
         const count = Object.values(ticketsState).filter(t => t.status === 'Waiting Accept' || t.status === 'In Progress' || t.status === 'Paused' || t.status === 'Overdue').length;
         const navBadge = document.getElementById('navTicketBadge');
         if (navBadge) navBadge.textContent = count;
+
+        const notifs = readNotifications();
+        const navNotifBadge = document.getElementById('navNotifBadge');
+        if (navNotifBadge) navNotifBadge.textContent = notifs.length;
     }
 
     /* ================= AUTH FLOW REMOVED ================= */
@@ -1588,6 +1764,26 @@
     function go(view, ticketId) {
         if (ticketId) currentTicketId = ticketId;
         currentView = view;
+
+        // Re-sync with local storage to ensure fresh status when navigating
+        try {
+            const storedStatuses = readStoredRepairTicketStatuses();
+            inspectionData.forEach((ticket, index) => {
+                const defaultState = getDefaultStatus(index);
+                const saved = storedStatuses[ticket.id] || storedStatuses[ticket.itemCode];
+                const storedStatus = applyStoredRepairStatus(saved, defaultState.status, defaultState.repairSeconds, defaultState.repairRunning);
+                
+                const tState = ticketsState[ticket.id];
+                if (tState) {
+                    tState.status = storedStatus.status;
+                    tState.repairSeconds = storedStatus.repairSeconds;
+                    tState.repairRunning = storedStatus.repairRunning;
+                    tState.updatedAt = storedStatus.updatedAt;
+                }
+            });
+        } catch (err) {
+            console.error('Failed to sync statuses on navigation:', err);
+        }
 
         // Update active sidebar nav
         document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('active'));
@@ -1751,8 +1947,13 @@
                     <option ${priorityFilter === 'Medium' ? 'selected' : ''}>Medium</option>
                     <option ${priorityFilter === 'Low' ? 'selected' : ''}>Low</option>
                 </select>
+                <select id="timeFilterSelect" onchange="handleTimeFilter(this.value)">
+                    <option value="all" ${timeFilter === 'all' ? 'selected' : ''}>All Time</option>
+                    <option value="today" ${timeFilter === 'today' ? 'selected' : ''}>Changed Today</option>
+                </select>
                 <select id="sortSelect" onchange="handleSort(this.value)">
                     <option value="default" ${sortOption === 'default' ? 'selected' : ''}>Default Sort</option>
+                    <option value="updated" ${sortOption === 'updated' ? 'selected' : ''}>Recently Updated (Newest first)</option>
                     <option value="priority" ${sortOption === 'priority' ? 'selected' : ''}>Priority (High to Low)</option>
                     <option value="deadline" ${sortOption === 'deadline' ? 'selected' : ''}>Deadline (Soonest first)</option>
                     <option value="id" ${sortOption === 'id' ? 'selected' : ''}>Ticket ID (Newest first)</option>
@@ -1779,6 +1980,15 @@
             });
         } else if (sortOption === "id") {
             filtered.sort((a, b) => b.id.localeCompare(a.id));
+        } else if (sortOption === "updated") {
+            filtered.sort((a, b) => {
+                const ua = ticketsState[a.id].updatedAt || '';
+                const ub = ticketsState[b.id].updatedAt || '';
+                if (!ua && !ub) return 0;
+                if (!ua) return 1;
+                if (!ub) return -1;
+                return ub.localeCompare(ua);
+            });
         }
 
         if (filtered.length === 0) {
@@ -1791,6 +2001,12 @@
         }
         return filtered.map(t => {
             const state = ticketsState[t.id];
+            let formattedTime = '';
+            if (state.updatedAt) {
+                try {
+                    formattedTime = new Date(state.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                } catch(e) {}
+            }
             return `
                 <div class="wo-tag ${prClass(t.priority)}" onclick="go('detail', '${t.id}')">
                     <div class="wo-head">
@@ -1807,6 +2023,7 @@
                         <span>Department: <b>${t.fromDept || 'N/A'}</b></span>
                         <span>Priority: <b>${t.priority}</b></span>
                         <span>Inspector: <b>${t.source ? t.source.inspectorName : 'N/A'}</b></span>
+                        ${formattedTime ? `<span style="margin-left:auto; color:var(--txt-dim); font-size:11px;">Updated: <b>${formattedTime}</b></span>` : ''}
                     </div>
                 </div>
             `;
@@ -1837,7 +2054,24 @@
             const matchesPriority = priorityFilter === "All Priorities" || 
                 (t.priority && t.priority.toLowerCase() === priorityFilter.toLowerCase());
             
-            return matchesSearch && matchesStatus && matchesStage && matchesPriority;
+            // Time filter check (Changed Today)
+            let matchesTime = true;
+            if (timeFilter === 'today') {
+                matchesTime = false;
+                if (state.updatedAt) {
+                    try {
+                        const date = new Date(state.updatedAt);
+                        const today = new Date();
+                        matchesTime = date.getDate() === today.getDate() &&
+                            date.getMonth() === today.getMonth() &&
+                            date.getFullYear() === today.getFullYear();
+                    } catch(e) {
+                        matchesTime = false;
+                    }
+                }
+            }
+            
+            return matchesSearch && matchesStatus && matchesStage && matchesPriority && matchesTime;
         });
     }
 
@@ -1858,6 +2092,11 @@
 
     function handlePriorityFilter(val) {
         priorityFilter = val;
+        document.getElementById('ticketsListContainer').innerHTML = renderTicketsListContent();
+    }
+
+    function handleTimeFilter(val) {
+        timeFilter = val;
         document.getElementById('ticketsListContainer').innerHTML = renderTicketsListContent();
     }
 
@@ -2009,6 +2248,7 @@
         if (ticket) {
             ticket.status = "In Progress";
             ticket.repairRunning = true;
+            persistTicketStatus(id);
             showToast('Ticket accepted successfully — starting timer');
             go('working', id);
         }
@@ -2037,6 +2277,7 @@
         
         ticket.status = "In Progress";
         ticket.repairRunning = true;
+        persistTicketStatus(id);
         updateSidebarBadges();
         
         showToast('Repair started. Time tracking is running.');
@@ -2048,6 +2289,9 @@
         if (ticket) {
             ticket.repairRunning = false;
             ticket.status = 'Paused';
+            persistTicketStatus(id, {
+                pausedAt: new Date().toISOString()
+            });
             updateSidebarBadges();
             showToast('Repair stopped (Paused).');
             if (currentView === 'detail' && currentTicketId === id) {
@@ -2151,6 +2395,8 @@
         const ticket = ticketsState[id];
         if (ticket) {
             ticket.repairRunning = start;
+            ticket.status = start ? 'In Progress' : 'Paused';
+            persistTicketStatus(id);
             go('working', id);
         }
     }
@@ -2209,17 +2455,25 @@
     function renderHistory() {
         const completedTickets = Object.values(ticketsState).filter(t => t.status === "Completed");
         
-        const historyRows = completedTickets.map(h => `
-            <tr>
-                <td class="mono">${h.meta.id}</td>
-                <td class="mono">${h.meta.itemCode}</td>
-                <td>${h.meta.itemName || 'N/A'}</td>
-                <td>${h.meta.defectCode || 'N/A'}</td>
-                <td>05 Jul 2026</td>
-                <td>${formatTime(h.repairSeconds)}</td>
-                <td><span class="pass-tag">PASS</span></td>
-            </tr>
-        `).join('');
+        const historyRows = completedTickets.map(h => {
+            let completedDate = '05 Jul 2026';
+            if (h.completedAt) {
+                try {
+                    completedDate = new Date(h.completedAt).toLocaleDateString();
+                } catch(e) {}
+            }
+            return `
+                <tr>
+                    <td class="mono">${h.meta.id}</td>
+                    <td class="mono">${h.meta.itemCode}</td>
+                    <td>${h.meta.itemName || 'N/A'}</td>
+                    <td>${h.meta.defectCode || 'N/A'}</td>
+                    <td>${completedDate}</td>
+                    <td>${formatTime(h.repairSeconds)}</td>
+                    <td><span class="pass-tag">PASS</span></td>
+                </tr>
+            `;
+        }).join('');
 
         const staticHistoryRows = staticHistory.map(h => `
             <tr>
@@ -2270,24 +2524,54 @@
 
     // 6. NOTIFICATIONS VIEW
     function renderNotif() {
+        const notifs = readNotifications();
+        
+        let dynamicNotifsHtml = "";
+        if (notifs.length > 0) {
+            dynamicNotifsHtml = notifs.map((n, i) => {
+                const timeAgo = formatTimeAgo(n.timestamp);
+                return `
+                    <div style="${i > 0 ? 'border-top:1px solid var(--panel-line-soft); padding-top:14px;' : ''}">
+                        <div style="font-weight:600; font-size:14px; color:#1f2937;">${n.title}</div>
+                        <div style="font-size:12.5px; color:var(--txt-dim); margin-top:2px;">${n.text}</div>
+                        <div style="font-size:11px; color:#9ca3af; margin-top:4px;">${timeAgo}</div>
+                    </div>
+                `;
+            }).join('');
+        } else {
+            dynamicNotifsHtml = `
+                <div style="text-align:center; padding: 20px 0; color: var(--txt-dim); font-size: 13px;">
+                    No new status notifications.
+                </div>
+            `;
+        }
+
         return `
             <div class="panel">
-                <div class="panel-head"><h3>Notifications Inbox</h3></div>
+                <div class="panel-head" style="display:flex; justify-content:space-between; align-items:center;">
+                    <h3>Notifications Inbox</h3>
+                    ${notifs.length > 0 ? `<button class="btn-sm btn-ghost" onclick="clearNotifs()" style="font-size:11px; padding: 4px 8px; border: 1px solid var(--panel-line-soft); border-radius: 4px; cursor:pointer;">Clear All</button>` : ''}
+                </div>
                 <div class="panel-body" style="display:flex; flex-direction:column; gap:14px; padding: 22px;">
-                    <div>
-                        <div style="font-weight:600; font-size:14px; color:#1f2937;">Repair Ticket Assigned — INH-3-8395</div>
-                        <div style="font-size:12.5px; color:var(--txt-dim); margin-top:2px;">Finishing inspection failed for WO 8395. Critical defect owner: 2ASSY. Action: Sand & Repaint.</div>
-                        <div style="font-size:11px; color:#9ca3af; margin-top:4px;">5 minutes ago</div>
-                    </div>
-                    <div style="border-top:1px solid var(--panel-line-soft); padding-top:14px;">
-                        <div style="font-weight:600; font-size:14px; color:#1f2937;">Material Supplement Arrived — INH-4-8396</div>
-                        <div style="font-size:12.5px; color:var(--txt-dim); margin-top:2px;">Requested Rubber Seal Gaskets are now ready for pickup in Room 2 (Bin B-12).</div>
-                        <div style="font-size:11px; color:#9ca3af; margin-top:4px;">30 minutes ago</div>
-                    </div>
-                    <div style="border-top:1px solid var(--panel-line-soft); padding-top:14px;">
-                        <div style="font-weight:600; font-size:14px; color:#1f2937;">System Maintenance Complete</div>
-                        <div style="font-size:12.5px; color:var(--txt-dim); margin-top:2px;">The QMS Server database sync has completed. Data load speeds optimized.</div>
-                        <div style="font-size:11px; color:#9ca3af; margin-top:4px;">1 day ago</div>
+                    ${dynamicNotifsHtml}
+                    
+                    <div style="border-top:2px dashed var(--panel-line-soft); padding-top:14px; margin-top: 10px;">
+                        <h4 style="font-size:12px; text-transform:uppercase; color:#9ca3af; letter-spacing:0.5px; margin-bottom:12px;">System Broadcasts</h4>
+                        <div>
+                            <div style="font-weight:600; font-size:14px; color:#1f2937;">Repair Ticket Assigned — INH-3-8395</div>
+                            <div style="font-size:12.5px; color:var(--txt-dim); margin-top:2px;">Finishing inspection failed for WO 8395. Critical defect owner: 2ASSY. Action: Sand & Repaint.</div>
+                            <div style="font-size:11px; color:#9ca3af; margin-top:4px;">5 minutes ago</div>
+                        </div>
+                        <div style="border-top:1px solid var(--panel-line-soft); padding-top:14px; margin-top:14px;">
+                            <div style="font-weight:600; font-size:14px; color:#1f2937;">Material Supplement Arrived — INH-4-8396</div>
+                            <div style="font-size:12.5px; color:var(--txt-dim); margin-top:2px;">Requested Rubber Seal Gaskets are now ready for pickup in Room 2 (Bin B-12).</div>
+                            <div style="font-size:11px; color:#9ca3af; margin-top:4px;">30 minutes ago</div>
+                        </div>
+                        <div style="border-top:1px solid var(--panel-line-soft); padding-top:14px; margin-top:14px;">
+                            <div style="font-weight:600; font-size:14px; color:#1f2937;">System Maintenance Complete</div>
+                            <div style="font-size:12.5px; color:var(--txt-dim); margin-top:2px;">The QMS Server database sync has completed. Data load speeds optimized.</div>
+                            <div style="font-size:11px; color:#9ca3af; margin-top:4px;">1 day ago</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -2363,6 +2647,10 @@
             const reason = document.querySelector('input[name="pr"]:checked').value;
             ticket.repairRunning = false;
             ticket.status = 'Paused';
+            persistTicketStatus(currentTicketId, {
+                pauseReason: reason,
+                pausedAt: new Date().toISOString()
+            });
             showToast(`Repair paused: ${reason}`);
             go('working', currentTicketId);
         }
@@ -2382,6 +2670,11 @@
             ticket.summary = summary;
             ticket.result = resultVal;
             ticket.repairSeconds = (hours * 3600) + (mins * 60);
+            persistTicketStatus(currentTicketId, {
+                summary,
+                result: resultVal,
+                completedAt: new Date().toISOString()
+            });
 
             showToast('Ticket completed.');
             go('tickets');
@@ -2515,6 +2808,60 @@
         localStorage.removeItem('role');
         window.location.href = '/index.html';
     }
+
+    // Listen to storage changes to update ticket status in real-time
+    window.addEventListener('storage', (e) => {
+        if (e.key === REPAIR_TICKET_STATUS_KEY) {
+            try {
+                const storedStatuses = readStoredRepairTicketStatuses();
+                let hasChanges = false;
+                inspectionData.forEach((ticket, index) => {
+                    const defaultState = getDefaultStatus(index);
+                    const saved = storedStatuses[ticket.id] || storedStatuses[ticket.itemCode];
+                    const storedStatus = applyStoredRepairStatus(saved, defaultState.status, defaultState.repairSeconds, defaultState.repairRunning);
+                    
+                    const tState = ticketsState[ticket.id];
+                    if (tState) {
+                        const oldStatus = tState.status;
+                        const newStatus = storedStatus.status;
+                        
+                        tState.status = storedStatus.status;
+                        tState.repairSeconds = storedStatus.repairSeconds;
+                        tState.repairRunning = storedStatus.repairRunning;
+                        tState.updatedAt = storedStatus.updatedAt;
+                        if (saved && saved.completedAt) {
+                            tState.completedAt = saved.completedAt;
+                        }
+
+                        if (oldStatus !== newStatus) {
+                            hasChanges = true;
+                            addNotification(
+                                `Ticket ${ticket.id} Status Changed`,
+                                `Ticket status updated from "${oldStatus}" to "${newStatus}" by Production Worker.`
+                            );
+                        }
+                    }
+                });
+                
+                updateSidebarBadges();
+                
+                // If the user is currently viewing the updated list/detail/working, refresh it
+                if (currentView === 'tickets') {
+                    const listContainer = document.getElementById('ticketsListContainer');
+                    if (listContainer) listContainer.innerHTML = renderTicketsListContent();
+                } else if (currentView === 'detail' && currentTicketId) {
+                    go('detail', currentTicketId);
+                } else if (currentView === 'working' && currentTicketId) {
+                    go('working', currentTicketId);
+                } else if (currentView === 'notif') {
+                    const container = document.getElementById('content');
+                    if (container) container.innerHTML = renderNotif();
+                }
+            } catch (err) {
+                console.error('Failed to sync statuses on storage event:', err);
+            }
+        }
+    });
 
     loadInspectionData();
 </script>

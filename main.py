@@ -1411,6 +1411,36 @@ def get_repair_plans(current_user: dict = Depends(get_current_user), db: Session
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/api/production-worker/repair-plans/{plan_id}/start")
+def start_repair_plan(plan_id: int, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Start an assigned repair plan and mark it in progress."""
+    if current_user['role'] not in ('Production Worker', 'Production Manager'):
+        raise HTTPException(status_code=403, detail="Unauthorized")
+
+    try:
+        plan = db.query(RepairPlanDB).filter(RepairPlanDB.plan_id == plan_id).first()
+        if not plan:
+            raise HTTPException(status_code=404, detail="Repair plan not found")
+
+        if current_user['role'] == 'Production Worker' and plan.assigned_worker_id != current_user['user_id']:
+            raise HTTPException(status_code=403, detail="Repair plan is assigned to another worker")
+
+        if plan.status == "completed":
+            raise HTTPException(status_code=400, detail="Completed repair plans cannot be restarted")
+
+        plan.status = "in_progress"
+        db.commit()
+        db.refresh(plan)
+
+        return {"plan_id": plan.plan_id, "status": plan.status}
+
+    except HTTPException:
+        db.rollback()
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/api/production-worker/repair-completion")
 def complete_repair(completion: RepairCompletion, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
     """Complete repair and record details (Production Worker)"""
@@ -1646,7 +1676,6 @@ app.mount("/", StaticFiles(directory="public", html=True), name="static")
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=False)
-
 
 
 

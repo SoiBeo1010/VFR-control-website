@@ -687,6 +687,64 @@
         let activeLocation = '';
         let locInputMode = 'scan';
 
+        const REPAIR_TICKET_STATUS_KEY = 'qms_repair_ticket_statuses';
+
+        function readRepairTicketStatuses() {
+            try {
+                return JSON.parse(localStorage.getItem(REPAIR_TICKET_STATUS_KEY) || '{}');
+            } catch (error) {
+                console.error('Failed to read repair ticket statuses:', error);
+                return {};
+            }
+        }
+
+        function writeRepairTicketStatuses(statuses) {
+            localStorage.setItem(REPAIR_TICKET_STATUS_KEY, JSON.stringify(statuses));
+        }
+
+        function updateRepairTicketStatus(ticketId, status, details = {}) {
+            if (!ticketId) return;
+
+            const statuses = readRepairTicketStatuses();
+            
+            // Find all tickets that match either the ticketId or scannedBarcode or itemCode
+            const matchingTickets = inspectionData.filter(item => 
+                item.id === ticketId || 
+                item.itemCode === ticketId || 
+                (scannedBarcode && (item.id === scannedBarcode || item.itemCode === scannedBarcode))
+            );
+
+            // If we found matching tickets from inspectionData, update all of them
+            if (matchingTickets.length > 0) {
+                matchingTickets.forEach(t => {
+                    statuses[t.id] = {
+                        ...(statuses[t.id] || {}),
+                        ...details,
+                        status,
+                        updatedAt: new Date().toISOString()
+                    };
+                });
+            }
+
+            // Always update the explicit ticketId and scannedBarcode keys as well for safety
+            statuses[ticketId] = {
+                ...(statuses[ticketId] || {}),
+                ...details,
+                status,
+                updatedAt: new Date().toISOString()
+            };
+            if (scannedBarcode) {
+                statuses[scannedBarcode] = {
+                    ...(statuses[scannedBarcode] || {}),
+                    ...details,
+                    status,
+                    updatedAt: new Date().toISOString()
+                };
+            }
+
+            writeRepairTicketStatuses(statuses);
+        }
+
         // Load inspection data from public/inspection-data.json
         let inspectionData = [];
         async function fetchInspectionData() {
@@ -1089,15 +1147,25 @@
             // Save active repair state
             let underRepair = JSON.parse(localStorage.getItem('qms_under_repair') || '{}');
             const item = getItemData(scannedBarcode);
+            const ticketId = item.id || scannedBarcode;
+            const startedAt = new Date().toISOString();
             underRepair[scannedBarcode] = {
+                ticketId: ticketId,
                 id: scannedBarcode,
                 name: item.name,
                 defect: item.defect,
                 workers: workerCount,
                 location: activeLocation,
-                startTime: new Date().toISOString()
+                startTime: startedAt
             };
             localStorage.setItem('qms_under_repair', JSON.stringify(underRepair));
+            updateRepairTicketStatus(ticketId, 'In Progress', {
+                repairRunning: true,
+                repairSeconds: 0,
+                startedAt: startedAt,
+                workers: workerCount,
+                location: activeLocation
+            });
 
             // Hide stepper, show success screen
             document.getElementById('stepperContainer').style.display = 'none';
@@ -1165,6 +1233,8 @@
             // Retrieve repair data before deleting it
             let underRepair = JSON.parse(localStorage.getItem('qms_under_repair') || '{}');
             const repairData = underRepair[scannedBarcode];
+            const item = getItemData(scannedBarcode);
+            const ticketId = repairData && repairData.ticketId ? repairData.ticketId : (item.id || scannedBarcode);
 
             // Delete the repair process from the active list
             delete underRepair[scannedBarcode];
@@ -1182,6 +1252,16 @@
                 const seconds = diffSecs % 60;
                 const pad = (num) => String(num).padStart(2, '0');
                 elapsedText = `${pad(hours)}h ${pad(minutes)}m ${pad(seconds)}s`;
+                updateRepairTicketStatus(ticketId, 'Completed', {
+                    repairRunning: false,
+                    repairSeconds: diffSecs,
+                    completedAt: end.toISOString()
+                });
+            } else {
+                updateRepairTicketStatus(ticketId, 'Completed', {
+                    repairRunning: false,
+                    completedAt: new Date().toISOString()
+                });
             }
 
             // Set the success message
@@ -1217,6 +1297,13 @@
             localStorage.removeItem('role');
             window.location.href = '/index.html';
         }
+
+        // Listen for storage clear to reset worker workflow in real-time
+        window.addEventListener('storage', (e) => {
+            if (e.key === REPAIR_TICKET_STATUS_KEY && !localStorage.getItem(REPAIR_TICKET_STATUS_KEY)) {
+                resetWorkflow();
+            }
+        });
     </script>
 </body>
 
