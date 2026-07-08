@@ -64,10 +64,6 @@ class InspectionDB(Base):
     qty_passed = Column(Integer, default=0)
     qty_failed = Column(Integer, default=0)
     status = Column(String(50), default="pending")
-    repair_status = Column(String(50), nullable=True)
-    repair_status_updated_at = Column(DateTime, nullable=True)
-    start_repair = Column(String(100), nullable=True)
-    end_repair = Column(String(100), nullable=True)
 
 class DefectListDB(Base):
     __tablename__ = "defect_list"
@@ -137,48 +133,8 @@ class CostManagementDB(Base):
     amount = Column(Float)
     recorded_date = Column(DateTime, default=datetime.utcnow)
 
-class RepairCardSupplementLinkDB(Base):
-    __tablename__ = "repair_card_supplement_link"
-    link_id = Column(Integer, primary_key=True, index=True)
-    repair_card_id = Column(String(100), index=True, nullable=False)
-    supplement_request_code = Column(String(100), index=True, nullable=False)
-    wo_no = Column(String(100), nullable=False)
-    item_code = Column(String(100), nullable=False)
-    carcass_code = Column(String(100), nullable=True)
-    linked_at = Column(DateTime, default=datetime.utcnow)
-
-class NotificationDB(Base):
-    __tablename__ = "notifications"
-    id = Column(Integer, primary_key=True, index=True)
-    role = Column(String(50), nullable=False)  # "QC Manager" or "Production Manager"
-    title = Column(String(200), nullable=True)
-    message = Column(String(500), nullable=False)
-    created_date = Column(DateTime, default=datetime.utcnow)
-
 # Create all tables
 Base.metadata.create_all(bind=engine)
-
-# Auto-migration script for SQLite to add missing columns in inspections table
-try:
-    with engine.connect() as conn:
-        from sqlalchemy import text
-        cursor = conn.execute(text("PRAGMA table_info(inspections)"))
-        columns = [row[1] for row in cursor.fetchall()]
-        if "repair_status" not in columns:
-            conn.execute(text("ALTER TABLE inspections ADD COLUMN repair_status VARCHAR(50)"))
-            print("Migration: Added column 'repair_status' to inspections table.")
-        if "repair_status_updated_at" not in columns:
-            conn.execute(text("ALTER TABLE inspections ADD COLUMN repair_status_updated_at DATETIME"))
-            print("Migration: Added column 'repair_status_updated_at' to inspections table.")
-        if "start_repair" not in columns:
-            conn.execute(text("ALTER TABLE inspections ADD COLUMN start_repair VARCHAR(100)"))
-            print("Migration: Added column 'start_repair' to inspections table.")
-        if "end_repair" not in columns:
-            conn.execute(text("ALTER TABLE inspections ADD COLUMN end_repair VARCHAR(100)"))
-            print("Migration: Added column 'end_repair' to inspections table.")
-        conn.commit()
-except Exception as migration_err:
-    print(f"Auto-migration warning: {migration_err}")
 
 # Dependency
 def get_db():
@@ -283,12 +239,6 @@ INSPECTION_FIELDS = [
     "check_pass_date",
     "check_pass_minutes",
     "check_pass_hours",
-    "carcass_code",
-    "repair_status",
-    "repair_status_updated_at",
-    "supplement_request_code",
-    "start_repair",
-    "end_repair",
 ]
 
 # ============ UTILITY FUNCTIONS ============
@@ -548,12 +498,6 @@ def _normalize_inspection_record(record: Dict[str, Any], record_id: Optional[int
     normalized["check_pass_date"] = _serialize_datetime(normalized["check_pass_date"])
     normalized["check_pass_minutes"] = normalized["check_pass_minutes"] if normalized["check_pass_minutes"] not in (None, "") else ""
     normalized["check_pass_hours"] = normalized["check_pass_hours"] if normalized["check_pass_hours"] not in (None, "") else ""
-    normalized["carcass_code"] = record.get("carcass_code") or record.get("carcassCode") or ""
-    normalized["repair_status"] = record.get("repair_status") or record.get("repairStatus") or ""
-    normalized["repair_status_updated_at"] = _serialize_datetime(record.get("repair_status_updated_at") or record.get("repairStatusUpdatedAt"))
-    normalized["supplement_request_code"] = record.get("supplement_request_code") or record.get("supplementRequestCode") or ""
-    normalized["start_repair"] = _serialize_datetime(record.get("start_repair") or record.get("startRepair"))
-    normalized["end_repair"] = _serialize_datetime(record.get("end_repair") or record.get("endRepair"))
     normalized["id"] = _coerce_int(record_id if record_id is not None else record.get("id"), 0)
     normalized["source_file"] = source_file
     normalized["source_row"] = source_row
@@ -1059,25 +1003,9 @@ def get_notifications(current_user: dict = Depends(get_current_user), db: Sessio
         raise HTTPException(status_code=403, detail="Unauthorized")
     
     try:
+        inspections = db.query(InspectionDB).all()
         notifications = []
         
-        # 1. Fetch custom notifications
-        custom_notifs = db.query(NotificationDB).filter(NotificationDB.role == 'QC Manager').all()
-        for cn in custom_notifs:
-            notifications.append({
-                "notification_id": f"custom_{cn.id}",
-                "product_id": cn.title or "System",
-                "batch_number": "",
-                "inspection_stage": "System",
-                "status": "Notification",
-                "defect_count": 0,
-                "severity_count": 0,
-                "message": cn.message,
-                "created_date": cn.created_date.isoformat() if cn.created_date else None
-            })
-            
-        # 2. Fetch dynamic inspection notifications
-        inspections = db.query(InspectionDB).all()
         for inspection in inspections:
             defects = db.query(DefectListDB).filter(DefectListDB.inspection_id == inspection.inspection_id).all()
             if defects:
@@ -1093,8 +1021,6 @@ def get_notifications(current_user: dict = Depends(get_current_user), db: Sessio
                     "created_date": inspection.inspection_date.isoformat() if inspection.inspection_date else None
                 })
         
-        # Sort by date descending
-        notifications.sort(key=lambda x: x["created_date"] or "", reverse=True)
         return {"notifications": notifications}
     
     except Exception as e:
@@ -1259,19 +1185,12 @@ def get_inspection_control(
     current_user: dict = Depends(get_current_user), 
     limit: int = 50,
     offset: int = 0,
-    db: Session = Depends(get_db),
 ):
     """Get inspection control data with advanced filters from the shared file store."""
     if current_user['role'] != 'QC Manager':
         raise HTTPException(status_code=403, detail="Unauthorized")
     
     try:
-        # Automatically sync Supplement Requests and Repair Cards
-        try:
-            sync_repair_cards_and_supplement_requests(db)
-        except Exception as sync_err:
-            print(f"Sync error during dashboard fetch: {sync_err}")
-            
         params = dict(request.query_params) if request else {}
         excluded = {'limit', 'offset'}
         records = _apply_column_filters(_load_store(), params, excluded)
@@ -1492,127 +1411,35 @@ def get_repair_plans(current_user: dict = Depends(get_current_user), db: Session
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/api/production-worker/start-repair")
-def start_repair_timestamp(data: dict, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    """Record the start repair timestamp for a ticket in both JSON files and SQLite inspections table."""
-    if current_user['role'] not in ('Production Worker', 'Production Manager', 'QC Manager'):
+@app.post("/api/production-worker/repair-plans/{plan_id}/start")
+def start_repair_plan(plan_id: int, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Start an assigned repair plan and mark it in progress."""
+    if current_user['role'] not in ('Production Worker', 'Production Manager'):
         raise HTTPException(status_code=403, detail="Unauthorized")
 
-    ticket_id = data.get("ticket_id")
-    if not ticket_id:
-        raise HTTPException(status_code=400, detail="ticket_id is required")
-
-    now = datetime.utcnow().isoformat()
-    matched = False
-
-    # 1. Update JSON files
-    json_paths = [
-        Path("data/inspection-control.json"),
-        Path("public/inspection-data.json")
-    ]
-    for json_path in json_paths:
-        if json_path.exists():
-            try:
-                cards = json.loads(json_path.read_text(encoding="utf-8"))
-                for card in cards:
-                    if str(card.get("id")) == str(ticket_id) or str(card.get("wo_no")) == str(ticket_id):
-                        card["start_repair"] = now
-                        matched = True
-                json_path.write_text(json.dumps(cards, ensure_ascii=False, indent=2), encoding="utf-8")
-            except Exception as e:
-                print(f"Error updating start_repair in {json_path.name}: {e}")
-
-    # 2. Update SQLite database inspections table
     try:
-        if isinstance(ticket_id, str) and ticket_id.startswith("INH-"):
-            parts = ticket_id.split("-")
-            if len(parts) >= 3:
-                wo_candidate = parts[2]
-                db_inspection = db.query(InspectionDB).filter(
-                    (InspectionDB.wo_number == wo_candidate) |
-                    (InspectionDB.product_id == wo_candidate)
-                ).first()
-                if db_inspection:
-                    db_inspection.start_repair = now
-                    db.commit()
-                    matched = True
-        else:
-            db_inspection = db.query(InspectionDB).filter(
-                (InspectionDB.wo_number == str(ticket_id)) |
-                (InspectionDB.product_id == str(ticket_id))
-            ).first()
-            if db_inspection:
-                db_inspection.start_repair = now
-                db.commit()
-                matched = True
-    except Exception as dberr:
-        print(f"Error updating database start_repair: {dberr}")
+        plan = db.query(RepairPlanDB).filter(RepairPlanDB.plan_id == plan_id).first()
+        if not plan:
+            raise HTTPException(status_code=404, detail="Repair plan not found")
 
-    if not matched:
-        raise HTTPException(status_code=404, detail=f"Ticket '{ticket_id}' not found")
+        if current_user['role'] == 'Production Worker' and plan.assigned_worker_id != current_user['user_id']:
+            raise HTTPException(status_code=403, detail="Repair plan is assigned to another worker")
 
-    return {"ticket_id": ticket_id, "start_repair": now, "status": "recorded"}
+        if plan.status == "completed":
+            raise HTTPException(status_code=400, detail="Completed repair plans cannot be restarted")
 
-@app.post("/api/production-worker/end-repair")
-def end_repair_timestamp(data: dict, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    """Record the end repair timestamp for a ticket in both JSON files and SQLite inspections table."""
-    if current_user['role'] not in ('Production Worker', 'Production Manager', 'QC Manager'):
-        raise HTTPException(status_code=403, detail="Unauthorized")
+        plan.status = "in_progress"
+        db.commit()
+        db.refresh(plan)
 
-    ticket_id = data.get("ticket_id")
-    if not ticket_id:
-        raise HTTPException(status_code=400, detail="ticket_id is required")
+        return {"plan_id": plan.plan_id, "status": plan.status}
 
-    now = datetime.utcnow().isoformat()
-    matched = False
-
-    # 1. Update JSON files
-    json_paths = [
-        Path("data/inspection-control.json"),
-        Path("public/inspection-data.json")
-    ]
-    for json_path in json_paths:
-        if json_path.exists():
-            try:
-                cards = json.loads(json_path.read_text(encoding="utf-8"))
-                for card in cards:
-                    if str(card.get("id")) == str(ticket_id) or str(card.get("wo_no")) == str(ticket_id):
-                        card["end_repair"] = now
-                        matched = True
-                json_path.write_text(json.dumps(cards, ensure_ascii=False, indent=2), encoding="utf-8")
-            except Exception as e:
-                print(f"Error updating end_repair in {json_path.name}: {e}")
-
-    # 2. Update SQLite database inspections table
-    try:
-        if isinstance(ticket_id, str) and ticket_id.startswith("INH-"):
-            parts = ticket_id.split("-")
-            if len(parts) >= 3:
-                wo_candidate = parts[2]
-                db_inspection = db.query(InspectionDB).filter(
-                    (InspectionDB.wo_number == wo_candidate) |
-                    (InspectionDB.product_id == wo_candidate)
-                ).first()
-                if db_inspection:
-                    db_inspection.end_repair = now
-                    db.commit()
-                    matched = True
-        else:
-            db_inspection = db.query(InspectionDB).filter(
-                (InspectionDB.wo_number == str(ticket_id)) |
-                (InspectionDB.product_id == str(ticket_id))
-            ).first()
-            if db_inspection:
-                db_inspection.end_repair = now
-                db.commit()
-                matched = True
-    except Exception as dberr:
-        print(f"Error updating database end_repair: {dberr}")
-
-    if not matched:
-        raise HTTPException(status_code=404, detail=f"Ticket '{ticket_id}' not found")
-
-    return {"ticket_id": ticket_id, "end_repair": now, "status": "recorded"}
+    except HTTPException:
+        db.rollback()
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/production-worker/repair-completion")
 def complete_repair(completion: RepairCompletion, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
@@ -1776,12 +1603,6 @@ def parse_excel_data(xlsx_path: Path) -> list:
             "fromDept": repair_department,
             "crew": "1 worker" if fail_qty <= 1 else f"{fail_qty} workers",
             "branchRoute": "yes" if repair_department else "no",
-            "carcass_code": _as_text(record.get("Carcass Code")),
-            "repair_status": "",
-            "repair_status_updated_at": None,
-            "supplement_request_code": "",
-            "start_repair": None,
-            "end_repair": None,
             "supplement": {
                 "needed": False
             },
@@ -1806,221 +1627,6 @@ def ensure_inspection_data():
     json_path = Path(__file__).resolve().parent / "public" / "inspection-data.json"
     xlsx_path = Path(__file__).resolve().parent / "data" / "input data.xlsx"
     
-_last_excel_sync_time = 0.0
-
-def sync_to_db(db: Session, card: dict, request_code: str, status: str):
-    card_id = str(card.get("id"))
-    wo_no = str(card.get("wo_no") or card.get("wo") or "").strip()
-    item_code = str(card.get("item_code") or card.get("itemCode") or "").strip()
-    carcass_code = str(card.get("carcass_code") or card.get("partcode") or "").strip()
-    
-    # 1. Update/Insert in repair_card_supplement_link
-    link = db.query(RepairCardSupplementLinkDB).filter(
-        RepairCardSupplementLinkDB.repair_card_id == card_id,
-        RepairCardSupplementLinkDB.supplement_request_code == request_code
-    ).first()
-    
-    if not link:
-        link = RepairCardSupplementLinkDB(
-            repair_card_id=card_id,
-            supplement_request_code=request_code,
-            wo_no=wo_no,
-            item_code=item_code,
-            carcass_code=carcass_code
-        )
-        db.add(link)
-    
-    # 2. Update InspectionDB
-    inspection = db.query(InspectionDB).filter(
-        InspectionDB.wo_number == wo_no,
-        InspectionDB.batch_number == item_code
-    ).first()
-    if inspection:
-        inspection.repair_status = status
-        inspection.repair_status_updated_at = datetime.utcnow()
-
-def sync_repair_cards_and_supplement_requests(db: Optional[Session] = None, force: bool = False):
-    global _last_excel_sync_time
-    
-    supp_path = Path("data/Supplement request.xlsx")
-    link_path = Path("data/Sample_Repair_Supplement_Link.xlsx")
-    
-    mtime1 = supp_path.stat().st_mtime if supp_path.exists() else 0.0
-    mtime2 = link_path.stat().st_mtime if link_path.exists() else 0.0
-    current_max_mtime = max(mtime1, mtime2)
-    
-    if not force and current_max_mtime <= _last_excel_sync_time:
-        return
-        
-    supplement_items = []
-    
-    if supp_path.exists():
-        try:
-            workbook = load_workbook(supp_path, data_only=True)
-            for sheet_name in workbook.sheetnames:
-                if sheet_name.startswith("SRC-"):
-                    sheet = workbook[sheet_name]
-                    rows = list(sheet.iter_rows(values_only=True))
-                    if len(rows) > 1:
-                        headers = [str(h).strip() if h is not None else f"Col{idx}" for idx, h in enumerate(rows[0])]
-                        for row in rows[1:]:
-                            if all(cell is None for cell in row):
-                                continue
-                            item = dict(zip(headers, row))
-                            wo = item.get("WO") or item.get("WO No.")
-                            item_code = item.get("Item Code")
-                            if wo and item_code:
-                                supplement_items.append({
-                                    "request_code": sheet_name,
-                                    "wo": str(wo).strip(),
-                                    "item_code": str(item_code).strip(),
-                                    "carcass_code": str(item.get("Carcass Code") or "").strip(),
-                                    "material_code": str(item.get("Material Code") or "").strip(),
-                                    "material_name": str(item.get("Material Name") or "").strip(),
-                                    "qty": item.get("Supplement Qty") or 0,
-                                    "hod": str(item.get("HOD") or "").strip(),
-                                    "related_hod": str(item.get("Related HOD") or "").strip(),
-                                    "bod": str(item.get("BOD") or "").strip()
-                                })
-        except Exception as e:
-            print(f"Error loading Supplement request.xlsx: {e}")
-
-    if link_path.exists():
-        try:
-            workbook = load_workbook(link_path, data_only=True)
-            # Sample sheet name is QC_Repair_x_Supplement or active sheet
-            sheet = workbook.active
-            rows = list(sheet.iter_rows(values_only=True))
-            if len(rows) > 1:
-                headers = [str(h).strip() if h is not None else f"Col{idx}" for idx, h in enumerate(rows[0])]
-                for row in rows[1:]:
-                    if all(cell is None for cell in row):
-                        continue
-                    item = dict(zip(headers, row))
-                    wo = item.get("WO No.")
-                    item_code = item.get("Item Code")
-                    req_code = item.get("Supplement Request Code")
-                    if wo and item_code and req_code:
-                        supplement_items.append({
-                            "request_code": str(req_code).strip(),
-                            "wo": str(wo).strip(),
-                            "item_code": str(item_code).strip(),
-                            "carcass_code": str(item.get("Carcass Code") or "").strip(),
-                            "material_code": str(item.get("Material Code") or "").strip(),
-                            "material_name": str(item.get("Material Name") or "").strip(),
-                            "qty": item.get("Supplement Qty") or 0,
-                            "hod": str(item.get("HOD Approval") or "").strip(),
-                            "related_hod": str(item.get("Related HOD Approval") or "").strip(),
-                            "bod": str(item.get("BOD Approval") or "").strip()
-                        })
-        except Exception as e:
-            print(f"Error loading Sample_Repair_Supplement_Link.xlsx: {e}")
-
-    if not supplement_items:
-        return
-
-    # Group supplement items by (wo, item_code)
-    supplement_map = {}
-    for item in supplement_items:
-        wo = item["wo"]
-        item_code = item["item_code"]
-        key = (wo, item_code)
-        if key not in supplement_map:
-            supplement_map[key] = []
-        supplement_map[key].append(item)
-
-    json_paths = [
-        Path("data/inspection-control.json"),
-        Path("public/inspection-data.json")
-    ]
-    
-    local_db = db or SessionLocal()
-    try:
-        for json_path in json_paths:
-            if not json_path.exists():
-                continue
-            try:
-                cards = json.loads(json_path.read_text(encoding="utf-8"))
-                changed = False
-                for card in cards:
-                    wo = str(card.get("wo_no") or card.get("wo") or "").strip()
-                    item_code = str(card.get("item_code") or card.get("itemCode") or "").strip()
-                    carcass_code = str(card.get("carcass_code") or "").strip()
-                    
-                    if not wo or not item_code:
-                        continue
-                    
-                    key = (wo, item_code)
-                    matches = supplement_map.get(key) or []
-                    
-                    # Match on carcass_code if present on both sides
-                    filtered_matches = []
-                    for m in matches:
-                        req_carcass = m["carcass_code"]
-                        if req_carcass and carcass_code:
-                            if req_carcass.lower() in carcass_code.lower() or carcass_code.lower() in req_carcass.lower():
-                                filtered_matches.append(m)
-                        else:
-                            filtered_matches.append(m)
-                    
-                    if filtered_matches:
-                        req_code = filtered_matches[0]["request_code"]
-                        
-                        all_approved = True
-                        for m in filtered_matches:
-                            hod_ok = m["hod"].lower() == "approved"
-                            rel_ok = m["related_hod"].lower() == "approved"
-                            bod_ok = m["bod"].lower() == "approved"
-                            if not (hod_ok and rel_ok and bod_ok):
-                                all_approved = False
-                                break
-                        
-                        target_status = "IN_REPAIR" if all_approved else "WAITING_MATERIAL"
-                        current_status = card.get("repair_status")
-                        
-                        if current_status != target_status or card.get("supplement_request_code") != req_code:
-                            card["repair_status"] = target_status
-                            card["repair_status_updated_at"] = datetime.utcnow().isoformat()
-                            card["supplement_request_code"] = req_code
-                            
-                            # Update supplement dictionary
-                            card["supplement"] = {
-                                "needed": True,
-                                "status": "waiting" if target_status == "WAITING_MATERIAL" else "arrived",
-                                "partName": filtered_matches[0]["material_name"] or "Material Supplement",
-                                "qty": filtered_matches[0]["qty"] or 1,
-                                "eta": "Pending" if target_status == "WAITING_MATERIAL" else "Storage Bin",
-                                "requestCode": req_code
-                            }
-                            changed = True
-                            
-                            try:
-                                sync_to_db(local_db, card, req_code, target_status)
-                            except Exception as dberr:
-                                print(f"Error syncing to DB: {dberr}")
-                                
-                if changed:
-                    json_path.write_text(json.dumps(cards, ensure_ascii=False, indent=2), encoding="utf-8")
-                    print(f"Sync complete: {json_path.name} updated.")
-            except Exception as e:
-                print(f"Error syncing {json_path.name}: {e}")
-        
-        local_db.commit()
-    finally:
-        if db is None:
-            local_db.close()
-            
-    _last_excel_sync_time = current_max_mtime
-
-def ensure_inspection_data():
-    json_path = Path(__file__).resolve().parent / "public" / "inspection-data.json"
-    xlsx_path = Path(__file__).resolve().parent / "data" / "input data.xlsx"
-    control_json_path = Path(__file__).resolve().parent / "data" / "inspection-control.json"
-    
-    if not control_json_path.exists() and json_path.exists():
-        control_json_path.parent.mkdir(parents=True, exist_ok=True)
-        control_json_path.write_text(json_path.read_text(encoding="utf-8"), encoding="utf-8")
-        
     if xlsx_path.exists():
         should_generate = False
         if not json_path.exists():
@@ -2036,14 +1642,8 @@ def ensure_inspection_data():
                 json_path.parent.mkdir(parents=True, exist_ok=True)
                 json_path.write_text(json.dumps(tickets, ensure_ascii=False, indent=2), encoding="utf-8")
                 print(f"Successfully generated: {len(tickets)} records.")
-                control_json_path.write_text(json.dumps(tickets, ensure_ascii=False, indent=2), encoding="utf-8")
             except Exception as e:
                 print(f"Failed to auto-generate JSON from Excel: {e}")
-                
-    try:
-        sync_repair_cards_and_supplement_requests()
-    except Exception as e:
-        print(f"Failed to auto-sync supplement requests: {e}")
 
 @app.get("/data/input data")
 def get_input_data_custom():
@@ -2070,472 +1670,12 @@ def get_inspection_data():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/api/qc-manager/sync-repair-supplement")
-def trigger_manual_sync(db: Session = Depends(get_db)):
-    """Manually trigger supplement-request and repair-card sync."""
-    try:
-        sync_repair_cards_and_supplement_requests(db, force=True)
-        return {"status": "success", "message": "Synchronization complete."}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/api/qc-manager/seed-test-data")
-def seed_test_data(db: Session = Depends(get_db)):
-    """Seed test data from Sample_Repair_Supplement_Link.xlsx into the datastore."""
-    try:
-        link_path = Path("data/Sample_Repair_Supplement_Link.xlsx")
-        if not link_path.exists():
-            raise HTTPException(status_code=404, detail="Sample_Repair_Supplement_Link.xlsx not found")
-            
-        workbook = load_workbook(link_path, data_only=True)
-        sheet = workbook.active
-        rows = list(sheet.iter_rows(values_only=True))
-        if len(rows) <= 1:
-            raise HTTPException(status_code=400, detail="Sheet has no data rows")
-            
-        headers = [str(h).strip() if h is not None else f"Col{idx}" for idx, h in enumerate(rows[0])]
-        
-        json_paths = [
-            Path("data/inspection-control.json"),
-            Path("public/inspection-data.json")
-        ]
-        
-        seeded_count = 0
-        for r_idx, row in enumerate(rows[1:], start=2):
-            if all(cell is None for cell in row):
-                continue
-            item = dict(zip(headers, row))
-            wo = str(item.get("WO No.")).strip()
-            item_code = str(item.get("Item Code")).strip()
-            if not wo or not item_code:
-                continue
-                
-            inspected_date = item.get("Inspected Date")
-            if isinstance(inspected_date, datetime):
-                inspected_date_str = inspected_date.isoformat()
-            else:
-                inspected_date_str = str(inspected_date) if inspected_date else datetime.utcnow().isoformat()
-                
-            card_id = f"INH-{r_idx}-{wo}"
-            new_card = {
-                "id": card_id,
-                "branch_itw": str(item.get("Branch") or "VFR2.1").strip(),
-                "branch_fgw": str(item.get("Branch") or "VFR2.1").strip(),
-                "wo_no": wo,
-                "item_code": item_code,
-                "partcode": str(item.get("Partcode") or "").strip(),
-                "carcass_code": str(item.get("Carcass Code") or "").strip(),
-                "wo_quantity": int(item.get("WO Quantity") or 0),
-                "inspector": "17372",
-                "inspector_name": str(item.get("Inspector Name") or "Lê Thị Xuân").strip(),
-                "inspector_dept": str(item.get("Inspector Dept.") or "2QCD").strip(),
-                "inspection_stage": str(item.get("Inspection Stage") or "Finishing").strip(),
-                "inspected_date": inspected_date_str,
-                "inspected_time": inspected_date_str,
-                "inspected_qty": 1,
-                "pass_qty": 0,
-                "fail_qty": int(item.get("Fail Qty") or 1),
-                "quarantine": 1,
-                "defect_code": str(item.get("Defect Code") or "").strip(),
-                "defect_category": str(item.get("Defect Category") or "Major").strip(),
-                "defect_owner": str(item.get("Defect Owner") or "").strip(),
-                "inspector_recommend": str(item.get("Inspector Recommend") or "Sửa hàng - kiểm lại").strip(),
-                "repair_department": str(item.get("Repair Department") or "").strip(),
-                "remark": str(item.get("Trigger Note") or "").strip(),
-                "check_pass_date": None,
-                "check_pass_minutes": "",
-                "check_pass_hours": "",
-                "status": "Fail",
-                "repair_status": "NEW",
-                "repair_status_updated_at": None,
-                "supplement_request_code": "",
-                "start_repair": None,
-                "end_repair": None
-            }
-            
-            for json_path in json_paths:
-                cards = []
-                if json_path.exists():
-                    try:
-                        cards = json.loads(json_path.read_text(encoding="utf-8"))
-                    except Exception:
-                        cards = []
-                cards = [c for c in cards if c.get("id") != card_id]
-                cards.append(new_card)
-                json_path.write_text(json.dumps(cards, ensure_ascii=False, indent=2), encoding="utf-8")
-                
-            existing_inspection = db.query(InspectionDB).filter(
-                InspectionDB.wo_number == wo,
-                InspectionDB.batch_number == item_code
-            ).first()
-            
-            if not existing_inspection:
-                new_db_inspection = InspectionDB(
-                    product_id=wo,
-                    batch_number=item_code,
-                    wo_number=wo,
-                    component_code=item_code,
-                    carcass_code=new_card["carcass_code"],
-                    inspection_stage=new_card["inspection_stage"],
-                    inspector_id=1,
-                    qty_inspected=1,
-                    qty_passed=0,
-                    qty_failed=new_card["fail_qty"],
-                    status="Fail",
-                    repair_status="NEW"
-                )
-                db.add(new_db_inspection)
-            
-            seeded_count += 1
-            
-        db.commit()
-        sync_repair_cards_and_supplement_requests(db, force=True)
-        return {"status": "success", "message": f"Seeded {seeded_count} test records and synced status."}
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
-
-class MaterialItem(BaseModel):
-    materialCode: str
-    materialName: str
-    dimension: Optional[str] = None
-    unit: str
-    supplementQty: float
-    wo: str
-    itemCode: str
-    revision: Optional[int] = 1
-    carcassCode: Optional[str] = ""
-    itemQty: Optional[int] = 0
-    bomQtyPerItem: Optional[float] = 0.0
-    totalBomQty: Optional[float] = 0.0
-    requesterRemark: Optional[str] = ""
-    budget: Optional[float] = 0.0
-
-class SupplementRequestCreate(BaseModel):
-    requestCode: str
-    requestDept: str
-    relatedDept: str
-    status: str = "New"
-    reasonToRequest: str
-    requester: str
-    requestDate: str
-    requesterRemark: Optional[str] = ""
-    materials: List[MaterialItem]
-
-@app.get("/api/supplement-requests/next-code")
-def get_next_supplement_code():
-    """Generate the next auto-incremented supplement request code."""
-    try:
-        xlsx_path = Path("data/Supplement request.xlsx")
-        if not xlsx_path.exists():
-            return {"next_code": "SRC-202607-0001"}
-            
-        workbook = load_workbook(xlsx_path, data_only=True)
-        total_sheet = workbook["total"] if "total" in workbook.sheetnames else workbook.worksheets[0]
-        
-        now = datetime.utcnow()
-        prefix = f"SRC-{now.strftime('%Y%m')}-"
-        
-        max_num = 0
-        for r_idx, row in enumerate(total_sheet.iter_rows(values_only=True)):
-            if r_idx == 0:
-                continue
-            code = row[1]
-            if code and str(code).startswith(prefix):
-                try:
-                    num_str = str(code).replace(prefix, "")
-                    num = int(num_str)
-                    if num > max_num:
-                        max_num = num
-                except Exception:
-                    pass
-        next_num = max_num + 1
-        next_code = f"{prefix}{next_num:04d}"
-        return {"next_code": next_code}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/api/supplement-requests")
-def create_supplement_request(req: SupplementRequestCreate, db: Session = Depends(get_db)):
-    """Create a new supplement request in Excel, run sync, and notify QC Manager."""
-    try:
-        xlsx_path = Path("data/Supplement request.xlsx")
-        if not xlsx_path.exists():
-            raise HTTPException(status_code=404, detail="Supplement request.xlsx not found")
-        
-        workbook = load_workbook(xlsx_path)
-        
-        # 1. Append to 'total' sheet
-        total_sheet = workbook["total"] if "total" in workbook.sheetnames else workbook.worksheets[0]
-        now_dt = datetime.utcnow()
-        
-        total_sheet.append([
-            0,
-            req.requestCode,
-            req.requestDept,
-            req.relatedDept,
-            req.status,
-            req.requester,
-            now_dt,
-            None
-        ])
-        
-        # 2. Create request details sheet
-        if req.requestCode in workbook.sheetnames:
-            del workbook[req.requestCode]
-            
-        detail_sheet = workbook.create_sheet(title=req.requestCode)
-        headers = [
-            'Selected', 'Request Code', 'Material Code', 'Material Name', 'Material\nDimension(W-L-T)', 
-            'Unit', 'Supplement Qty', 'WO', 'Item Code', 'Revision', 'Carcass Code', 'ItemQty', 
-            'BOM Qty\nPer Item', 'Total BOM\nQty', 'Requester\nRemark', 'HOD\nRemark', 'Related HOD\nRemark', 
-            'BOD\nRemark', 'Budget', 'HOD', 'Related HOD', 'BOD'
-        ]
-        detail_sheet.append(headers)
-        
-        for item in req.materials:
-            detail_sheet.append([
-                0,
-                req.requestCode,
-                item.materialCode,
-                item.materialName,
-                item.dimension,
-                item.unit,
-                float(item.supplementQty),
-                item.wo,
-                item.itemCode,
-                int(item.revision or 1),
-                item.carcassCode,
-                int(item.itemQty or 0),
-                float(item.bomQtyPerItem or 0.0),
-                float(item.totalBomQty or 0.0),
-                item.requesterRemark or "",
-                "", # HOD Remark
-                "", # Related HOD Remark
-                "", # BOD Remark
-                float(item.budget or 0.0),
-                "Pending",
-                "Pending",
-                "Pending"
-            ])
-            
-        workbook.save(xlsx_path)
-        
-        # 3. Synchronize status and link mapping
-        sync_repair_cards_and_supplement_requests(db, force=True)
-        
-        # 4. Trigger QC Manager notification
-        first_wo = req.materials[0].wo if req.materials else "N/A"
-        first_item = req.materials[0].itemCode if req.materials else "N/A"
-        
-        msg = f"Bên phía production manager vừa tạo supplement request {req.requestCode} cho WO {first_wo} (Item Code: {first_item})"
-        new_notif = NotificationDB(
-            role="QC Manager",
-            title=f"Supplement Request {req.requestCode}",
-            message=msg
-        )
-        db.add(new_notif)
-        db.commit()
-        
-        return {"status": "success", "requestCode": req.requestCode}
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/api/supplement-requests")
-def get_supplement_requests():
-    """Return list of supplement requests parsed from Excel."""
-    try:
-        xlsx_path = Path("data/Supplement request.xlsx")
-        if not xlsx_path.exists():
-            raise HTTPException(status_code=404, detail="Supplement request.xlsx not found")
-        
-        workbook = load_workbook(xlsx_path, data_only=True)
-        sheet = workbook["total"] if "total" in workbook.sheetnames else workbook.worksheets[0]
-        
-        requests = []
-        for r_idx, row in enumerate(sheet.iter_rows(values_only=True)):
-            if r_idx == 0:
-                continue
-            code = row[1]
-            if code and str(code).startswith("SRC-"):
-                create_date = row[6]
-                if isinstance(create_date, datetime):
-                    create_date = create_date.strftime("%d/%m/%Y")
-                elif create_date:
-                    try:
-                        dt = datetime.fromisoformat(str(create_date))
-                        create_date = dt.strftime("%d/%m/%Y")
-                    except Exception:
-                        pass
-                
-                expired_date = row[7]
-                if isinstance(expired_date, datetime):
-                    expired_date = expired_date.strftime("%d/%m/%Y")
-                elif expired_date:
-                    try:
-                        dt = datetime.fromisoformat(str(expired_date))
-                        expired_date = dt.strftime("%d/%m/%Y")
-                    except Exception:
-                        pass
-                else:
-                    expired_date = ""
-
-                requests.append({
-                    "requestCode": str(code).strip(),
-                    "requestDept": str(row[2]).strip() if row[2] else "",
-                    "relatedDept": str(row[3]).strip() if row[3] else "",
-                    "status": str(row[4]).strip() if row[4] else "",
-                    "createBy": str(row[5]).strip() if row[5] else "",
-                    "createDate": create_date if create_date else "",
-                    "expiredDate": expired_date
-                })
-        # Return requests in reverse chronological order (newest first)
-        requests.reverse()
-        return requests
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/api/supplement-requests/{request_code}")
-def get_supplement_request_detail(request_code: str):
-    """Return detailed items and master info for a specific supplement request."""
-    try:
-        xlsx_path = Path("data/Supplement request.xlsx")
-        if not xlsx_path.exists():
-            raise HTTPException(status_code=404, detail="Supplement request.xlsx not found")
-        
-        workbook = load_workbook(xlsx_path, data_only=True)
-        if request_code not in workbook.sheetnames:
-            raise HTTPException(status_code=404, detail=f"Request details for {request_code} not found")
-            
-        sheet = workbook[request_code]
-        rows = list(sheet.iter_rows(values_only=True))
-        if not rows:
-            return {"headers": [], "items": [], "master": {}}
-            
-        headers = [str(h).strip() if h is not None else f"Col{idx}" for idx, h in enumerate(rows[0])]
-        
-        items = []
-        for row in rows[1:]:
-            if all(cell is None for cell in row):
-                continue
-            if len(row) <= 2 or row[2] is None:
-                continue
-                
-            item = {}
-            for c_idx, h in enumerate(headers):
-                if c_idx < len(row):
-                    val = row[c_idx]
-                    if isinstance(val, datetime):
-                        val = val.strftime("%d/%m/%Y %H:%M:%S")
-                    elif val is None:
-                        val = ""
-                    item[h] = val
-                else:
-                    item[h] = ""
-            items.append(item)
-            
-        total_sheet = workbook["total"] if "total" in workbook.sheetnames else workbook.worksheets[0]
-        master = {}
-        for row in total_sheet.iter_rows(values_only=True):
-            if row[1] and str(row[1]).strip() == request_code:
-                create_date = row[6]
-                if isinstance(create_date, datetime):
-                    create_date = create_date.strftime("%d/%m/%Y")
-                elif create_date:
-                    try:
-                        dt = datetime.fromisoformat(str(create_date))
-                        create_date = dt.strftime("%d/%m/%Y")
-                    except Exception:
-                        pass
-                
-                master = {
-                    "requestCode": request_code,
-                    "requestDept": str(row[2]).strip() if row[2] else "",
-                    "relatedDept": str(row[3]).strip() if row[3] else "",
-                    "status": str(row[4]).strip() if row[4] else "",
-                    "createBy": str(row[5]).strip() if row[5] else "",
-                    "createDate": create_date if create_date else "",
-                }
-                break
-                
-        # Supplement with standard mock fields to display full detailed information of image (9)
-        if request_code == "SRC-202606-0071":
-            master.update({
-                "reasonToRequest": "Construction change - Thay đổi thiết kế",
-                "requester": "18679 - Phạm Thị Thu Uyên",
-                "requesterRemark": "Tec updated drawing to improve the product's aesthetics",
-                "hodApprovedBy": "17972 - Nguyễn Hoàng Tú",
-                "hodApprovedDate": "29/06/2026",
-                "hodRemark": "",
-                "relatedHodApprovedBy": "16542 - Phạm Phú Quốc",
-                "relatedHodApprovedDate": "29/06/2026",
-                "relatedHodRemark": "Confirmed",
-                "bodApprovedBy": "16848 - Jakob Svendsen",
-                "bodApprovedDate": "30/06/2026",
-                "bodRemark": "Confirmed"
-            })
-        elif request_code == "SRC-202607-0017":
-            master.update({
-                "reasonToRequest": "Design modification - Điều chỉnh kích thước",
-                "requester": "18679 - Phạm Thị Thu Uyên",
-                "requesterRemark": "Adjust dimension to fit layout design",
-                "hodApprovedBy": "17972 - Nguyễn Hoàng Tú",
-                "hodApprovedDate": "04/07/2026",
-                "hodRemark": "",
-                "relatedHodApprovedBy": "16542 - Phạm Phú Quốc",
-                "relatedHodApprovedDate": "04/07/2026",
-                "relatedHodRemark": "Confirmed",
-                "bodApprovedBy": "16848 - Jakob Svendsen",
-                "bodApprovedDate": "",
-                "bodRemark": "Pending"
-            })
-        elif request_code == "SRC-202607-0010":
-            master.update({
-                "reasonToRequest": "Material shortage - Thiếu hụt nguyên vật liệu",
-                "requester": "18679 - Phạm Thị Thu Uyên",
-                "requesterRemark": "Supplement materials for urgent order",
-                "hodApprovedBy": "17972 - Nguyễn Hoàng Tú",
-                "hodApprovedDate": "03/07/2026",
-                "hodRemark": "",
-                "relatedHodApprovedBy": "16542 - Phạm Phú Quốc",
-                "relatedHodApprovedDate": "03/07/2026",
-                "relatedHodRemark": "Confirmed",
-                "bodApprovedBy": "16848 - Jakob Svendsen",
-                "bodApprovedDate": "",
-                "bodRemark": "Pending"
-            })
-        else:
-            master.update({
-                "reasonToRequest": "General Supplement Request",
-                "requester": "18679 - Phạm Thị Thu Uyên",
-                "requesterRemark": "",
-                "hodApprovedBy": "17972 - Nguyễn Hoàng Tú",
-                "hodApprovedDate": "",
-                "hodRemark": "",
-                "relatedHodApprovedBy": "16542 - Phạm Phú Quốc",
-                "relatedHodApprovedDate": "",
-                "relatedHodRemark": "",
-                "bodApprovedBy": "16848 - Jakob Svendsen",
-                "bodApprovedDate": "",
-                "bodRemark": ""
-            })
-            
-        return {
-            "headers": headers,
-            "items": items,
-            "master": master
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
 app.mount("/", StaticFiles(directory="public", html=True), name="static")
 
 # ============ RUN SERVER ============
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=False)
-
 
 
 
