@@ -2037,11 +2037,6 @@
                         <span>Priority: <b>${t.priority}</b></span>
                         <span>Inspector: <b>${t.source ? t.source.inspectorName : 'N/A'}</b></span>
                     </div>
-                    <div class="sup-create-btn-wrapper">
-                        <button class="btn-create-supplement" onclick="event.stopPropagation(); openSupplementForm('${t.id}')">
-                            + Create Supplement Request
-                        </button>
-                    </div>
                 </div>
             `;
         }).join('');
@@ -2132,6 +2127,7 @@
                     <button class="btn-sm btn-ghost" onclick="openQuarantine('${t.id}')">&#128196; View Quarantine Report</button>
                     <button class="btn-sm btn-ghost" style="border-color: var(--amber); color: var(--amber);" onclick="scanLocation('${t.id}')">&#128248; Update location (scan)</button>
                     ${(ticket.status !== 'In Progress' && ticket.status !== 'Completed') ? `<button class="btn-sm btn-ghost" style="border-color: var(--amber); color: var(--amber);" onclick="scanStartRepair('${t.id}')">&#9658; Start repair (scan)</button>` : ''}
+                    <button class="btn-sm btn-ghost" style="border-color: var(--amber); color: var(--amber); font-weight: bold;" onclick="openSupplementForm('${t.id}')">+ Create Supplement Request</button>
                     ${actionButtons}
                 </div>
             </div>
