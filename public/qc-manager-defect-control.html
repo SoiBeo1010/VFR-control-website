@@ -2025,6 +2025,11 @@
                         <span>Inspector: <b>${t.source ? t.source.inspectorName : 'N/A'}</b></span>
                         ${formattedTime ? `<span style="margin-left:auto; color:var(--txt-dim); font-size:11px;">Updated: <b>${formattedTime}</b></span>` : ''}
                     </div>
+                    <div class="sup-create-btn-wrapper">
+                        <button class="btn-create-supplement" onclick="event.stopPropagation(); openSupplementForm('${t.id}')">
+                            + Create Supplement Request
+                        </button>
+                    </div>
                 </div>
             `;
         }).join('');
@@ -2868,8 +2873,679 @@
         }
     });
 
+    /* ================= ERP SUPPLEMENT REQUEST MODAL LOGIC ================= */
+    let currentSupTicketId = null;
+    let requestMaterialsList = [];
+
+    function openSupplementForm(ticketId) {
+        currentSupTicketId = ticketId;
+        const ticket = inspectionData.find(t => t.id === ticketId);
+        if (!ticket) return;
+
+        // Prefill master info
+        const generatedCode = `SRC-${new Date().getFullYear()}${String(new Date().getMonth()+1).padStart(2,'0')}-${String(Math.floor(1000 + Math.random()*9000))}`;
+        document.getElementById('sup-code').value = generatedCode;
+        document.getElementById('sup-requester').value = `${localStorage.getItem('userId') || '20949'} - ${localStorage.getItem('username') || 'Ngô Phạm Yến Linh'}`;
+        
+        // Format today's date as DD/MM/YYYY
+        const today = new Date();
+        const formattedDate = `${String(today.getDate()).padStart(2,'0')}/${String(today.getMonth()+1).padStart(2,'0')}/${today.getFullYear()}`;
+        document.getElementById('sup-date').value = formattedDate;
+
+        // Prefill WO and Item options
+        const woSelect = document.getElementById('sup-material-wo');
+        const itemSelect = document.getElementById('sup-material-item');
+
+        woSelect.innerHTML = `<option value="${ticket.wo || ''}">${ticket.wo || 'N/A'}</option>`;
+        itemSelect.innerHTML = `<option value="${ticket.itemCode || ''}">${ticket.itemCode || 'N/A'}</option>`;
+
+        // Reset inputs
+        document.getElementById('sup-reason').value = "";
+        document.getElementById('sup-related-dept').value = "";
+        document.getElementById('sup-remark').value = "";
+        document.getElementById('sup-confirm-chk').checked = false;
+
+        // Reset materials list
+        requestMaterialsList = [];
+        renderSupplementMaterialsTable();
+
+        document.getElementById('supplementRequestModal').style.display = 'flex';
+    }
+
+    function closeSupplementForm() {
+        document.getElementById('supplementRequestModal').style.display = 'none';
+        currentSupTicketId = null;
+        requestMaterialsList = [];
+    }
+
+    window.clearMaterialForm = function() {
+        document.getElementById('sup-material-qty').value = 1;
+        document.getElementById('sup-material-code').selectedIndex = 0;
+    }
+
+    window.addMaterialToRequest = function() {
+        const wo = document.getElementById('sup-material-wo').value;
+        const itemCode = document.getElementById('sup-material-item').value;
+        const materialSelect = document.getElementById('sup-material-code');
+        const materialCode = materialSelect.value;
+        const materialName = materialSelect.options[materialSelect.selectedIndex].text.split('(')[1]?.replace(')', '') || 'Wood Component';
+        const qty = Number(document.getElementById('sup-material-qty').value) || 1;
+
+        if (!qty || qty < 1) {
+            alert('Please enter a valid quantity.');
+            return;
+        }
+
+        const newMat = {
+            code: materialCode,
+            name: materialName,
+            dimension: '18 x 400 x 600',
+            unit: 'pcs',
+            qty: qty,
+            wo: wo,
+            itemCode: itemCode,
+            revision: 'A',
+            carcassCode: 'CAR-021838-A',
+            itemQty: 1,
+            bomQtyPerItem: 1,
+            totalBomQty: qty,
+            remark: 'Defect replacement requested',
+            budget: 'Yes'
+        };
+
+        requestMaterialsList.push(newMat);
+        renderSupplementMaterialsTable();
+        window.clearMaterialForm();
+    }
+
+    function renderSupplementMaterialsTable() {
+        const tbody = document.getElementById('sup-materials-tbody');
+        tbody.innerHTML = requestMaterialsList.map((m, index) => `
+            <tr>
+                <td>${m.code}</td>
+                <td>${m.name}</td>
+                <td>${m.dimension}</td>
+                <td>${m.unit}</td>
+                <td><strong>${m.qty}</strong></td>
+                <td>${m.wo}</td>
+                <td>${m.itemCode}</td>
+                <td>${m.revision}</td>
+                <td>${m.carcassCode}</td>
+                <td>${m.itemQty}</td>
+                <td>${m.bomQtyPerItem}</td>
+                <td>${m.totalBomQty}</td>
+                <td>${m.remark}</td>
+                <td>${m.budget}</td>
+            </tr>
+        `).join('');
+
+        document.getElementById('sup-footer-count').textContent = `Count: ${requestMaterialsList.length}`;
+    }
+
+    window.saveSupplementRequest = function() {
+        if (!currentSupTicketId) return;
+
+        const reason = document.getElementById('sup-reason').value;
+        if (!reason) {
+            alert('Reason To Request is required.');
+            return;
+        }
+
+        if (requestMaterialsList.length === 0) {
+            alert('Please add at least one material to the request.');
+            return;
+        }
+
+        const confirmChecked = document.getElementById('sup-confirm-chk').checked;
+        if (!confirmChecked) {
+            alert('Please check "Confirm" checkbox before saving.');
+            return;
+        }
+
+        // Persist the supplement info in the localStorage status bridge
+        const statuses = readStoredRepairTicketStatuses();
+        const saved = statuses[currentSupTicketId] || {};
+
+        statuses[currentSupTicketId] = {
+            ...saved,
+            status: saved.status || 'Waiting Accept',
+            updatedAt: new Date().toISOString(),
+            supplement: {
+                needed: true,
+                status: 'waiting',
+                partName: requestMaterialsList.map(m => m.name).join(', '),
+                qty: requestMaterialsList.reduce((acc, m) => acc + m.qty, 0),
+                eta: "Pending Approval",
+                details: requestMaterialsList
+            }
+        };
+
+        writeStoredRepairTicketStatuses(statuses);
+
+        // Also add dynamic update notification
+        addNotification(
+            `Supplement Request Created`,
+            `Supplement request ${document.getElementById('sup-code').value} created for Ticket ${currentSupTicketId}.`
+        );
+
+        alert('💾 Supplement Request saved successfully!');
+        closeSupplementForm();
+
+        // Refresh views
+        const listContainer = document.getElementById('ticketsListContainer');
+        if (listContainer) listContainer.innerHTML = renderTicketsListContent();
+    }
+
+    window.closeSupplementForm = closeSupplementForm;
+
+    loadInspectionData();
+</script>
+
+<!-- CSS STYLE INJECTION -->
+<style>
+/* ERP SUPPLEMENT REQUEST MODAL STYLE */
+.sup-modal {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 9999;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.sup-modal-content {
+    width: 95%;
+    max-width: 1200px;
+    height: 90vh;
+    background: #f7f9fa;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid #c8c8c8;
+}
+
+/* ERP Tab Bar */
+.sup-tab-bar {
+    display: flex;
+    background: #e0e0e0;
+    border-bottom: 1px solid #c8c8c8;
+    padding-top: 4px;
+}
+
+.sup-tab {
+    padding: 6px 16px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #4b5563;
+    background: #d4d4d4;
+    border: 1px solid #c8c8c8;
+    border-bottom: none;
+    border-radius: 4px 4px 0 0;
+    margin-left: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sup-tab.active {
+    background: #f7f9fa;
+    color: #113228;
+    font-weight: bold;
+    border-top: 2px solid var(--amber, #1b4d3e);
+}
+
+.sup-tab-close {
+    color: #ef4444;
+    font-weight: bold;
+}
+
+/* Modal Body Scroll */
+.sup-modal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    font-size: 12px;
+}
+
+/* Section Cards */
+.sup-section-card {
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    background: #ffffff;
+}
+
+.sup-section-legend {
+    font-weight: bold;
+    color: #113228;
+    padding: 0 8px;
+    font-size: 13px;
+}
+
+/* Form layout grid */
+.sup-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+}
+
+.sup-form-group {
+    margin-bottom: 8px;
+}
+
+.sup-form-group label {
+    display: block;
+    font-size: 11px;
+    font-weight: bold;
+    color: #374151;
+    margin-bottom: 4px;
+}
+
+.sup-form-group input,
+.sup-form-group select {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid #c8c8c8;
+    border-radius: 4px;
+    font-size: 12px;
+    background-color: #fafafa;
+}
+
+.sup-form-group input[readonly] {
+    background-color: #f3f4f6;
+    color: #6b7280;
+}
+
+.required-star {
+    color: #ef4444;
+    font-weight: bold;
+}
+
+.sup-status-new {
+    display: inline-block;
+    color: #ef4444;
+    font-weight: bold;
+    font-size: 14px;
+    margin-top: 4px;
+}
+
+/* Attach file section */
+.sup-attach-section {
+    padding: 8px 12px;
+    background: #ffffff;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    margin-bottom: 16px;
+    font-size: 12px;
+}
+
+/* Add Material Section Row */
+.sup-add-material-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 16px;
+}
+
+.flex-1 { flex: 1; }
+
+.sup-action-buttons {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.sup-btn {
+    padding: 6px 16px;
+    font-size: 12px;
+    font-weight: bold;
+    border-radius: 4px;
+    border: 1px solid #999;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.btn-clear {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+.btn-add {
+    background: var(--amber, #1b4d3e);
+    color: #ffffff;
+    border-color: var(--amber, #1b4d3e);
+}
+
+.btn-save {
+    background: var(--amber, #1b4d3e);
+    color: #ffffff;
+    border-color: var(--amber, #1b4d3e);
+}
+
+.btn-close {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.btn-export {
+    background: #e2f0d9;
+    color: #385723;
+    border-color: #a9d18e;
+}
+
+/* Materials Table */
+.sup-table-section {
+    background: #ffffff;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    padding: 12px;
+}
+
+.sup-table-wrapper {
+    overflow-x: auto;
+    max-height: 200px;
+}
+
+.sup-materials-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+}
+
+.sup-materials-table th {
+    background: #f3f4f6;
+    border: 1px solid #d1d5db;
+    padding: 6px 8px;
+    font-weight: bold;
+    color: #374151;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.sup-materials-table td {
+    border: 1px solid #d1d5db;
+    padding: 6px 8px;
+    white-space: nowrap;
+}
+
+.sup-materials-table tbody tr:hover {
+    background: #f9fafb;
+}
+
+/* Footer Section styling */
+.sup-modal-footer {
+    background: #e0e0e0;
+    border-top: 1px solid #c8c8c8;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+}
+
+.sup-footer-sn {
+    font-weight: 500;
+    color: #4b5563;
+}
+
+.sup-footer-count {
+    font-weight: bold;
+    color: #113228;
+}
+
+.sup-footer-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.sup-footer-actions label {
+    font-weight: bold;
+    color: #113228;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.wo-tag {
+    position: relative;
+    padding-bottom: 44px !important; /* Make room for the button */
+}
+
+.sup-create-btn-wrapper {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+}
+
+.btn-create-supplement {
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: bold;
+    color: white;
+    background-color: var(--amber, #1b4d3e);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+.btn-create-supplement:hover {
+    background-color: #2d6a4f;
+}
+</style>
+
+<!-- CREATE SUPPLEMENT REQUEST MODAL HTML -->
+<div id="supplementRequestModal" class="sup-modal" style="display: none;">
+    <div class="sup-modal-content">
+        <!-- ERP Tab Bar Header -->
+        <div class="sup-tab-bar">
+            <div class="sup-tab">HOME PAGE <span class="sup-tab-close">×</span></div>
+            <div class="sup-tab">Supplement Request List <span class="sup-tab-close">×</span></div>
+            <div class="sup-tab active">New Supplement Request <span class="sup-tab-close">×</span></div>
+        </div>
+
+        <div class="sup-modal-body">
+            <!-- Section 1: Master Information -->
+            <fieldset class="sup-section-card">
+                <legend class="sup-section-legend">Master information</legend>
+                <div class="sup-form-grid">
+                    <!-- Column 1 -->
+                    <div>
+                        <div class="sup-form-group">
+                            <label>Request Supplement Code</label>
+                            <input type="text" id="sup-code" readonly value="SRC-202607-0026">
+                        </div>
+                        <div class="sup-form-group">
+                            <label>Reason To Request <span class="required-star">(*)</span></label>
+                            <select id="sup-reason" required>
+                                <option value="" disabled selected>-- Select Reason --</option>
+                                <option value="Defect Material">Defect Material</option>
+                                <option value="Tool Broken">Tool Broken</option>
+                                <option value="Machine Malfunction">Machine Malfunction</option>
+                                <option value="Process Error">Process Error</option>
+                                <option value="Design Variance">Design Variance</option>
+                            </select>
+                        </div>
+                        <div class="sup-form-group">
+                            <label>Requester</label>
+                            <input type="text" id="sup-requester" readonly value="20949 - Ngô Phạm Yến Linh">
+                        </div>
+                        <div class="sup-form-group">
+                            <label>HOD Approved By</label>
+                            <input type="text" id="sup-hod-approver" readonly value="">
+                        </div>
+                        <div class="sup-form-group">
+                            <label>Related HOD Approved By</label>
+                            <input type="text" id="sup-rel-hod-approver" readonly value="">
+                        </div>
+                        <div class="sup-form-group">
+                            <label>BOD Approved By</label>
+                            <input type="text" id="sup-bod-approver" readonly value="">
+                        </div>
+                    </div>
+
+                    <!-- Column 2 -->
+                    <div>
+                        <div class="sup-form-group">
+                            <label>Dept Request</label>
+                            <input type="text" id="sup-dept" value="NON_EMP" readonly>
+                        </div>
+                        <div class="sup-form-group" style="visibility: hidden;">
+                            <label>Spacer</label>
+                            <input type="text">
+                        </div>
+                        <div class="sup-form-group">
+                            <label>Requested Date</label>
+                            <input type="text" id="sup-date" readonly value="07/07/2026">
+                        </div>
+                        <div class="sup-form-group">
+                            <label>HOD Approved Date</label>
+                            <input type="text" readonly value="">
+                        </div>
+                        <div class="sup-form-group">
+                            <label>HOD Related Approved Date</label>
+                            <input type="text" readonly value="">
+                        </div>
+                        <div class="sup-form-group">
+                            <label>BOD Approved Date</label>
+                            <input type="text" readonly value="">
+                        </div>
+                    </div>
+
+                    <!-- Column 3 -->
+                    <div>
+                        <div class="sup-form-group">
+                            <label>Status</label>
+                            <span class="sup-status-new">New</span>
+                        </div>
+                        <div class="sup-form-group">
+                            <label>Related Department</label>
+                            <select id="sup-related-dept">
+                                <option value="" selected>-- Select Related Department --</option>
+                                <option value="Quality Control">Quality Control</option>
+                                <option value="Production">Production</option>
+                                <option value="Warehouse">Warehouse</option>
+                                <option value="Purchasing">Purchasing</option>
+                                <option value="Maintenance">Maintenance</option>
+                            </select>
+                        </div>
+                        <div class="sup-form-group">
+                            <label>Requester Remark</label>
+                            <input type="text" id="sup-remark" placeholder="Enter remark...">
+                        </div>
+                        <div class="sup-form-group">
+                            <label>HOD Remark</label>
+                            <input type="text" readonly value="">
+                        </div>
+                        <div class="sup-form-group">
+                            <label>HOD Related Remark</label>
+                            <input type="text" readonly value="">
+                        </div>
+                        <div class="sup-form-group">
+                            <label>BOD Remark</label>
+                            <input type="text" readonly value="">
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- Section 2: Attach File -->
+            <div class="sup-attach-section">
+                <span class="arrow">▼</span> Attach File: <strong>NO</strong>
+            </div>
+
+            <!-- Section 3: Add Material -->
+            <fieldset class="sup-section-card">
+                <legend class="sup-section-legend">Add material</legend>
+                <div class="sup-add-material-row">
+                    <div class="sup-form-group flex-1">
+                        <label>WO <span class="required-star">(*)</span></label>
+                        <select id="sup-material-wo">
+                            <!-- Dynamically loaded -->
+                        </select>
+                    </div>
+                    <div class="sup-form-group flex-1">
+                        <label>Item Code <span class="required-star">(*)</span></label>
+                        <select id="sup-material-item">
+                            <!-- Dynamically loaded -->
+                        </select>
+                    </div>
+                    <div class="sup-form-group flex-1">
+                        <label>Material Code <span class="required-star">(*)</span> ➕</label>
+                        <select id="sup-material-code">
+                            <option value="MAT-01829265-WP">MAT-01829265-WP (Replacement Board 18mm)</option>
+                            <option value="MAT-01835419-WP">MAT-01835419-WP (Veneer Layup Board)</option>
+                            <option value="MAT-33221100-YY">MAT-33221100-YY (High Temp Rubber Gasket)</option>
+                            <option value="MAT-GEN-BOLT-M6">MAT-GEN-BOLT-M6 (Replacement Bolt M6)</option>
+                            <option value="MAT-GEN-GLUE-WP">MAT-GEN-GLUE-WP (Standard Wood Glue)</option>
+                        </select>
+                    </div>
+                    <div class="sup-form-group">
+                        <label>Supplement Qty <span class="required-star">(*)</span></label>
+                        <input type="number" id="sup-material-qty" min="1" value="1" style="width: 100px;">
+                    </div>
+                    <div class="sup-action-buttons">
+                        <button class="sup-btn btn-clear" onclick="window.clearMaterialForm()">🧹 Clear</button>
+                        <button class="sup-btn btn-add" onclick="window.addMaterialToRequest()">💾 Add</button>
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- Section 4: List of Materials Table -->
+            <div class="sup-table-section">
+                <div style="font-weight: bold; margin-bottom: 8px; font-size: 13px; color: #113228;">List of materials <input type="checkbox" id="sup-select-all"> Select All</div>
+                <div class="sup-table-wrapper">
+                    <table class="sup-materials-table">
+                        <thead>
+                            <tr>
+                                <th>Material Code</th>
+                                <th>Material Name</th>
+                                <th>Material Dimension(W-L-T)</th>
+                                <th>Unit</th>
+                                <th>Supplement Qty</th>
+                                <th>WO</th>
+                                <th>Item Code</th>
+                                <th>Revision</th>
+                                <th>Carcass Code</th>
+                                <th>ItemQty</th>
+                                <th>BOM Qty Per Item</th>
+                                <th>Total BOM Qty</th>
+                                <th>Requester Remark</th>
+                                <th>Budget</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sup-materials-tbody">
+                            <!-- Dynamically loaded rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer Section -->
+        <div class="sup-modal-footer">
+            <span class="sup-footer-sn">SN: GNR_10_001</span>
+            <span class="sup-footer-count" id="sup-footer-count">Count: 0</span>
+            <div class="sup-footer-actions">
+                <label><input type="checkbox" id="sup-confirm-chk"> Confirm</label>
+                <button class="sup-btn btn-save" onclick="window.saveSupplementRequest()">💾 Save</button>
+                <button class="sup-btn btn-export">📄 Export</button>
+                <button class="sup-btn btn-close" onclick="window.closeSupplementForm()">🚪 Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
     loadInspectionData();
 </script>
 </body>
 </html>
+
 
