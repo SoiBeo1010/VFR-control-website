@@ -1,2869 +1,1347 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Production Worker - Quality Management System</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <title>Production Worker - QMS System</title>
+    <link rel="stylesheet" href="/styles.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
-            background: #f4f7f5;
-            color: #1f2937;
-            min-height: 100vh;
-        }
-
-        /* Design tokens matching original production-worker.html */
-        :root {
-            --amber: #1b4d3e; /* Primary: Dark forest green */
-            --amber-dim: #e8f5e9; /* Light green bg */
-            --ink: #ffffff;
-            --panel: #ffffff;
-            --panel-line: #e5e7eb;
-            --panel-line-soft: #f3f4f6;
-            --good: #10b981;
-            --good-dim: #d1fae5;
-            --red: #f85149;
-            --red-dim: #fee2e2;
-            --txt-dim: #4b5563;
-        }
-
-        h1, h2, h3, h4, .disp {
-            font-family: 'Oswald', sans-serif;
-            letter-spacing: .02em;
-            text-transform: none;
-            color: #1f2937;
-            margin: 0;
-        }
-
-        .mono {
-            font-family: 'IBM Plex Mono', monospace;
-        }
-
-        button {
-            font-family: 'Inter', sans-serif;
-            cursor: pointer;
-        }
-
-        a {
-            color: inherit;
-            text-decoration: none;
-        }
-
-        /* ---------- LOGIN ---------- */
-        #loginScreen {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(160deg, rgba(27, 77, 62, .98), rgba(15, 43, 35, .95)),
-                        repeating-linear-gradient(135deg, rgba(232, 245, 233, .04) 0 2px, transparent 2px 24px);
-            background-color: #113228;
-        }
-
-        .login-card {
-            width: 380px;
-            background: #ffffff;
+        .workflow-card {
+            background: white;
             border-radius: 12px;
-            padding: 40px 36px 32px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, .25);
-            position: relative;
+            box-shadow: var(--shadow-lg);
+            padding: 2.5rem;
+            max-width: 600px;
+            margin: 2.5rem auto;
+            border-top: 5px solid var(--primary-color);
         }
 
-        .login-card:before {
-            content: "";
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 6px;
-            background: linear-gradient(90deg, var(--amber), var(--good));
-            border-radius: 12px 12px 0 0;
-        }
-
-        .brand-mark {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 6px;
-        }
-
-        .brand-mark .sq {
-            width: 34px;
-            height: 34px;
-            background: var(--amber);
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #ffffff;
-            font-family: 'Oswald', sans-serif;
-            font-weight: 700;
-            font-size: 16px;
-        }
-
-        .brand-mark .name {
-            font-family: 'Oswald', sans-serif;
-            font-weight: 600;
-            font-size: 22px;
-            letter-spacing: .06em;
-            color: #1f2937;
-        }
-
-        .login-sub {
-            color: var(--txt-dim);
-            font-size: 12.5px;
-            margin-bottom: 28px;
-            letter-spacing: .03em;
-            text-transform: uppercase;
-            font-weight: 600;
-        }
-
-        .field {
-            margin-bottom: 16px;
-        }
-
-        .field label {
-            display: block;
-            font-size: 11.5px;
-            color: var(--txt-dim);
-            text-transform: uppercase;
-            letter-spacing: .06em;
-            margin-bottom: 6px;
-            font-weight: 600;
-        }
-
-        .field input {
-            width: 100%;
-            padding: 11px 12px;
-            border: 1px solid var(--panel-line);
-            border-radius: 8px;
-            font-size: 14px;
-            background: #fafbfc;
-            transition: .15s;
-            outline: none;
-        }
-
-        .field input:focus {
-            border-color: var(--amber);
-            background: #ffffff;
-        }
-
-        .login-row {
+        /* Stepper progress */
+        .stepper {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 12.5px;
-            color: var(--txt-dim);
-            margin: 14px 0 20px;
+            margin-bottom: 2.5rem;
+            position: relative;
         }
 
-        .btn {
-            border: none;
-            border-radius: 8px;
-            padding: 12px 18px;
-            font-size: 13.5px;
-            font-weight: 700;
-            letter-spacing: .02em;
-            transition: .15s;
-            width: 100%;
+        .stepper-line {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            height: 2px;
+            background: var(--border-color);
+            z-index: 1;
+            transition: background 0.3s;
         }
 
-        .btn-primary {
-            background: var(--amber);
-            color: #ffffff;
+        .stepper-line-fill {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0%;
+            height: 100%;
+            background: var(--primary-color);
+            transition: width 0.3s;
         }
 
-        .btn-primary:hover {
-            background: #113228;
-        }
-
-        .login-err {
-            background: var(--red-dim);
-            color: var(--red);
-            font-size: 12.5px;
-            padding: 8px 10px;
-            border-radius: 6px;
-            margin-bottom: 14px;
-            display: none;
-            font-weight: 500;
-        }
-
-        .login-foot {
+        .step {
+            position: relative;
+            z-index: 2;
             text-align: center;
-            color: #9ca3af;
-            font-size: 11px;
-            margin-top: 22px;
-            letter-spacing: .03em;
         }
 
-        /* ---------- APP SHELL ---------- */
-        #appShell {
-            display: flex;
-            min-height: 100vh;
-        }
-
-        .sidebar {
-            width: 230px;
-            background: #ffffff;
-            border-right: 1px solid var(--panel-line);
-            position: fixed;
-            top: 0; bottom: 0; left: 0;
-            display: flex;
-            flex-direction: column;
-            padding: 20px 18px 16px;
-            z-index: 10;
-        }
-
-        .sb-brand {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding-bottom: 16px;
-            border-bottom: 1px solid var(--panel-line);
-            margin-bottom: 14px;
-        }
-
-        .sb-brand .sq {
-            width: 28px;
-            height: 28px;
-            background: var(--amber);
-            border-radius: 6px;
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: white;
+            border: 2px solid var(--border-color);
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #ffffff;
-            font-family: 'Oswald', sans-serif;
-            font-weight: 700;
-            font-size: 13px;
+            font-weight: bold;
+            font-size: 14px;
+            color: var(--text-light);
+            margin: 0 auto 8px;
+            transition: all 0.3s;
         }
 
-        .sb-brand .name {
-            font-family: 'Oswald', sans-serif;
+        .step-label {
+            font-size: 11px;
             font-weight: 600;
-            font-size: 18px;
-            color: #1f2937;
-            letter-spacing: .04em;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
-        .sb-nav {
-            flex: 1;
-            padding: 10px 0;
+        .step.active .step-circle {
+            border-color: var(--primary-color);
+            background: var(--primary-color);
+            color: white;
+            box-shadow: 0 0 0 4px rgba(27, 77, 62, 0.15);
         }
 
-        .sb-item {
+        .step.active .step-label {
+            color: var(--primary-color);
+        }
+
+        .step.completed .step-circle {
+            border-color: var(--primary-color);
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* Option cards (Step 2) */
+        .option-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.25rem;
+            margin: 2rem 0;
+        }
+
+        .option-card {
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .option-card:hover {
+            border-color: var(--primary-color);
+            background-color: var(--light-bg);
+        }
+
+        .option-card.selected {
+            border-color: var(--primary-color);
+            background-color: #e8f5e9;
+        }
+
+        .option-card input[type="radio"] {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            accent-color: var(--primary-color);
+            transform: scale(1.2);
+        }
+
+        .option-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.75rem;
+            display: block;
+        }
+
+        .option-title {
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 0.25rem;
+        }
+
+        .option-desc {
+            font-size: 12px;
+            color: var(--text-light);
+        }
+
+        /* Viewfinder barcode simulation (Step 3) */
+        .scanner-viewfinder {
+            position: relative;
+            width: 280px;
+            height: 180px;
+            border: 3px dashed var(--primary-color);
+            border-radius: 12px;
+            margin: 1.5rem auto;
+            overflow: hidden;
+            background: #fafbfc;
             display: flex;
             align-items: center;
-            gap: 11px;
-            padding: 10px 12px;
-            border-radius: 8px;
-            font-size: 13.5px;
-            color: var(--txt-dim);
-            margin-bottom: 4px;
-            cursor: pointer;
-            transition: .12s;
-            position: relative;
-            font-weight: 500;
+            justify-content: center;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.02);
         }
 
-        .sb-item:hover {
-            background: var(--panel-line-soft);
-            color: #1f2937;
-        }
-
-        .sb-item.active {
-            background: var(--amber-dim);
-            color: var(--amber);
-            font-weight: 600;
-        }
-
-        .sb-item.active:before {
-            content: "";
+        .scanner-laser {
             position: absolute;
             left: 0;
-            top: 8px;
-            bottom: 8px;
-            width: 3px;
-            background: var(--amber);
-            border-radius: 0 4px 4px 0;
+            right: 0;
+            height: 4px;
+            background: #ef4444;
+            box-shadow: 0 0 12px #ef4444;
+            animation: laserScan 2.5s ease-in-out infinite;
         }
 
-        .sb-item .ic {
-            width: 16px;
-            text-align: center;
-            font-size: 14px;
+        @keyframes laserScan {
+            0% {
+                top: 10%;
+            }
+
+            50% {
+                top: 90%;
+            }
+
+            100% {
+                top: 10%;
+            }
         }
 
-        .sb-item .bd {
-            margin-left: auto;
-            background: var(--amber);
-            color: #ffffff;
-            font-size: 10px;
-            font-weight: 700;
-            padding: 1px 6px;
-            border-radius: 8px;
-        }
-
-        .sb-foot {
-            padding: 14px 0;
-            border-top: 1px solid var(--panel-line);
-        }
-
-        .sb-user {
-            display: flex;
-            align-items: center;
-            gap: 9px;
-            padding: 8px;
-            border-radius: 8px;
-        }
-
-        .sb-user .av {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            background: var(--amber);
-            color: #ffffff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-family: 'Oswald', sans-serif;
-            font-size: 13px;
-        }
-
-        .sb-user .nm {
-            font-size: 13px;
-            color: #1f2937;
-            font-weight: 600;
-        }
-
-        .sb-user .rl {
-            font-size: 10.5px;
-            color: var(--txt-dim);
-        }
-
-        .sb-logout {
-            margin-top: 10px;
-            font-size: 12px;
-            color: var(--txt-dim);
-            cursor: pointer;
-            padding: 6px 8px;
-            transition: color 0.15s;
-            font-weight: 500;
-        }
-
-        .sb-logout:hover {
-            color: var(--red);
-        }
-
-        .main {
-            margin-left: 230px;
-            flex: 1;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            width: calc(100% - 230px);
-        }
-
-        .topbar {
-            background: #ffffff;
-            border-bottom: 1px solid var(--panel-line);
-            padding: 14px 28px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .tb-title {
-            font-family: 'Oswald', sans-serif;
-            font-size: 20px;
-            font-weight: 600;
-            color: #1f2937;
-        }
-
-        .tb-crumb {
-            font-size: 11px;
-            color: var(--txt-dim);
-            text-transform: uppercase;
-            letter-spacing: .05em;
-            margin-bottom: 2px;
-            font-weight: 600;
-        }
-
-        .tb-right {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .icon-btn {
-            position: relative;
-            width: 34px;
-            height: 34px;
-            border-radius: 8px;
-            border: 1px solid var(--panel-line);
-            background: #ffffff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 15px;
-            color: var(--txt-dim);
-            cursor: pointer;
-            transition: all 0.15s;
-        }
-
-        .icon-btn:hover {
-            border-color: var(--amber);
-            color: var(--amber);
-        }
-
-        .icon-btn .dot {
+        .viewfinder-corner {
             position: absolute;
-            top: -4px;
-            right: -4px;
             width: 15px;
             height: 15px;
-            background: var(--red);
-            color: #ffffff;
-            font-size: 9px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
+            border: 3px solid var(--primary-color);
         }
 
-        .content {
-            padding: 26px 28px 50px;
-            flex: 1;
+        .tl {
+            top: 8px;
+            left: 8px;
+            border-right: none;
+            border-bottom: none;
         }
 
-        /* ---------- KPI & CARDS ---------- */
-        .grid-4 {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 14px;
-            margin-bottom: 22px;
+        .tr {
+            top: 8px;
+            right: 8px;
+            border-left: none;
+            border-bottom: none;
         }
 
-        .kpi {
-            background: #ffffff;
-            border: 1px solid var(--panel-line);
-            border-radius: 10px;
-            padding: 16px 18px;
-            border-left: 4px solid var(--amber);
+        .bl {
+            bottom: 8px;
+            left: 8px;
+            border-right: none;
+            border-top: none;
         }
 
-        .kpi.amber { border-left-color: #f59e0b; }
-        .kpi.green { border-left-color: var(--good); }
-        .kpi.red { border-left-color: var(--red); }
-
-        .kpi .num {
-            font-family: 'Oswald', sans-serif;
-            font-size: 32px;
-            font-weight: 600;
-            line-height: 1;
-            color: #1f2937;
+        .br {
+            bottom: 8px;
+            right: 8px;
+            border-left: none;
+            border-top: none;
         }
 
-        .kpi .lbl {
-            font-size: 11px;
-            color: var(--txt-dim);
-            text-transform: uppercase;
-            letter-spacing: .05em;
-            margin-top: 6px;
-            font-weight: 600;
+        /* Item Info layout (Step 4) */
+        .info-panel {
+            background: var(--light-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin: 1.5rem 0;
         }
 
-        .panel {
-            background: #ffffff;
-            border: 1px solid var(--panel-line);
-            border-radius: 12px;
-            overflow: hidden;
-        }
-
-        .panel-head {
-            padding: 14px 18px;
-            border-bottom: 1px solid var(--panel-line);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .panel-head h3 {
-            font-family: 'Oswald', sans-serif;
-            font-size: 16px;
-            font-weight: 600;
-            color: #1f2937;
-        }
-
-        .panel-head .link {
-            font-size: 12px;
-            color: var(--amber);
-            font-weight: 600;
-            cursor: pointer;
-        }
-
-        .panel-body {
-            padding: 16px 18px;
-        }
-
-        .two-col {
-            display: grid;
-            grid-template-columns: 1.5fr 1fr;
-            gap: 16px;
-            align-items: start;
-        }
-
-        /* ---------- TICKET TAG CARD ---------- */
-        .wo-tag {
-            position: relative;
-            border: 1px solid var(--panel-line);
-            border-radius: 12px;
-            background: #ffffff;
-            padding: 18px 18px 18px 24px;
-            margin-bottom: 12px;
-            overflow: hidden;
-            transition: .15s;
-            cursor: pointer;
-            display: block;
-            width: 100%;
-            text-align: left;
-            color: inherit;
-        }
-
-        .wo-tag:hover {
-            box-shadow: 0 6px 16px rgba(27, 77, 62, .06);
-            border-color: var(--amber);
-            transform: translateY(-1px);
-        }
-
-        .wo-tag:before {
-            content: "";
-            position: absolute;
-            left: 0; top: 0; bottom: 0;
-            width: 6px;
-            background: var(--amber);
-        }
-
-        .wo-tag.p-high:before { background: var(--red); }
-        .wo-tag.p-medium:before { background: #f59e0b; }
-        .wo-tag.p-low:before { background: var(--txt-dim); }
-
-        .wo-tag:after {
-            content: "";
-            position: absolute;
-            left: -1px;
-            top: 50%;
-            width: 12px;
-            height: 12px;
-            background: #f4f7f5;
-            border: 1px solid var(--panel-line);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-        }
-
-        .wo-head {
+        .info-row {
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 10px;
-        }
-
-        .wo-ids {
-            display: flex;
-            gap: 18px;
-            flex-wrap: wrap;
-        }
-
-        .wo-id .k {
-            font-size: 10px;
-            color: var(--txt-dim);
-            text-transform: uppercase;
-            letter-spacing: .05em;
-            font-weight: 600;
-        }
-
-        .wo-id .v {
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 14px;
-            font-weight: 600;
-            color: #1f2937;
-        }
-
-        .status-chip {
-            font-size: 10.5px;
-            font-weight: 700;
-            padding: 4px 10px;
-            border-radius: 12px;
-            text-transform: uppercase;
-            letter-spacing: .03em;
-            white-space: nowrap;
-        }
-
-        .st-wait { background: #fee2e2; color: var(--red); }
-        .st-progress { background: var(--amber-dim); color: var(--amber); }
-        .st-paused { background: #fef3c7; color: #d97706; }
-        .st-completed { background: var(--good-dim); color: var(--good); }
-        .st-overdue { background: #fef2f2; border: 1px solid var(--red); color: var(--red); }
-
-        .wo-meta {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-            font-size: 12.5px;
-            color: var(--txt-dim);
-            border-top: 1px dashed var(--panel-line);
-            padding-top: 10px;
-            margin-top: 2px;
-        }
-
-        .wo-meta b {
-            color: #1f2937;
-            font-weight: 600;
-        }
-
-        .barcode {
-            height: 22px;
-            background: repeating-linear-gradient(90deg, #1f2937 0 2px, transparent 2px 4px, #1f2937 4px 5px, transparent 5px 8px);
-            opacity: .4;
-            margin-top: 10px;
-            width: 140px;
-        }
-
-        /* ---------- BUTTONS ---------- */
-        .btn-sm {
-            padding: 8px 14px;
-            font-size: 12.5px;
-            border-radius: 8px;
-            font-weight: 600;
-            border: 1px solid var(--panel-line);
-            background: #ffffff;
-            color: #1f2937;
-            cursor: pointer;
-            transition: .15s;
-        }
-
-        .btn-sm:hover {
-            background: var(--panel-line-soft);
-        }
-
-        .btn-steel {
-            background: var(--amber);
-            color: #ffffff;
-            border-color: var(--amber);
-        }
-
-        .btn-steel:hover {
-            background: #113228;
-        }
-
-        .btn-green {
-            background: var(--good);
-            color: #ffffff;
-            border-color: var(--good);
-        }
-
-        .btn-green:hover {
-            background: #059669;
-        }
-
-        .btn-red {
-            background: #ffffff;
-            color: var(--red);
-            border-color: var(--red);
-        }
-
-        .btn-red:hover {
-            background: var(--red-dim);
-        }
-
-        .btn-amber {
-            background: #f59e0b;
-            color: #ffffff;
-            border-color: #f59e0b;
-        }
-
-        .btn-amber:hover {
-            background: #d97706;
-        }
-
-        .btn-ghost {
-            background: transparent;
-            border: 1px solid var(--panel-line);
-            color: var(--txt-dim);
-        }
-
-        /* ---------- SEARCH & CONTROLS ---------- */
-        .search-bar {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 16px;
-            flex-wrap: wrap;
-        }
-
-        .search-bar input, .search-bar select {
-            padding: 10px 12px;
-            border: 1px solid var(--panel-line);
-            border-radius: 8px;
-            font-size: 13px;
-            background: #ffffff;
-            outline: none;
-            transition: all 0.15s;
-            color: #1f2937;
-        }
-
-        .search-bar input:focus, .search-bar select:focus {
-            border-color: var(--amber);
-        }
-
-        .search-bar input {
-            flex: 1;
-            min-width: 220px;
-        }
-
-        /* ---------- DETAILS & WORK ---------- */
-        .back-link {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 13px;
-            color: var(--txt-dim);
-            cursor: pointer;
-            margin-bottom: 14px;
-            font-weight: 600;
-            transition: all 0.15s;
-        }
-
-        .back-link:hover {
-            color: var(--amber);
-        }
-
-        .detail-head {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 18px;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .detail-head .idline {
-            font-family: 'Oswald', sans-serif;
-            font-size: 24px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            color: #1f2937;
-        }
-
-        .field-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px 20px;
-        }
-
-        .field-grid .fk {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: .05em;
-            color: var(--txt-dim);
-            margin-bottom: 3px;
-            font-weight: 600;
-        }
-
-        .field-grid .fv {
-            font-size: 14.5px;
-            font-weight: 600;
-            color: #1f2937;
-        }
-
-        .field-grid .fv.mono {
-            font-family: 'IBM Plex Mono', monospace;
-        }
-
-        .field-grid .fv.warn {
-            color: var(--red);
-        }
-
-        .field-grid .fv.ok {
-            color: var(--good);
-        }
-
-        .sect-title {
-            font-size: 11.5px;
-            text-transform: uppercase;
-            letter-spacing: .06em;
-            color: var(--amber);
-            font-weight: 700;
-            margin: 0 0 12px;
-            padding-bottom: 8px;
-            border-bottom: 2px solid var(--panel-line-soft);
-        }
-
-        .stack {
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-        }
-
-        .img-thumbs {
-            display: flex;
-            gap: 8px;
-        }
-
-        .img-thumb {
-            width: 68px;
-            height: 68px;
-            border-radius: 8px;
-            background: var(--panel-line-soft);
-            border: 1px solid var(--panel-line);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--txt-dim);
-            font-size: 18px;
-            cursor: pointer;
-        }
-
-        /* ---------- TIMER & REPAIR ---------- */
-        .timer-box {
-            background: var(--amber);
-            color: #ffffff;
-            border-radius: 12px;
-            padding: 20px 24px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 18px;
-        }
-
-        .timer-box .tval {
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 38px;
-            font-weight: 600;
-            letter-spacing: .03em;
-        }
-
-        .timer-box .tlbl {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: .06em;
-            color: #a3e635; /* bright lime green label to show running */
-            margin-top: 2px;
-            font-weight: 600;
-        }
-
-        .checklist-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 0;
-            border-bottom: 1px solid var(--panel-line-soft);
-            font-size: 13.5px;
-        }
-
-        .checklist-item input {
-            width: 18px;
-            height: 18px;
-            accent-color: var(--amber);
-        }
-
-        .checklist-item.done label {
-            text-decoration: line-through;
-            color: var(--txt-dim);
-        }
-
-        textarea {
-            width: 100%;
-            border: 1px solid var(--panel-line);
-            border-radius: 8px;
-            padding: 12px;
-            font-family: 'Inter', sans-serif;
-            font-size: 13.5px;
-            resize: vertical;
-            outline: none;
-            color: #1f2937;
-        }
-
-        textarea:focus {
-            border-color: var(--amber);
-        }
-
-        .mat-row {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 8px;
-        }
-
-        .mat-row input {
-            flex: 1;
-            padding: 8px 10px;
-            border: 1px solid var(--panel-line);
-            border-radius: 8px;
-            font-size: 13px;
-            outline: none;
-            color: #1f2937;
-        }
-
-        .mat-row input:focus {
-            border-color: var(--amber);
-        }
-
-        .radio-line {
-            display: flex;
-            align-items: center;
-            gap: 9px;
             padding: 8px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 500;
+            color: var(--text-light);
             font-size: 13.5px;
-            cursor: pointer;
         }
 
-        .radio-line input {
-            width: 18px;
-            height: 18px;
-            accent-color: var(--amber);
-        }
-
-        /* ---------- TABLES ---------- */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        th {
-            text-align: left;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: .05em;
-            color: var(--txt-dim);
-            padding: 12px 10px;
-            border-bottom: 2px solid var(--panel-line-soft);
-            font-weight: 700;
-        }
-
-        td {
-            padding: 12px 10px;
-            font-size: 13.5px;
-            border-bottom: 1px solid var(--panel-line-soft);
-            color: #1f2937;
-        }
-
-        tr:hover td {
-            background: var(--panel-line-soft);
-        }
-
-        .pass-tag {
-            color: var(--good);
-            font-weight: 700;
-            font-size: 12px;
-        }
-
-        /* ---------- MODALS & TOAST ---------- */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(17, 50, 40, .55);
-            z-index: 100;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            backdrop-filter: blur(4px);
-        }
-
-        .modal-overlay.open {
-            display: flex;
-        }
-
-        .modal-box {
-            background: #ffffff;
-            border-radius: 12px;
-            max-width: 480px;
-            width: 100%;
-            padding: 26px;
-            max-height: 88vh;
-            overflow-y: auto;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, .2);
-        }
-
-        .modal-box.wide {
-            max-width: 640px;
-        }
-
-        .modal-title {
-            font-family: 'Oswald', sans-serif;
-            font-size: 18px;
+        .info-val {
             font-weight: 600;
-            margin-bottom: 18px;
+            color: var(--text-color);
+            font-size: 13.5px;
+        }
+
+        /* Action buttons footer */
+        .btn-group {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: #1f2937;
+            gap: 1rem;
+            margin-top: 2rem;
         }
 
-        .modal-close {
-            cursor: pointer;
-            color: var(--txt-dim);
-            font-size: 20px;
-            transition: color 0.15s;
+        .btn-flex {
+            flex: 1;
         }
 
-        .modal-close:hover {
-            color: var(--red);
-        }
-
-        .modal-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-            justify-content: flex-end;
-        }
-
-        .toast {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            background: #113228;
-            color: #ffffff;
-            padding: 13px 20px;
+        /* Inputs */
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-color);
             border-radius: 8px;
-            font-size: 13.5px;
-            font-weight: 600;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, .2);
-            z-index: 200;
-            display: none;
-            align-items: center;
-            gap: 9px;
-            border-left: 4px solid var(--good);
-        }
-
-        .toast .tk {
-            color: var(--good);
-        }
-
-        /* ---------- PRINT VIEW ---------- */
-        .qr-doc {
-            background: #ffffff;
-            font-family: 'Inter', sans-serif;
-            color: #111111;
-        }
-
-        .qr-h1 {
-            font-family: Georgia, serif;
-            font-size: 26px;
-            font-weight: 700;
-            letter-spacing: .02em;
-            color: #111111;
-        }
-
-        .qr-topline {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            border-bottom: 3px solid #111111;
-            padding-bottom: 14px;
-            margin-bottom: 18px;
-        }
-
-        .qr-meta-box {
-            text-align: right;
-            font-size: 12.5px;
-        }
-
-        .qr-meta-box .row {
-            margin-bottom: 3px;
-        }
-
-        .qr-meta-box b {
-            display: inline-block;
-            min-width: 80px;
-            text-align: left;
-            color: #666666;
-            font-weight: 600;
-        }
-
-        .qr-section-title {
-            font-size: 12px;
-            font-weight: 700;
-            letter-spacing: .06em;
-            background: var(--amber);
-            color: #ffffff;
-            padding: 5px 10px;
-            margin: 18px 0 10px;
-            text-transform: uppercase;
-        }
-
-        .qr-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0;
-            border: 1px solid var(--panel-line);
-        }
-
-        .qr-cell {
-            padding: 10px 14px;
-            border-bottom: 1px solid var(--panel-line);
-            border-right: 1px solid var(--panel-line);
-        }
-
-        .qr-cell:nth-child(2n) {
-            border-right: none;
-        }
-
-        .qr-cell.full {
-            grid-column: 1/3;
-            border-right: none;
-        }
-
-        .qr-cell .en {
-            font-weight: 700;
-            font-size: 13px;
-            color: #111111;
-        }
-
-        .qr-cell .vn {
-            font-style: italic;
-            color: #666666;
-            font-size: 11.5px;
-            margin-bottom: 4px;
-        }
-
-        .qr-cell .val {
             font-size: 14px;
-            margin-top: 2px;
-            color: #222222;
+            outline: none;
+            transition: border-color 0.15s;
         }
 
-        .qr-photos {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 10px;
-            margin-top: 8px;
+        .form-input:focus {
+            border-color: var(--primary-color);
         }
 
-        .qr-photo {
-            aspect-ratio: 1;
-            background: #f4f7f5;
-            border: 1px solid var(--panel-line);
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--txt-dim);
-            font-size: 10px;
+        /* Success screen */
+        .success-state {
             text-align: center;
-            padding: 6px;
+            padding: 2rem 0;
         }
 
-        .qr-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            margin-bottom: 16px;
+        .success-icon {
+            font-size: 4rem;
+            color: var(--success-color);
+            margin-bottom: 1.5rem;
         }
 
-        @media print {
-            body * {
-                visibility: hidden;
-                background: none !important;
-            }
-            .quarantine-print, .quarantine-print * {
-                visibility: visible;
-            }
-            .quarantine-print {
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
-                padding: 0;
-                margin: 0;
-            }
-            .qr-actions {
-                display: none;
-            }
-            .qr-section-title {
-                background: #111111 !important;
-                color: #ffffff !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
-            .modal-overlay {
-                position: absolute;
-                background: none;
-                backdrop-filter: none;
-            }
-            .modal-box {
-                box-shadow: none;
-                max-height: none;
-                overflow: visible;
-                padding: 0;
-                width: 100%;
-                max-width: 100%;
-            }
+        /* Pulse dot for active repair status */
+        .pulse-dot {
+            width: 10px;
+            height: 10px;
+            background-color: var(--warning-color);
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulse 1.5s infinite;
         }
 
-        @media (max-width: 900px) {
-            .sidebar {
-                display: none;
+        @keyframes pulse {
+            0% {
+                transform: scale(0.9);
+                box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7);
             }
-            .main {
-                margin-left: 0;
-                width: 100%;
+            70% {
+                transform: scale(1.1);
+                box-shadow: 0 0 0 8px rgba(245, 158, 11, 0);
             }
-            .grid-4 {
-                grid-template-columns: 1fr 1fr;
-            }
-            .two-col {
-                grid-template-columns: 1fr;
-            }
-            .field-grid {
-                grid-template-columns: 1fr;
-            }
-            .qr-photos {
-                grid-template-columns: repeat(2, 1fr);
+            100% {
+                transform: scale(0.9);
+                box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
             }
         }
     </style>
 </head>
+
 <body>
+    <nav>
+        <div class="container">
+            <div class="nav-brand">
+                <img src="/logo.png" alt="VFR Logo">
+                <span>QMS System</span>
+            </div>
+            <ul class="nav-menu">
+                <li style="color: #6b7280;"><strong>Production Worker</strong> - <span id="username"></span></li>
+                <li><button class="logout-btn" onclick="logout()">Logout</button></li>
+            </ul>
+        </div>
+    </nav>
 
-<!-- ============ APP SHELL ============ -->
-<div id="appShell">
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <div class="sb-brand">
-            <div class="sq">Q</div>
-            <div class="name">QMS</div>
-        </div>
-        <div class="sb-nav">
-            <div class="sb-item active" data-view="dashboard" onclick="go('dashboard')">
-                <span class="ic">&#9635;</span> Dashboard
-            </div>
-            <div class="sb-item" data-view="tickets" onclick="go('tickets')">
-                <span class="ic">&#128203;</span> My Repair Tickets 
-                <span class="bd" id="navTicketBadge">0</span>
-            </div>
-            <div class="sb-item" data-view="history" onclick="go('history')">
-                <span class="ic">&#128337;</span> Repair History
-            </div>
-            <div class="sb-item" data-view="notif" onclick="go('notif')">
-                <span class="ic">&#128276;</span> Notifications 
-                <span class="bd" id="navNotifBadge">0</span>
-            </div>
-            <div class="sb-item" data-view="profile" onclick="go('profile')">
-                <span class="ic">&#128100;</span> Profile
-            </div>
-            <div class="sb-item" onclick="logout()" style="color: var(--red); margin-top: 1.5rem; border-top: 1px solid var(--panel-line-soft); padding-top: 1rem;">
-                <span class="ic">&#128274;</span> Logout
-            </div>
-        </div>
-        <div class="sb-foot">
-            <div class="sb-user">
-                <div class="av">NA</div>
-                <div>
-                    <div class="nm">Nguyễn Văn A</div>
-                    <div class="rl">Production Worker</div>
+    <main>
+        <div class="container">
+            <!-- Stepper Container Card -->
+            <div class="workflow-card">
+                <!-- Stepper Progress Bar -->
+                <div class="stepper" id="stepperContainer" style="display: none;">
+                    <div class="stepper-line">
+                        <div class="stepper-line-fill" id="stepperLineFill"></div>
+                    </div>
+                    <div class="step active" id="step1-indicator">
+                        <div class="step-circle">1</div>
+                        <div class="step-label">Menu</div>
+                    </div>
+                    <div class="step" id="step2-indicator">
+                        <div class="step-circle">2</div>
+                        <div class="step-label">Mode</div>
+                    </div>
+                    <div class="step" id="step3-indicator">
+                        <div class="step-circle">3</div>
+                        <div class="step-label">Input</div>
+                    </div>
+                    <div class="step" id="step4-indicator">
+                        <div class="step-circle">4</div>
+                        <div class="step-label">Detail</div>
+                    </div>
+                    <div class="step" id="step5-indicator">
+                        <div class="step-circle">5</div>
+                        <div class="step-label">Confirm</div>
+                    </div>
+                </div>
+
+                <!-- Step Views -->
+                <div id="step-views">
+
+                    <!-- STEP 1: Main Menu -->
+                    <div id="view-step1" style="text-align: center;">
+                        <h2
+                            style="font-size: 1.6rem; color: var(--text-color); margin-bottom: 1rem; font-weight: bold;">
+                            Main Menu</h2>
+                        <p style="color: var(--text-light); margin-bottom: 2rem;">Scan or enter a quarantine item's partcode to
+                            assign workers and start the repair operation.</p>
+
+                        <div style="font-size: 5rem; margin-bottom: 2rem;">🛠️</div>
+
+                        <button class="btn btn-primary" onclick="goToStep(2)"
+                            style="width: 100%; padding: 1rem; font-size: 1.1rem; border-radius: 8px;">
+                            Scan / Enter Partcode
+                        </button>
+                    </div>
+
+                    <!-- STEP 2: Select Mode -->
+                    <div id="view-step2" style="display: none;">
+                        <h2
+                            style="font-size: 1.4rem; color: var(--text-color); margin-bottom: 0.5rem; font-weight: bold;">
+                            Select Mode</h2>
+                        <p style="color: var(--text-light); font-size: 0.9rem;">Choose how you want to load the repair
+                            item's information.</p>
+
+                        <div class="option-grid">
+                            <div class="option-card selected" onclick="selectMode('manual')" id="mode-manual-card">
+                                <input type="radio" name="input_mode" value="manual" checked>
+                                <span class="option-icon">⌨️</span>
+                                <div class="option-title">Manual Enter</div>
+                                <div class="option-desc">Type in the partcode</div>
+                            </div>
+                            <div class="option-card" onclick="selectMode('scan')" id="mode-scan-card">
+                                <input type="radio" name="input_mode" value="scan">
+                                <span class="option-icon">📷</span>
+                                <div class="option-title">Scan Partcode</div>
+                                <div class="option-desc">Use device camera scanner</div>
+                            </div>
+                        </div>
+
+                        <div class="btn-group">
+                            <button class="btn btn-secondary btn-flex" onclick="goToStep(1)">Back</button>
+                            <button class="btn btn-primary btn-flex" onclick="goToStep(3)">Next</button>
+                        </div>
+                    </div>
+
+                    <!-- STEP 3: Input / Scan Partcode -->
+                    <div id="view-step3" style="display: none;">
+                        <h2 style="font-size: 1.4rem; color: var(--text-color); margin-bottom: 0.5rem; font-weight: bold;"
+                            id="step3-title">Input Partcode</h2>
+                        <p style="color: var(--text-light); font-size: 0.9rem; margin-bottom: 1.5rem;" id="step3-desc">
+                        </p>
+
+                        <!-- Manual Input Form -->
+                        <div id="step3-manual-ui">
+                            <div style="margin-bottom: 1rem;">
+                                <label
+                                    style="display: block; font-size: 12px; font-weight: bold; margin-bottom: 6px; color: var(--text-light); text-transform: uppercase;">Partcode</label>
+                                <input type="text" id="partcode-input" class="form-input" placeholder="e.g. 01829265-WP"
+                                    value="01829265-WP">
+                            </div>
+                            <div id="barcode-error" style="color: var(--danger-color); font-size: 13.5px; font-weight: 500; margin-top: -0.5rem; margin-bottom: 1rem; display: none;"></div>
+                            <button class="btn btn-primary" onclick="submitBarcode()"
+                                style="width: 100%; padding: 0.75rem;">Submit</button>
+                        </div>
+
+                        <!-- Barcode Scanner Simulation -->
+                        <div id="step3-scan-ui" style="display: none; text-align: center;">
+                            <div class="scanner-viewfinder">
+                                <div class="scanner-laser"></div>
+                                <div class="viewfinder-corner tl"></div>
+                                <div class="viewfinder-corner tr"></div>
+                                <div class="viewfinder-corner bl"></div>
+                                <div class="viewfinder-corner br"></div>
+                                <div style="font-size: 2.5rem; opacity: 0.15;">Partcode</div>
+                            </div>
+                            <button class="btn btn-primary" onclick="simulateScan()"
+                                style="width: 100%; padding: 0.75rem;">Simulate Scan</button>
+                        </div>
+
+                        <div class="btn-group">
+                            <button class="btn btn-secondary btn-flex" onclick="goToStep(2)">Back</button>
+                        </div>
+                    </div>
+
+                    <!-- STEP 4: Item Information & Worker Input -->
+                    <div id="view-step4" style="display: none;">
+                        <h2
+                            style="font-size: 1.4rem; color: var(--text-color); margin-bottom: 0.5rem; font-weight: bold;">
+                            Item Details</h2>
+                        <p style="color: var(--text-light); font-size: 0.9rem;">Review item data and input resource
+                            allocation.</p>
+
+                        <div class="info-panel">
+                            <div class="info-row">
+                                <div class="info-label">Item ID</div>
+                                <div class="info-val" id="info-id">INH-3-8395</div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Item Name</div>
+                                <div class="info-val" id="info-name">Nightstand 28 inch — Left Single Metro</div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Defect Case</div>
+                                <div class="info-val" id="info-condition" style="color: var(--danger-color);">A-04
+                                    (Crack / broken)</div>
+                            </div>
+                        </div>
+
+                        <div id="no-repair-banner" style="display: none; background-color: #e3f2fd; border-left: 4px solid #2196f3; color: #0d47a1; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; font-weight: 500; font-size: 0.95rem; text-align: left; line-height: 1.4;">
+                            📢 <strong>Announcement:</strong> This item has passed inspection (Pass Qty: 1) and does not require repair.
+                        </div>
+
+                        <!-- Location scanning/updating section -->
+                        <div id="location-input-group" style="margin-bottom: 1.5rem; padding: 1.25rem; background: var(--light-bg); border: 1px solid var(--border-color); border-radius: 8px;">
+                            <label style="display: block; font-size: 12.5px; font-weight: bold; margin-bottom: 8px; color: var(--text-color);">
+                                📍 Scan Location Barcode
+                            </label>
+                            
+                            <!-- Location Input Selection Mode -->
+                            <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                                <button type="button" class="btn btn-primary" id="loc-btn-scan" onclick="setLocInputMode('scan')" style="flex: 1; padding: 6px; font-size: 11px; border-radius: 4px;">📷 Scan Barcode</button>
+                                <button type="button" class="btn btn-secondary" id="loc-btn-manual" onclick="setLocInputMode('manual')" style="flex: 1; padding: 6px; font-size: 11px; border-radius: 4px;">⌨️ Manual Enter</button>
+                            </div>
+
+                            <!-- Location Manual Entry -->
+                            <div id="loc-manual-ui" style="display: none; margin-bottom: 10px;">
+                                <input type="text" id="location-input" class="form-input" placeholder="e.g. LOC-CAR2-S5" style="padding: 8px; font-size: 13px;">
+                                <button type="button" class="btn btn-primary" onclick="submitLocationManual()" style="width: 100%; padding: 6px; font-size: 12px; margin-top: 8px; border-radius: 4px;">Update Location</button>
+                            </div>
+
+                            <!-- Location Scanner Simulation -->
+                            <div id="loc-scan-ui" style="text-align: center; margin-bottom: 10px;">
+                                <div class="scanner-viewfinder" style="width: 100%; height: 100px; margin: 8px 0; border-radius: 6px; border-width: 2px;">
+                                    <div class="scanner-laser" style="animation-duration: 2s;"></div>
+                                    <div class="viewfinder-corner tl" style="width: 10px; height: 10px; border-width: 2px;"></div>
+                                    <div class="viewfinder-corner tr" style="width: 10px; height: 10px; border-width: 2px;"></div>
+                                    <div class="viewfinder-corner bl" style="width: 10px; height: 10px; border-width: 2px;"></div>
+                                    <div class="viewfinder-corner br" style="width: 10px; height: 10px; border-width: 2px;"></div>
+                                    <div style="font-size: 13px; opacity: 0.25; font-weight: bold;">Location Barcode</div>
+                                </div>
+                                <button type="button" class="btn btn-primary" onclick="simulateLocationScan()" style="width: 100%; padding: 6px; font-size: 12px; border-radius: 4px;">Simulate Scan</button>
+                            </div>
+                            
+                            <div id="location-error" style="color: var(--danger-color); font-size: 12.5px; font-weight: 500; margin-top: 4px; display: none;"></div>
+                        </div>
+
+                        <!-- Location Success Display -->
+                        <div id="location-success-group" style="display: none; margin-bottom: 1.5rem; padding: 0.75rem 1rem; background-color: #e8f5e9; border-left: 4px solid var(--success-color); border-radius: 8px; font-size: 13.5px; align-items: center; justify-content: space-between;">
+                            <span>📍 Location Updated: <strong id="active-location-name" style="color: var(--primary-color);"></strong></span>
+                            <button type="button" class="btn btn-ghost" onclick="resetLocationInput()" style="font-size: 10px; padding: 4px 8px; border-radius: 3px; border: 1px solid var(--border-color); background: white;">Change</button>
+                        </div>
+
+                        <div id="worker-input-group" style="margin-bottom: 1rem; display: none;">
+                            <label for="worker-count"
+                                style="display: block; font-size: 12.5px; font-weight: bold; margin-bottom: 8px; color: var(--text-color);">Enter
+                                number of repair workers</label>
+                            <input type="number" id="worker-count" class="form-input" min="1" max="10" value="1">
+                        </div>
+
+                        <div class="btn-group">
+                            <button class="btn btn-secondary btn-flex" onclick="goToStep(3)">Back</button>
+                            <button class="btn btn-primary btn-flex" id="step4-next-btn" onclick="goToStep(5)" style="display: none;">Next</button>
+                            <button class="btn btn-primary btn-flex" id="step4-return-btn" onclick="resetWorkflow()" style="display: none;">Return to Menu</button>
+                        </div>
+                    </div>
+
+                    <!-- STEP 5: Confirm Start -->
+                    <div id="view-step5" style="display: none;">
+                        <h2
+                            style="font-size: 1.4rem; color: var(--text-color); margin-bottom: 0.5rem; font-weight: bold;">
+                            Confirm Operation</h2>
+                        <p style="color: var(--text-light); font-size: 0.9rem; margin-bottom: 1.5rem;">Review the repair
+                            summary before starting the timer.</p>
+
+                        <div class="info-panel" style="border-left: 4px solid var(--primary-color);">
+                            <div class="info-row">
+                                <div class="info-label">Operation</div>
+                                <div class="info-val" style="color: var(--primary-color);">Start Repair Process</div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Partcode</div>
+                                <div class="info-val" id="summary-id"></div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Item Description</div>
+                                <div class="info-val" id="summary-name"></div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Allocated Labor</div>
+                                <div class="info-val" id="summary-workers"></div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Allocated Location</div>
+                                <div class="info-val" id="summary-location"></div>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-primary" onclick="confirmStart()"
+                            style="width: 100%; padding: 1rem; font-size: 1.05rem; font-weight: bold; border-radius: 8px;">
+                            Confirm Start Repair
+                        </button>
+
+                        <div class="btn-group">
+                            <button class="btn btn-secondary btn-flex" onclick="goToStep(4)">Back</button>
+                        </div>
+                    </div>
+
+                    <!-- SUCCESS STATE -->
+                    <div id="view-success" style="display: none;">
+                        <div class="success-state">
+                            <div class="success-icon">✔️</div>
+                            <h2
+                                style="font-size: 1.6rem; color: var(--text-color); margin-bottom: 0.5rem; font-weight: bold;">
+                                Repair Started!</h2>
+                            <p style="color: var(--text-light); margin-bottom: 2rem;">The repair process timer has been
+                                initialized. Assigned workers have been registered successfully.</p>
+                            <button class="btn btn-primary" onclick="resetWorkflow()"
+                                style="width: 100%; padding: 0.75rem;">Return to Main Menu</button>
+                        </div>
+                    </div>
+
+                    <!-- ACTIVE REPAIR PROCESS SCREEN -->
+                    <div id="view-active-repair" style="display: none;">
+                        <h2 style="font-size: 1.4rem; color: var(--text-color); margin-bottom: 0.5rem; font-weight: bold;">
+                            Active Repair Process
+                        </h2>
+                        <p style="color: var(--text-light); font-size: 0.9rem; margin-bottom: 1.5rem;">
+                            This item is currently undergoing repair. Review details or complete the operation.
+                        </p>
+
+                        <div class="info-panel" style="border-left: 4px solid var(--warning-color);">
+                            <div class="info-row">
+                                <div class="info-label">Status</div>
+                                <div class="info-val" style="color: var(--warning-color); font-weight: bold; display: flex; align-items: center; gap: 6px;">
+                                    <span class="pulse-dot"></span> In Progress
+                                </div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Item ID</div>
+                                <div class="info-val" id="active-id"></div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Item Name</div>
+                                <div class="info-val" id="active-name"></div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Defect Case</div>
+                                <div class="info-val" id="active-defect" style="color: var(--danger-color);"></div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Assigned Workers</div>
+                                <div class="info-val" id="active-workers"></div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Repair Location</div>
+                                <div class="info-val" id="active-location" style="color: var(--primary-color); font-weight: bold;"></div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Start Time</div>
+                                <div class="info-val" id="active-start-time"></div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Elapsed Time</div>
+                                <div class="info-val" id="active-elapsed" style="font-family: monospace; font-size: 1.1rem; color: var(--primary-color); font-weight: bold;">00:00:00</div>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-primary" onclick="confirmEndRepair()"
+                            style="width: 100%; padding: 1rem; font-size: 1.05rem; font-weight: bold; border-radius: 8px; margin-bottom: 1rem;">
+                            End Repair
+                        </button>
+
+                        <div class="btn-group">
+                            <button class="btn btn-secondary btn-flex" onclick="goToStep(3)">Back</button>
+                        </div>
+                    </div>
+
+                    <!-- COMPLETION SUCCESS STATE -->
+                    <div id="view-completion-success" style="display: none;">
+                        <div class="success-state">
+                            <div class="success-icon" style="color: var(--success-color);">🎉</div>
+                            <h2 style="font-size: 1.6rem; color: var(--text-color); margin-bottom: 0.5rem; font-weight: bold;">
+                                Repair Completed!
+                            </h2>
+                            <p style="color: var(--text-light); margin-bottom: 2rem;" id="completion-success-msg">
+                                The repair process has been marked as done. The total duration has been recorded.
+                            </p>
+                            <button class="btn btn-primary" onclick="resetWorkflow()"
+                                style="width: 100%; padding: 0.75rem;">Return to Main Menu</button>
+                        </div>
+                    </div>
+
                 </div>
             </div>
-            <div class="sb-logout" onclick="logout()">&#128274; Logout</div>
         </div>
-    </div>
+    </main>
 
-    <!-- Main Container -->
-    <div class="main">
-        <div class="topbar">
-            <div>
-                <div class="tb-crumb" id="tbCrumb">Overview</div>
-                <div class="tb-title" id="tbTitle">Dashboard</div>
-            </div>
-            <div class="tb-right">
-                <div class="icon-btn" onclick="go('notif')">&#128276;<span class="dot">2</span></div>
-                <div class="icon-btn" onclick="go('profile')">&#9881;</div>
-                <button onclick="logout()" style="background: var(--red); color: white; border: none; border-radius: 6px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; margin-left: 8px; margin-right: 8px; transition: background 0.15s;" onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='var(--red)'">Logout</button>
-                <div class="sb-user" style="background:transparent; padding:0;">
-                    <div class="av" style="background:var(--amber);color:#ffffff;">NA</div>
-                </div>
-            </div>
-        </div>
-        <div class="content" id="content"></div>
-    </div>
-</div>
-
-<!-- ============ MODALS ============ -->
-<div class="modal-overlay" id="modalPause">
-    <div class="modal-box">
-        <div class="modal-title">Pause Repair <span class="modal-close" onclick="closeModal('modalPause')">&times;</span></div>
-        <div style="font-size:12px;color:var(--txt-dim);margin-bottom:6px;font-weight:600;text-transform:uppercase;">Pause Reason</div>
-        <div id="pauseReasons">
-            <label class="radio-line"><input type="radio" name="pr" value="Waiting Material" checked> Waiting Material</label>
-            <label class="radio-line"><input type="radio" name="pr" value="Machine Busy"> Machine Busy</label>
-            <label class="radio-line"><input type="radio" name="pr" value="Need Supervisor"> Need Supervisor</label>
-            <label class="radio-line"><input type="radio" name="pr" value="Lunch"> Lunch</label>
-            <label class="radio-line"><input type="radio" name="pr" value="Other"> Other</label>
-        </div>
-        <div class="field" style="margin-top:12px;">
-            <label>Notes</label>
-            <textarea id="pauseNotes" rows="2" placeholder="Ghi chú thêm..."></textarea>
-        </div>
-        <div class="modal-actions">
-            <button class="btn-sm btn-ghost" onclick="closeModal('modalPause')">Cancel</button>
-            <button class="btn-sm btn-amber" onclick="confirmPause()">Pause Repair</button>
-        </div>
-    </div>
-</div>
-
-<div class="modal-overlay" id="modalComplete">
-    <div class="modal-box wide">
-        <div class="modal-title">Complete Repair <span class="modal-close" onclick="closeModal('modalComplete')">&times;</span></div>
-        <div class="field">
-            <label>Repair Summary</label>
-            <textarea id="completeSummary" rows="3" placeholder="Mô tả kết quả sửa chữa...">Replaced defect component. Cleaned and fully tested. Machine operating normal.</textarea>
-        </div>
-        <div class="field">
-            <label>Repair Result</label>
-            <div style="display:flex;gap:16px;">
-                <label class="radio-line"><input type="radio" name="rr" value="Successful" checked> Successful (QC Pass)</label>
-                <label class="radio-line"><input type="radio" name="rr" value="Unsuccessful"> Unsuccessful (Need Rework)</label>
-            </div>
-        </div>
-        <div class="field">
-            <label>Used Time</label>
-            <div style="display:flex;gap:8px;align-items:center;">
-                <input id="completeHours" type="number" value="1" min="0" max="24" style="width:64px;padding:8px;border:1px solid var(--panel-line);border-radius:8px;text-align:center;font-family:'IBM Plex Mono';outline:none;">
-                <span style="font-size:12px;color:var(--txt-dim);font-weight:600;">hrs</span>
-                <input id="completeMinutes" type="number" value="15" min="0" max="59" style="width:64px;padding:8px;border:1px solid var(--panel-line);border-radius:8px;text-align:center;font-family:'IBM Plex Mono';outline:none;">
-                <span style="font-size:12px;color:var(--txt-dim);font-weight:600;">min</span>
-            </div>
-        </div>
-        <div class="modal-actions">
-            <button class="btn-sm btn-ghost" onclick="closeModal('modalComplete')">Back</button>
-            <button class="btn-sm btn-green" onclick="confirmComplete()">Submit &amp; Complete</button>
-        </div>
-    </div>
-</div>
-
-<!-- PRINTABLE QUARANTINE REPORT MODAL -->
-<div class="modal-overlay" id="modalQuarantine">
-    <div class="modal-box wide quarantine-print">
-        <div class="qr-actions">
-            <button class="btn-sm btn-steel" onclick="window.print()">&#128424; Print</button>
-            <button class="btn-sm btn-ghost" onclick="closeModal('modalQuarantine')">Close</button>
-        </div>
-        <div class="qr-doc" id="qrDocBody"><!-- Filled dynamically --></div>
-    </div>
-</div>
-
-<div class="toast" id="toast"><span class="tk">&#10003;</span> <span id="toastMsg">Saved</span></div>
-
-<script>
-    /* ================= SYSTEM DATA & STATE ================= */
-    let inspectionData = [];
-    let ticketsState = {};
-    let currentTicketId = null;
-    let currentView = 'dashboard';
-    
-    // Search/filtering states
-    let searchQuery = "";
-    let statusFilter = "All Status";
-    let stageFilter = "All Stages";
-    let priorityFilter = "All Priorities";
-    let sortOption = "default";
-    let timeFilter = "all";
-
-    // User profile state
-    let userProfile = {
-        fullName: localStorage.getItem('username') || "Nguyễn Văn A",
-        employeeId: localStorage.getItem('userId') ? `EMP-${localStorage.getItem('userId')}` : "EMP-4471",
-        role: localStorage.getItem('role') || "Production Worker (Mechanical Repair)",
-        shift: "Shift A (06:00 - 18:00)",
-        worksiteBranch: "VFR2.1 Finishing Yard",
-        departments: "2ASSY, Finishing, Rework Mechanical"
-    };
-
-    const viewMeta = {
-        dashboard: { crumb: "Overview", title: "Dashboard" },
-        tickets: { crumb: "Work Queue", title: "My Repair Tickets" },
-        detail: { crumb: "My Repair Tickets", title: "Repair Ticket Detail" },
-        working: { crumb: "Repair Ticket", title: "Repair Working" },
-        history: { crumb: "Records", title: "Repair History" },
-        notif: { crumb: "Inbox", title: "Notifications" },
-        profile: { crumb: "Account", title: "Profile" }
-    };
-
-    const REPAIR_TICKET_STATUS_KEY = 'qms_repair_ticket_statuses';
-    const REPAIR_TICKET_STATUSES = new Set(['Waiting Accept', 'In Progress', 'Paused', 'Completed', 'Overdue']);
-    const REPAIR_STATUS_ALIASES = {
-        pending: 'Waiting Accept',
-        created: 'Waiting Accept',
-        assigned: 'Waiting Accept',
-        waiting: 'Waiting Accept',
-        'waiting accept': 'Waiting Accept',
-        inprogress: 'In Progress',
-        'in progress': 'In Progress',
-        paused: 'Paused',
-        completed: 'Completed',
-        complete: 'Completed',
-        overdue: 'Overdue'
-    };
-
-    function readStoredRepairTicketStatuses() {
-        try {
-            return JSON.parse(localStorage.getItem(REPAIR_TICKET_STATUS_KEY) || '{}');
-        } catch (error) {
-            console.error('Failed to read repair ticket statuses:', error);
-            return {};
-        }
-    }
-
-    function writeStoredRepairTicketStatuses(statuses) {
-        localStorage.setItem(REPAIR_TICKET_STATUS_KEY, JSON.stringify(statuses));
-    }
-
-    function readNotifications() {
-        try {
-            return JSON.parse(localStorage.getItem('qms_notifications') || '[]');
-        } catch(e) {
-            return [];
-        }
-    }
-
-    function addNotification(title, text) {
-        const list = readNotifications();
-        list.unshift({
-            title,
-            text,
-            timestamp: new Date().toISOString()
-        });
-        localStorage.setItem('qms_notifications', JSON.stringify(list));
-    }
-
-    function formatTimeAgo(timestamp) {
-        if (!timestamp) return 'Just now';
-        try {
-            const diffMs = Date.now() - new Date(timestamp);
-            const diffMins = Math.floor(diffMs / 60000);
-            if (diffMins < 1) return 'Just now';
-            if (diffMins < 60) return `${diffMins}m ago`;
-            const diffHours = Math.floor(diffMins / 60);
-            if (diffHours < 24) return `${diffHours}h ago`;
-            return new Date(timestamp).toLocaleDateString();
-        } catch(e) {
-            return 'Just now';
-        }
-    }
-
-    function clearNotifs() {
-        localStorage.removeItem('qms_notifications');
-        updateSidebarBadges();
-        if (currentView === 'notif') {
-            const container = document.getElementById('content');
-            if (container) container.innerHTML = renderNotif();
-        }
-    }
-
-    function normalizeRepairStatus(status) {
-        const raw = String(status || '').trim();
-        if (!raw) return null;
-        const key = raw.toLowerCase().replace(/[-_]+/g, ' ');
-        return REPAIR_STATUS_ALIASES[key] || (REPAIR_TICKET_STATUSES.has(raw) ? raw : null);
-    }
-
-    function secondsSince(isoDate) {
-        const timestamp = Date.parse(isoDate);
-        if (!Number.isFinite(timestamp)) return 0;
-        return Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
-    }
-
-    function startTimeFromSeconds(seconds) {
-        return new Date(Date.now() - Math.max(0, Number(seconds) || 0) * 1000).toISOString();
-    }
-
-    function applyStoredRepairStatus(saved, fallbackStatus, fallbackSeconds, fallbackRunning) {
-        if (!saved) {
-            return {
-                status: fallbackStatus,
-                repairSeconds: fallbackSeconds,
-                repairRunning: fallbackRunning,
-                updatedAt: null
-            };
+    <script>
+        let token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/index.html';
         }
 
-        const status = normalizeRepairStatus(saved.status) || fallbackStatus;
-        const repairRunning = typeof saved.repairRunning === 'boolean'
-            ? saved.repairRunning
-            : status === 'In Progress';
-        let repairSeconds = Number.isFinite(Number(saved.repairSeconds))
-            ? Math.max(0, Math.floor(Number(saved.repairSeconds)))
-            : fallbackSeconds;
+        document.getElementById('username').textContent = localStorage.getItem('username') || 'Production Worker';
 
-        if (repairRunning && saved.startedAt) {
-            repairSeconds = Math.max(repairSeconds, secondsSince(saved.startedAt));
+        const role = localStorage.getItem('role');
+        if (role === 'Production Manager') {
+            window.location.href = '/production-manager.html';
+        }
+        if (role === 'QC Manager') {
+            window.location.href = '/qc-manager.html';
         }
 
-        return { status, repairSeconds, repairRunning, updatedAt: saved.updatedAt || null };
-    }
+        // Workflow States
+        let currentStep = 1;
+        let selectedInputMode = 'manual';
+        let scannedBarcode = '';
+        let workerCount = 1;
+        let elapsedTimerInterval = null;
+        let activeLocation = '';
+        let locInputMode = 'scan';
 
-    function persistTicketStatus(id, extra = {}) {
-        const ticket = ticketsState[id];
-        if (!ticket) return;
+        const REPAIR_TICKET_STATUS_KEY = 'qms_repair_ticket_statuses';
 
-        const statuses = readStoredRepairTicketStatuses();
-        const previous = statuses[id] || {};
-        const oldStatus = previous.status || 'Waiting Accept';
-        const newStatus = ticket.status;
-
-        const next = {
-            ...previous,
-            ...extra,
-            status: ticket.status,
-            repairRunning: ticket.repairRunning,
-            repairSeconds: ticket.repairSeconds,
-            updatedAt: new Date().toISOString()
-        };
-
-        if (ticket.repairRunning) {
-            next.startedAt = extra.startedAt || startTimeFromSeconds(ticket.repairSeconds);
-        }
-        if (ticket.status === 'Completed') {
-            next.completedAt = extra.completedAt || new Date().toISOString();
-        }
-
-        statuses[id] = next;
-        
-        // Also persist under itemCode if available
-        if (ticket.meta && ticket.meta.itemCode) {
-            statuses[ticket.meta.itemCode] = next;
-        }
-
-        writeStoredRepairTicketStatuses(statuses);
-        
-        // Also update local ticket state
-        ticket.updatedAt = next.updatedAt;
-        if (ticket.status === 'Completed') {
-            ticket.completedAt = next.completedAt;
-        }
-
-        // Add notification if status changed
-        if (oldStatus !== newStatus) {
-            addNotification(
-                `Ticket ${id} Status Changed`,
-                `Ticket status updated from "${oldStatus}" to "${newStatus}" by Production Manager.`
-            );
-            updateSidebarBadges();
-        }
-    }
-
-    /* ================= MOCK/COMPLETED HISTORY DATA ================= */
-    const staticHistory = [
-        { id: "INH-3-8301", itemCode: "015076-2A", part: "01809070-WP", defect: "A-04 (Crack/broken)", completed: "04 Jul 2026", time: "1h 15m", result: "PASS" },
-        { id: "INH-4-8290", itemCode: "012345-AB", part: "91122344-ZZ", defect: "D-014 (Joint Leakage)", completed: "03 Jul 2026", time: "2h 30m", result: "PASS" },
-        { id: "INH-5-8270", itemCode: "066577-BB", part: "33221100-YY", defect: "D-022 (Veneer Scratch)", completed: "02 Jul 2026", time: "1h 45m", result: "PASS" }
-    ];
-
-    /* ================= DATA IMPORT LOAD ================= */
-    async function loadInspectionData() {
-        const candidates = ['/data/input data'];
-        
-        for (const url of candidates) {
+        function readRepairTicketStatuses() {
             try {
-                const response = await fetch(url);
-                if (!response.ok) continue;
-                
-                const data = await response.json();
-                if (Array.isArray(data)) {
-                    inspectionData = data;
-                    initializeTickets();
-                    // Setup initial routing state
-                    go('dashboard');
-                    return;
-                }
+                return JSON.parse(localStorage.getItem(REPAIR_TICKET_STATUS_KEY) || '{}');
             } catch (error) {
-                console.error(`Failed to load inspection data from ${url}:`, error);
+                console.error('Failed to read repair ticket statuses:', error);
+                return {};
             }
         }
-        
-        // Fallback mockup items in case fetch fails
-        inspectionData = [
-            {
-                id: "INH-3-8395",
-                itemCode: "015076-2A",
-                itemName: "Nightstand 28 inch — Left Single Metro",
-                wo: "8395",
-                customer: "Fleetwood Fine Furniture",
-                branch: "VFR2.1",
-                qtyOrder: 10,
-                qtyQuarantine: 1,
-                defectOwner: "2ASSY",
-                whereDetected: "Finishing — 2QCD",
-                defectCode: "A-04 (Crack / broken)",
-                defectDescription: "A-04 (Crack / broken)",
-                correctiveAction: "Sửa hàng - kiểm lại",
-                priority: "High",
-                deadline: "2026-07-05 17:30",
-                fromDept: "2ASSY",
-                supplement: { needed: false },
-                source: {
-                    inspector: "17372",
-                    inspectorName: "Huỳnh Văn Út",
-                    inspectorDept: "2QCD",
-                    inspectionStage: "Finishing",
-                    inspectedDate: "2026-07-05T10:55:27",
-                    passQty: 0,
-                    failQty: 1,
-                    defectCategory: "Major"
-                }
-            },
-            {
-                id: "INH-4-8396",
-                itemCode: "012345-AB",
-                itemName: "Dresser 6-Drawer — Metro",
-                wo: "8396",
-                customer: "Fleetwood Fine Furniture",
-                branch: "VFR2.1",
-                qtyOrder: 180,
-                qtyQuarantine: 2,
-                defectOwner: "Assembly",
-                whereDetected: "IPQC — CAR1-S2",
-                defectCode: "D-014 (Leakage)",
-                defectDescription: "Oil leakage at joint seal",
-                correctiveAction: "Reseal Joint & Clean",
-                priority: "Medium",
-                deadline: "2026-07-05 18:00",
-                fromDept: "Assembly",
-                supplement: {
-                    needed: true,
-                    status: "waiting",
-                    partName: "High Temp Rubber Seal Gasket",
-                    qty: 2,
-                    eta: "Today 16:30"
-                },
-                source: {
-                    inspector: "6701",
-                    inspectorName: "Trần Văn Hùng",
-                    inspectorDept: "1QCD",
-                    inspectionStage: "IPQC",
-                    inspectedDate: "2026-07-05T09:12:00",
-                    passQty: 0,
-                    failQty: 2,
-                    defectCategory: "Minor"
-                }
-            }
-        ];
-        initializeTickets();
-        go('dashboard');
-    }
 
-    function getDefaultStatus(index) {
-        let status = 'Waiting Accept';
-        let repairSeconds = 0;
-        let repairRunning = false;
-        
-        if (index === 0) {
-            status = 'Waiting Accept';
-        } else if (index === 1) {
-            status = 'In Progress';
-            repairSeconds = 4325; // 01:12:05
-            repairRunning = true;
-        } else if (index === 2) {
-            status = 'Paused';
-            repairSeconds = 1800; // 00:30:00
-        } else if (index === 3) {
-            status = 'Completed';
-            repairSeconds = 3600;
-        } else if (index === 4) {
-            status = 'Overdue';
-        }
-        return { status, repairSeconds, repairRunning };
-    }
-
-    function initializeTickets() {
-        const storedStatuses = readStoredRepairTicketStatuses();
-
-        inspectionData.forEach((ticket, index) => {
-            const defaultState = getDefaultStatus(index);
-            const saved = storedStatuses[ticket.id] || storedStatuses[ticket.itemCode];
-            const storedStatus = applyStoredRepairStatus(saved, defaultState.status, defaultState.repairSeconds, defaultState.repairRunning);
-
-            ticketsState[ticket.id] = {
-                meta: ticket,
-                status: storedStatus.status,
-                repairSeconds: storedStatus.repairSeconds,
-                repairRunning: storedStatus.repairRunning,
-                updatedAt: storedStatus.updatedAt,
-                checklist: ['Check defect area', 'Perform corrective action', 'Functional inspection', 'Clean item'],
-                checklistChecked: [true, false, false, false],
-                notes: index === 1 ? "Disassembled casing. Rubber seal looks worn out. Awaiting replacement to finish installation." : "",
-                materials: [
-                    { name: "Replacement Bolt M6", qty: "4 pcs" },
-                    { name: "Cleaning Solution", qty: "50 ml" }
-                ],
-                summary: "",
-                result: ""
-            };
-        });
-        
-        // Initial Badge setup
-        updateSidebarBadges();
-    }
-
-    function updateSidebarBadges() {
-        const count = Object.values(ticketsState).filter(t => t.status === 'Waiting Accept' || t.status === 'In Progress' || t.status === 'Paused' || t.status === 'Overdue').length;
-        const navBadge = document.getElementById('navTicketBadge');
-        if (navBadge) navBadge.textContent = count;
-
-        const notifs = readNotifications();
-        const navNotifBadge = document.getElementById('navNotifBadge');
-        if (navNotifBadge) navNotifBadge.textContent = notifs.length;
-    }
-
-    /* ================= AUTH FLOW REMOVED ================= */
-
-    /* ================= TIMER TICK ================= */
-    let lastTimerTick = Date.now();
-    function startGlobalTimer() {
-        setInterval(() => {
-            const now = Date.now();
-            const elapsedSeconds = Math.floor((now - lastTimerTick) / 1000);
-            if (elapsedSeconds >= 1) {
-                let changed = false;
-                for (const id in ticketsState) {
-                    if (ticketsState[id].repairRunning) {
-                        ticketsState[id].repairSeconds += elapsedSeconds;
-                        changed = true;
-                    }
-                }
-                lastTimerTick += elapsedSeconds * 1000;
-                
-                if (changed && currentTicketId && currentView === 'working') {
-                    const timerValEl = document.getElementById('timerVal');
-                    if (timerValEl) {
-                        const ticket = ticketsState[currentTicketId];
-                        timerValEl.textContent = formatTime(ticket.repairSeconds);
-                    }
-                }
-            }
-        }, 500);
-    }
-    startGlobalTimer();
-
-    function formatTime(seconds) {
-        const h = Math.floor(seconds / 3600);
-        const m = Math.floor((seconds % 3600) / 60);
-        const s = seconds % 60;
-        return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-    }
-
-    /* ================= NAVIGATION ROUTER ================= */
-    function go(view, ticketId) {
-        if (ticketId) currentTicketId = ticketId;
-        currentView = view;
-
-        // Re-sync with local storage to ensure fresh status when navigating
-        try {
-            const storedStatuses = readStoredRepairTicketStatuses();
-            inspectionData.forEach((ticket, index) => {
-                const defaultState = getDefaultStatus(index);
-                const saved = storedStatuses[ticket.id] || storedStatuses[ticket.itemCode];
-                const storedStatus = applyStoredRepairStatus(saved, defaultState.status, defaultState.repairSeconds, defaultState.repairRunning);
-                
-                const tState = ticketsState[ticket.id];
-                if (tState) {
-                    tState.status = storedStatus.status;
-                    tState.repairSeconds = storedStatus.repairSeconds;
-                    tState.repairRunning = storedStatus.repairRunning;
-                    tState.updatedAt = storedStatus.updatedAt;
-                }
-            });
-        } catch (err) {
-            console.error('Failed to sync statuses on navigation:', err);
+        function writeRepairTicketStatuses(statuses) {
+            localStorage.setItem(REPAIR_TICKET_STATUS_KEY, JSON.stringify(statuses));
         }
 
-        // Update active sidebar nav
-        document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('active'));
-        const navItem = document.querySelector(`.sb-item[data-view="${view}"]`);
-        if (navItem) navItem.classList.add('active');
+        function updateRepairTicketStatus(ticketId, status, details = {}) {
+            if (!ticketId) return;
 
-        // Set breadcrumb and header text
-        document.getElementById('tbCrumb').textContent = viewMeta[view].crumb;
-        document.getElementById('tbTitle').textContent = viewMeta[view].title;
-
-        // Render content HTML template
-        const container = document.getElementById('content');
-        if (view === 'dashboard') container.innerHTML = renderDashboard();
-        else if (view === 'tickets') container.innerHTML = renderTickets();
-        else if (view === 'detail') container.innerHTML = renderDetail(currentTicketId);
-        else if (view === 'working') container.innerHTML = renderWorking(currentTicketId);
-        else if (view === 'history') container.innerHTML = renderHistory();
-        else if (view === 'notif') container.innerHTML = renderNotif();
-        else if (view === 'profile') container.innerHTML = renderProfile();
-
-        window.scrollTo(0, 0);
-        updateSidebarBadges();
-    }
-
-    // Class helper mapping
-    function statusClass(s) {
-        return {
-            "Waiting Accept": "st-wait",
-            "In Progress": "st-progress",
-            "Paused": "st-paused",
-            "Completed": "st-completed",
-            "Overdue": "st-overdue"
-        }[s] || "st-wait";
-    }
-
-    function prClass(p) {
-        return { "High": "p-high", "Medium": "p-medium", "Low": "p-low" }[p] || "p-low";
-    }
-
-    /* ================= VIEW TEMPLATE RENDERS ================= */
-
-    // 1. DASHBOARD OVERVIEW
-    function renderDashboard() {
-        const wait = Object.values(ticketsState).filter(t => t.status === "Waiting Accept").length;
-        const prog = Object.values(ticketsState).filter(t => t.status === "In Progress" || t.status === "Paused").length;
-        const done = Object.values(ticketsState).filter(t => t.status === "Completed").length;
-        const over = Object.values(ticketsState).filter(t => t.status === "Overdue").length;
-        
-        const upcoming = Object.values(ticketsState).find(t => t.status === "Waiting Accept") || Object.values(ticketsState)[0];
-        
-        let upcomingHtml = "";
-        if (upcoming) {
-            const uMeta = upcoming.meta;
-            upcomingHtml = `
-                <div class="wo-tag ${prClass(uMeta.priority)}" onclick="go('detail', '${uMeta.id}')">
-                    <div class="wo-head">
-                        <div class="wo-ids">
-                            <div class="wo-id"><div class="k">WO No.</div><div class="v">${uMeta.wo}</div></div>
-                            <div class="wo-id"><div class="k">Item Code</div><div class="v">${uMeta.itemCode}</div></div>
-                            <div class="wo-id"><div class="k">Stage</div><div class="v" style="font-family:'Inter';">${uMeta.source ? uMeta.source.inspectionStage : 'Final'}</div></div>
-                        </div>
-                        <span class="status-chip ${statusClass(upcoming.status)}">${upcoming.status}</span>
-                    </div>
-                    <div class="wo-meta">
-                        <span>Defect: <b>${uMeta.defectCode || 'N/A'}</b></span>
-                        <span>Priority: <b>${uMeta.priority}</b></span>
-                        <span>Deadline: <b>${uMeta.deadline || 'Today'}</b></span>
-                    </div>
-                    <div class="barcode"></div>
-                </div>
-                <button class="btn-sm btn-steel" style="width:100%; justify-content:center; display:flex;" onclick="go('detail', '${uMeta.id}')">Open Ticket Detail &nbsp;&#8594;</button>
-            `;
-        } else {
-            upcomingHtml = `<div style="text-align:center; color:var(--txt-dim); padding: 30px 0;">No upcoming jobs assigned.</div>`;
-        }
-
-        return `
-            <div style="margin-bottom:18px; font-size:13.5px; color:var(--txt-dim);">Xin chào, <b style="color:#1f2937;">Nguyễn Văn A</b> — here is your mechanical repair line overview.</div>
+            const statuses = readRepairTicketStatuses();
             
-            <div class="grid-4">
-                <div class="kpi amber"><div class="num">${wait}</div><div class="lbl">Waiting Accept</div></div>
-                <div class="kpi"><div class="num">${prog}</div><div class="lbl">Active Repairs</div></div>
-                <div class="kpi green"><div class="num">${done}</div><div class="lbl">Completed Today</div></div>
-                <div class="kpi red"><div class="num">${over}</div><div class="lbl">Overdue Tickets</div></div>
-            </div>
-
-            <div class="two-col">
-                <div class="panel">
-                    <div class="panel-head">
-                        <h3>Upcoming Repair Job</h3>
-                        <span class="link" onclick="go('tickets')">View all queue</span>
-                    </div>
-                    <div class="panel-body">
-                        ${upcomingHtml}
-                    </div>
-                </div>
-                <div class="panel">
-                    <div class="panel-head">
-                        <h3>Recent Production Alerts</h3>
-                        <span class="link" onclick="go('notif')">Inbox</span>
-                    </div>
-                    <div class="panel-body" style="display:flex; flex-direction:column; gap:14px;">
-                        <div style="font-size:13px; line-height:1.4;">
-                            <b>Repair Ticket Assigned</b>
-                            <div style="color:var(--txt-dim); font-size:12px; margin-top:2px;">Ticket INH-3-8395 — Finishing Inspection Failed · 5m ago</div>
-                        </div>
-                        <div style="font-size:13px; border-top:1px solid var(--panel-line-soft); padding-top:12px; line-height:1.4;">
-                            <b>Material Stock Arrived</b>
-                            <div style="color:var(--txt-dim); font-size:12px; margin-top:2px;">Seal Gasket for INH-4-8396 is now available at Rack B3 · 30m ago</div>
-                        </div>
-                        <div style="font-size:13px; border-top:1px solid var(--panel-line-soft); padding-top:12px; line-height:1.4;">
-                            <b>Supervisor QC Approval</b>
-                            <div style="color:var(--txt-dim); font-size:12px; margin-top:2px;">Job INH-2-8142 successfully passed QC verification · 1h ago</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
-    // 2. TICKETS SEARCHABLE LIST
-    function getUniqueStages() {
-        const stages = new Set();
-        inspectionData.forEach(t => {
-            let stage = t.source && t.source.inspectionStage;
-            if (!stage && t.whereDetected) {
-                const parts = t.whereDetected.split('—');
-                stage = parts[0] ? parts[0].trim() : '';
-            }
-            if (stage) {
-                stages.add(stage);
-            }
-        });
-        return Array.from(stages).sort();
-    }
-
-    function renderTickets() {
-        const uniqueStages = getUniqueStages();
-        const stageOptions = uniqueStages.map(st => `
-            <option ${stageFilter === st ? 'selected' : ''} value="${st}">${st}</option>
-        `).join('');
-
-        return `
-            <div class="search-bar">
-                <input id="ticketSearchInput" placeholder="Search WO No, Item Code, Partcode, ID..." value="${searchQuery}" onkeyup="handleSearch(this.value)">
-                <select id="statusFilterSelect" onchange="handleStatusFilter(this.value)">
-                    <option ${statusFilter === 'All Status' ? 'selected' : ''}>All Status</option>
-                    <option ${statusFilter === 'Waiting Accept' ? 'selected' : ''}>Waiting Accept</option>
-                    <option ${statusFilter === 'In Progress' ? 'selected' : ''}>In Progress</option>
-                    <option ${statusFilter === 'Paused' ? 'selected' : ''}>Paused</option>
-                    <option ${statusFilter === 'Completed' ? 'selected' : ''}>Completed</option>
-                    <option ${statusFilter === 'Overdue' ? 'selected' : ''}>Overdue</option>
-                </select>
-                <select id="stageFilterSelect" onchange="handleStageFilter(this.value)">
-                    <option ${stageFilter === 'All Stages' ? 'selected' : ''}>All Stages</option>
-                    ${stageOptions}
-                </select>
-                <select id="priorityFilterSelect" onchange="handlePriorityFilter(this.value)">
-                    <option ${priorityFilter === 'All Priorities' ? 'selected' : ''}>All Priorities</option>
-                    <option ${priorityFilter === 'High' ? 'selected' : ''}>High</option>
-                    <option ${priorityFilter === 'Medium' ? 'selected' : ''}>Medium</option>
-                    <option ${priorityFilter === 'Low' ? 'selected' : ''}>Low</option>
-                </select>
-                <select id="timeFilterSelect" onchange="handleTimeFilter(this.value)">
-                    <option value="all" ${timeFilter === 'all' ? 'selected' : ''}>All Time</option>
-                    <option value="today" ${timeFilter === 'today' ? 'selected' : ''}>Changed Today</option>
-                </select>
-                <select id="sortSelect" onchange="handleSort(this.value)">
-                    <option value="default" ${sortOption === 'default' ? 'selected' : ''}>Default Sort</option>
-                    <option value="updated" ${sortOption === 'updated' ? 'selected' : ''}>Recently Updated (Newest first)</option>
-                    <option value="priority" ${sortOption === 'priority' ? 'selected' : ''}>Priority (High to Low)</option>
-                    <option value="deadline" ${sortOption === 'deadline' ? 'selected' : ''}>Deadline (Soonest first)</option>
-                    <option value="id" ${sortOption === 'id' ? 'selected' : ''}>Ticket ID (Newest first)</option>
-                </select>
-            </div>
-            <div id="ticketsListContainer">
-                ${renderTicketsListContent()}
-            </div>
-        `;
-    }
-
-    function renderTicketsListContent() {
-        const filtered = filterTickets();
-        
-        // Sorting logic
-        if (sortOption === "priority") {
-            const prWeight = { "High": 3, "Medium": 2, "Low": 1 };
-            filtered.sort((a, b) => (prWeight[b.priority] || 0) - (prWeight[a.priority] || 0));
-        } else if (sortOption === "deadline") {
-            filtered.sort((a, b) => {
-                if (!a.deadline) return 1;
-                if (!b.deadline) return -1;
-                return a.deadline.localeCompare(b.deadline);
-            });
-        } else if (sortOption === "id") {
-            filtered.sort((a, b) => b.id.localeCompare(a.id));
-        } else if (sortOption === "updated") {
-            filtered.sort((a, b) => {
-                const ua = ticketsState[a.id].updatedAt || '';
-                const ub = ticketsState[b.id].updatedAt || '';
-                if (!ua && !ub) return 0;
-                if (!ua) return 1;
-                if (!ub) return -1;
-                return ub.localeCompare(ua);
-            });
-        }
-
-        if (filtered.length === 0) {
-            return `
-                <div class="panel" style="text-align:center; padding:40px; color:var(--txt-dim);">
-                    <div style="font-size:32px; margin-bottom:12px;">🔍</div>
-                    <div style="font-weight:600;">No matching repair tickets found.</div>
-                </div>
-            `;
-        }
-        return filtered.map(t => {
-            const state = ticketsState[t.id];
-            let formattedTime = '';
-            if (state.updatedAt) {
-                try {
-                    formattedTime = new Date(state.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-                } catch(e) {}
-            }
-            return `
-                <div class="wo-tag ${prClass(t.priority)}" onclick="go('detail', '${t.id}')">
-                    <div class="wo-head">
-                        <div class="wo-ids">
-                            <div class="wo-id"><div class="k">WO No.</div><div class="v">${t.wo}</div></div>
-                            <div class="wo-id"><div class="k">Ticket ID</div><div class="v">${t.id}</div></div>
-                            <div class="wo-id"><div class="k">Item Code</div><div class="v">${t.itemCode}</div></div>
-                            <div class="wo-id"><div class="k">Stage</div><div class="v" style="font-family:'Inter';">${t.source ? t.source.inspectionStage : 'Final'}</div></div>
-                        </div>
-                        <span class="status-chip ${statusClass(state.status)}">${state.status}</span>
-                    </div>
-                    <div class="wo-meta">
-                        <span>Defect: <b>${t.defectCode || 'N/A'}</b></span>
-                        <span>Department: <b>${t.fromDept || 'N/A'}</b></span>
-                        <span>Priority: <b>${t.priority}</b></span>
-                        <span>Inspector: <b>${t.source ? t.source.inspectorName : 'N/A'}</b></span>
-                        ${formattedTime ? `<span style="margin-left:auto; color:var(--txt-dim); font-size:11px;">Updated: <b>${formattedTime}</b></span>` : ''}
-                    </div>
-                </div>
-            `;
-        }).join('');
-    }
-
-    function filterTickets() {
-        return inspectionData.filter(t => {
-            const state = ticketsState[t.id];
-            if (!state) return false;
-            
-            const matchesSearch = !searchQuery || 
-                t.id.toLowerCase().includes(searchQuery) ||
-                (t.itemCode && t.itemCode.toLowerCase().includes(searchQuery)) ||
-                (t.itemName && t.itemName.toLowerCase().includes(searchQuery)) ||
-                (t.wo && t.wo.toLowerCase().includes(searchQuery));
-            
-            const matchesStatus = statusFilter === "All Status" || state.status === statusFilter;
-            
-            let ticketStage = t.source && t.source.inspectionStage;
-            if (!ticketStage && t.whereDetected) {
-                const parts = t.whereDetected.split('—');
-                ticketStage = parts[0] ? parts[0].trim() : '';
-            }
-            const matchesStage = stageFilter === "All Stages" || 
-                (ticketStage && ticketStage.toLowerCase() === stageFilter.toLowerCase());
-            
-            const matchesPriority = priorityFilter === "All Priorities" || 
-                (t.priority && t.priority.toLowerCase() === priorityFilter.toLowerCase());
-            
-            // Time filter check (Changed Today)
-            let matchesTime = true;
-            if (timeFilter === 'today') {
-                matchesTime = false;
-                if (state.updatedAt) {
-                    try {
-                        const date = new Date(state.updatedAt);
-                        const today = new Date();
-                        matchesTime = date.getDate() === today.getDate() &&
-                            date.getMonth() === today.getMonth() &&
-                            date.getFullYear() === today.getFullYear();
-                    } catch(e) {
-                        matchesTime = false;
-                    }
-                }
-            }
-            
-            return matchesSearch && matchesStatus && matchesStage && matchesPriority && matchesTime;
-        });
-    }
-
-    function handleSearch(val) {
-        searchQuery = val.toLowerCase().trim();
-        document.getElementById('ticketsListContainer').innerHTML = renderTicketsListContent();
-    }
-
-    function handleStatusFilter(val) {
-        statusFilter = val;
-        document.getElementById('ticketsListContainer').innerHTML = renderTicketsListContent();
-    }
-
-    function handleStageFilter(val) {
-        stageFilter = val;
-        document.getElementById('ticketsListContainer').innerHTML = renderTicketsListContent();
-    }
-
-    function handlePriorityFilter(val) {
-        priorityFilter = val;
-        document.getElementById('ticketsListContainer').innerHTML = renderTicketsListContent();
-    }
-
-    function handleTimeFilter(val) {
-        timeFilter = val;
-        document.getElementById('ticketsListContainer').innerHTML = renderTicketsListContent();
-    }
-
-    function handleSort(val) {
-        sortOption = val;
-        document.getElementById('ticketsListContainer').innerHTML = renderTicketsListContent();
-    }
-
-    // 3. TICKET DETAILED PANEL VIEW
-    function renderDetail(id) {
-        const ticket = ticketsState[id] || Object.values(ticketsState)[0];
-        const t = ticket.meta;
-
-        let actionButtons = "";
-        if (ticket.status === 'Waiting Accept') {
-            actionButtons = `
-                <button class="btn-sm btn-red" onclick="showToast('Ticket rejected — returned to Supervisor')">Reject Ticket</button>
-                <button class="btn-sm btn-steel" onclick="acceptTicket('${t.id}')">Approve &amp; Accept Job</button>
-            `;
-        } else if (ticket.status === 'In Progress' || ticket.status === 'Paused' || ticket.status === 'Overdue') {
-            const isRunning = ticket.repairRunning;
-            actionButtons = `
-                <button class="btn-sm btn-steel" onclick="go('working', '${t.id}')">Resume Working Screen</button>
-                ${isRunning ? `<button class="btn-sm btn-amber" onclick="stopRepair('${t.id}')">Stop Repair</button>` : ''}
-            `;
-        } else {
-            actionButtons = `
-                <div style="font-size: 13px; font-weight: 700; color: var(--good); background: var(--good-dim); padding: 8px 12px; border-radius: 8px;">✓ Ticket Fully Completed</div>
-            `;
-        }
-
-        return `
-            <div class="back-link" onclick="go('tickets')">&#8592; Back to Work Queue</div>
-            
-            <div class="detail-head">
-                <div class="idline">Ticket ${t.id} <span class="status-chip ${statusClass(ticket.status)}">${ticket.status}</span></div>
-                <div style="display:flex; gap:10px; align-items:center; flex-wrap: wrap;">
-                    <button class="btn-sm btn-ghost" onclick="openQuarantine('${t.id}')">&#128196; View Quarantine Report</button>
-                    <button class="btn-sm btn-ghost" style="border-color: var(--amber); color: var(--amber);" onclick="scanLocation('${t.id}')">&#128248; Update location (scan)</button>
-                    ${(ticket.status !== 'In Progress' && ticket.status !== 'Completed') ? `<button class="btn-sm btn-ghost" style="border-color: var(--amber); color: var(--amber);" onclick="scanStartRepair('${t.id}')">&#9658; Start repair (scan)</button>` : ''}
-                    ${actionButtons}
-                </div>
-            </div>
-
-            <div class="two-col">
-                <div class="stack">
-                    <div class="panel">
-                        <div class="panel-body">
-                            <div class="sect-title">Product Information</div>
-                            <div class="field-grid">
-                                <div><div class="fk">Branch</div><div class="fv mono">${t.branch || 'VFR2.1'}</div></div>
-                                <div><div class="fk">Work Order No.</div><div class="fv mono">${t.wo}</div></div>
-                                <div><div class="fk">Item Code</div><div class="fv mono">${t.itemCode}</div></div>
-                                <div><div class="fk">Partcode / Name</div><div class="fv">${t.itemName || 'N/A'}</div></div>
-                                <div><div class="fk">WO Order Quantity</div><div class="fv">${t.qtyOrder || 'N/A'} pcs</div></div>
-                                <div><div class="fk">Detection Stage</div><div class="fv">${t.source ? t.source.inspectionStage : 'IPQC'}</div></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="panel">
-                        <div class="panel-body">
-                            <div class="sect-title">QC Inspection Source</div>
-                            <div class="field-grid">
-                                <div><div class="fk">Inspector ID</div><div class="fv mono">${t.source ? t.source.inspector : 'N/A'}</div></div>
-                                <div><div class="fk">Inspector Name</div><div class="fv">${t.source ? t.source.inspectorName : 'N/A'}</div></div>
-                                <div><div class="fk">Inspector Dept</div><div class="fv">${t.source ? t.source.inspectorDept : 'N/A'}</div></div>
-                                <div><div class="fk">Inspected Date &amp; Time</div><div class="fv mono">${t.source ? t.source.inspectedDate.replace('T', ' ').substring(0, 19) : 'N/A'}</div></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="panel">
-                        <div class="panel-body">
-                            <div class="sect-title">QC Inspection Results</div>
-                            <div class="field-grid">
-                                <div><div class="fk">Inspected Qty</div><div class="fv">1</div></div>
-                                <div><div class="fk">QC Pass Qty</div><div class="fv ok">${t.source ? t.source.passQty : 0}</div></div>
-                                <div><div class="fk">QC Fail Qty</div><div class="fv warn">${t.source ? t.source.failQty : 1}</div></div>
-                                <div><div class="fk">Quarantine Flag</div><div class="fv warn">${t.qtyQuarantine ? 'YES' : 'NO'}</div></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="panel">
-                        <div class="panel-body">
-                            <div class="sect-title">Defect Description</div>
-                            <div class="field-grid">
-                                <div><div class="fk">Defect Code</div><div class="fv mono">${t.defectCode || 'N/A'}</div></div>
-                                <div><div class="fk">Category</div><div class="fv">${t.source ? t.source.defectCategory : 'Major'}</div></div>
-                                <div><div class="fk">Defect Owner Dept</div><div class="fv">${t.defectOwner || 'N/A'}</div></div>
-                                <div style="grid-column: 1/3;"><div class="fk">Defect Remark</div><div class="fv" style="font-weight:500;">${t.defectDescription || 'Surface failure'}</div></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="stack">
-                    <div class="panel">
-                        <div class="panel-body">
-                            <div class="sect-title">Repair Instructions</div>
-                            <div style="font-size:11.5px; color:var(--txt-dim); margin-bottom:10px; font-weight:600; text-transform:uppercase;">From Production Manager</div>
-                            <div class="field-grid" style="grid-template-columns:1fr;">
-                                <div><div class="fk">Corrective Action Method</div><div class="fv" style="color:var(--amber);">${t.correctiveAction || 'Sửa hàng'}</div></div>
-                                <div><div class="fk">Priority Level</div><div class="fv" style="color:${t.priority === 'High' ? 'var(--red)' : t.priority === 'Medium' ? '#f59e0b' : 'var(--txt-dim)'};">${t.priority}</div></div>
-                                <div><div class="fk">Target Deadline</div><div class="fv mono">${t.deadline || 'Today 18:00'}</div></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="panel">
-                        <div class="panel-body">
-                            <div class="sect-title">Defect Reference Images</div>
-                            <div class="img-thumbs">
-                                <div class="img-thumb">&#128247;</div>
-                                <div class="img-thumb">&#128247;</div>
-                                <div class="img-thumb" style="background:var(--panel-line-soft); border-style:dashed; color:#9ca3af;">+</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="panel">
-                        <div class="panel-body">
-                            <div class="sect-title">Supplement Part Status</div>
-                            ${t.supplement && t.supplement.needed ? `
-                                <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
-                                    <div style="width:10px; height:10px; border-radius:50%; background:${t.supplement.status === 'waiting' ? '#f59e0b' : 'var(--good)'};"></div>
-                                    <span style="font-size:13px; font-weight:700; color:${t.supplement.status === 'waiting' ? '#d97706' : 'var(--good)'};">
-                                        ${t.supplement.status === 'waiting' ? 'Awaiting stock' : 'Stock arrived'}
-                                    </span>
-                                </div>
-                                <div class="field-grid" style="grid-template-columns: 1fr; gap:6px;">
-                                    <div><div class="fk">Supplement Part</div><div class="fv" style="font-size:13px;">${t.supplement.partName}</div></div>
-                                    <div><div class="fk">Qty Requested</div><div class="fv">${t.supplement.qty} pcs</div></div>
-                                    <div><div class="fk">${t.supplement.status === 'waiting' ? 'ETA' : 'Storage Bin'}</div><div class="fv mono" style="font-size:13px;">${t.supplement.status === 'waiting' ? (t.supplement.eta || 'Pending') : (t.supplement.location || 'Bin B-12')}</div></div>
-                                </div>
-                            ` : `
-                                <div style="font-size:13px; color:var(--txt-dim);">No supplementary material parts needed for this repair task.</div>
-                            `}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
-    function acceptTicket(id) {
-        const ticket = ticketsState[id];
-        if (ticket) {
-            ticket.status = "In Progress";
-            ticket.repairRunning = true;
-            persistTicketStatus(id);
-            showToast('Ticket accepted successfully — starting timer');
-            go('working', id);
-        }
-    }
-
-    function determineLocationByDept(dept) {
-        const d = (dept || '').toUpperCase().trim();
-        if (d.includes('FINISH')) return 'VFR2.1 Finishing Yard Rework Station';
-        if (d.includes('ASSY') || d.includes('ASSEMBLY')) return 'VFR2.1 Assembly Line 2 Bay';
-        if (d.includes('SAND')) return 'Sanding Rework Area';
-        if (d.includes('INCOMING')) return 'Incoming Inspection Bay';
-        if (d.includes('IPQC')) return 'IPQC Rework Cell';
-        return `${dept || 'General Rework'} Workshop Section`;
-    }
-
-    function scanLocation(id) {
-        const ticket = ticketsState[id];
-        if (!ticket) return;
-        const loc = determineLocationByDept(ticket.meta.fromDept);
-        showToast(`Location successfully updated at ${loc}`);
-    }
-
-    function scanStartRepair(id) {
-        const ticket = ticketsState[id];
-        if (!ticket) return;
-        
-        ticket.status = "In Progress";
-        ticket.repairRunning = true;
-        persistTicketStatus(id);
-        updateSidebarBadges();
-        
-        showToast('Repair started. Time tracking is running.');
-        go('working', id);
-    }
-
-    function stopRepair(id) {
-        const ticket = ticketsState[id];
-        if (ticket) {
-            ticket.repairRunning = false;
-            ticket.status = 'Paused';
-            persistTicketStatus(id, {
-                pausedAt: new Date().toISOString()
-            });
-            updateSidebarBadges();
-            showToast('Repair stopped (Paused).');
-            if (currentView === 'detail' && currentTicketId === id) {
-                go('detail', id);
-            } else if (currentView === 'working' && currentTicketId === id) {
-                go('working', id);
-            }
-        }
-    }
-
-    // 4. REPAIR WORKING VIEW (TIMER / CHECKLIST / MATERIALS / NOTES)
-    function renderWorking(id) {
-        const ticket = ticketsState[id] || Object.values(ticketsState)[0];
-        const t = ticket.meta;
-
-        const checklistHtml = ticket.checklist.map((c, i) => {
-            const checked = ticket.checklistChecked[i];
-            return `
-                <div class="checklist-item ${checked ? 'done' : ''}">
-                    <input type="checkbox" ${checked ? 'checked' : ''} onchange="toggleChecklistItem('${id}', ${i}, this.checked)">
-                    <label style="cursor:pointer; flex:1;"><span>${c}</span></label>
-                </div>
-            `;
-        }).join('');
-
-        const materialsHtml = ticket.materials.map((m, i) => `
-            <div class="mat-row" id="matRow-${id}-${i}">
-                <input value="${m.name}" placeholder="Material Name" onchange="updateMaterialName('${id}', ${i}, this.value)">
-                <input value="${m.qty}" style="max-width:90px;" placeholder="Qty" onchange="updateMaterialQty('${id}', ${i}, this.value)">
-                <button class="btn-sm btn-red" style="padding: 9px 12px; border-radius: 8px;" onclick="removeMaterial('${id}', ${i})">&times;</button>
-            </div>
-        `).join('');
-
-        return `
-            <div class="back-link" onclick="go('detail', '${t.id}')">&#8592; Back to Detail view</div>
-            
-            <div style="display:flex; gap:18px; font-size:13px; color:var(--txt-dim); margin-bottom:14px; font-weight:600;">
-                <span>WO: <b class="mono" style="color:#1f2937;">${t.wo}</b></span>
-                <span>Ticket ID: <b class="mono" style="color:#1f2937;">${t.id}</b></span>
-                <span>Item: <b class="mono" style="color:#1f2937;">${t.itemCode}</b></span>
-            </div>
-
-            <div class="timer-box">
-                <div>
-                    <div class="tval" id="timerVal">${formatTime(ticket.repairSeconds)}</div>
-                    <div class="tlbl" id="timerLabel">${ticket.repairRunning ? 'Repair Timer — Running' : 'Repair Timer — Stopped/Paused'}</div>
-                </div>
-                <div style="display:flex; gap:8px;">
-                    ${ticket.repairRunning ? 
-                        `<button class="btn-sm btn-amber" onclick="openModal('modalPause')">&#10074;&#10074; Stop Repair</button>` : 
-                        `<button class="btn-sm btn-steel" onclick="toggleTimer('${t.id}', true)">▶ Start Timer / Resume</button>`
-                    }
-                    <button class="btn-sm btn-green" onclick="openCompleteModal('${t.id}')">&#10003; Complete Repair</button>
-                </div>
-            </div>
-
-            <div class="two-col">
-                <div class="stack">
-                    <div class="panel">
-                        <div class="panel-body">
-                            <div class="sect-title">Checklist Tasks</div>
-                            <div id="checklistContainer">${checklistHtml}</div>
-                        </div>
-                    </div>
-
-                    <div class="panel">
-                        <div class="panel-body">
-                            <div class="sect-title">Repair Notes</div>
-                            <textarea id="workingNotes" rows="3" placeholder="Enter findings, root cause, or remarks during repair..." onkeyup="updateWorkingNotes('${t.id}', this.value)">${ticket.notes}</textarea>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="stack">
-                    <div class="panel">
-                        <div class="panel-body">
-                            <div class="sect-title">Used Materials (Actual)</div>
-                            <div id="materialsContainer">${materialsHtml}</div>
-                            <button class="btn-sm btn-ghost" style="width:100%; margin-top:8px;" onclick="addMaterial('${t.id}')">+ Add Material Item</button>
-                        </div>
-                    </div>
-
-                    <div class="panel">
-                        <div class="panel-body">
-                            <div class="sect-title">Upload Repair Photos</div>
-                            <div style="display:flex; gap:10px;">
-                                <div style="text-align:center;"><div class="img-thumb" style="font-size:12px; font-weight:700;">Before</div></div>
-                                <div style="text-align:center;"><div class="img-thumb" style="font-size:12px; font-weight:700;">After</div></div>
-                                <div style="text-align:center;">
-                                    <div class="img-thumb" style="background:#f4f7f5; color:#9ca3af; border-style:dashed;">+</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
-    function toggleTimer(id, start) {
-        const ticket = ticketsState[id];
-        if (ticket) {
-            ticket.repairRunning = start;
-            ticket.status = start ? 'In Progress' : 'Paused';
-            persistTicketStatus(id);
-            go('working', id);
-        }
-    }
-
-    function toggleChecklistItem(id, idx, isChecked) {
-        const ticket = ticketsState[id];
-        if (ticket) {
-            ticket.checklistChecked[idx] = isChecked;
-            const items = document.querySelectorAll('#checklistContainer .checklist-item');
-            if (items[idx]) {
-                if (isChecked) items[idx].classList.add('done');
-                else items[idx].classList.remove('done');
-            }
-        }
-    }
-
-    function updateWorkingNotes(id, text) {
-        const ticket = ticketsState[id];
-        if (ticket) {
-            ticket.notes = text;
-        }
-    }
-
-    // Material controls
-    function addMaterial(id) {
-        const ticket = ticketsState[id];
-        if (ticket) {
-            ticket.materials.push({ name: "", qty: "" });
-            go('working', id);
-        }
-    }
-
-    function removeMaterial(id, idx) {
-        const ticket = ticketsState[id];
-        if (ticket) {
-            ticket.materials.splice(idx, 1);
-            go('working', id);
-        }
-    }
-
-    function updateMaterialName(id, idx, val) {
-        const ticket = ticketsState[id];
-        if (ticket && ticket.materials[idx]) {
-            ticket.materials[idx].name = val;
-        }
-    }
-
-    function updateMaterialQty(id, idx, val) {
-        const ticket = ticketsState[id];
-        if (ticket && ticket.materials[idx]) {
-            ticket.materials[idx].qty = val;
-        }
-    }
-
-    // 5. REPAIR COMPLETED HISTORY VIEW
-    function renderHistory() {
-        const completedTickets = Object.values(ticketsState).filter(t => t.status === "Completed");
-        
-        const historyRows = completedTickets.map(h => {
-            let completedDate = '05 Jul 2026';
-            if (h.completedAt) {
-                try {
-                    completedDate = new Date(h.completedAt).toLocaleDateString();
-                } catch(e) {}
-            }
-            return `
-                <tr>
-                    <td class="mono">${h.meta.id}</td>
-                    <td class="mono">${h.meta.itemCode}</td>
-                    <td>${h.meta.itemName || 'N/A'}</td>
-                    <td>${h.meta.defectCode || 'N/A'}</td>
-                    <td>${completedDate}</td>
-                    <td>${formatTime(h.repairSeconds)}</td>
-                    <td><span class="pass-tag">PASS</span></td>
-                </tr>
-            `;
-        }).join('');
-
-        const staticHistoryRows = staticHistory.map(h => `
-            <tr>
-                <td class="mono">${h.id}</td>
-                <td class="mono">${h.itemCode}</td>
-                <td>${h.part}</td>
-                <td>${h.defect}</td>
-                <td>${h.completed}</td>
-                <td>${h.time}</td>
-                <td><span class="pass-tag">${h.result}</span></td>
-            </tr>
-        `).join('');
-
-        return `
-            <div class="grid-4">
-                <div class="kpi green"><div class="num">${completedTickets.length + staticHistory.length}</div><div class="lbl">Total Completed</div></div>
-                <div class="kpi"><div class="num">1.4h</div><div class="lbl">Avg Repair Duration</div></div>
-                <div class="kpi green"><div class="num">97%</div><div class="lbl">First Time Right</div></div>
-                <div class="kpi red"><div class="num">3%</div><div class="lbl">QC Rework Rate</div></div>
-            </div>
-            
-            <div class="panel">
-                <div class="panel-head">
-                    <h3>Closed Repair Verification Logs</h3>
-                </div>
-                <div class="panel-body" style="padding:0; overflow-x:auto;">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Ticket ID</th>
-                                <th>Item Code</th>
-                                <th>Description / Part</th>
-                                <th>Defect Case</th>
-                                <th>Completed Date</th>
-                                <th>Actual Duration</th>
-                                <th>QC Verification</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${historyRows}
-                            ${staticHistoryRows}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        `;
-    }
-
-    // 6. NOTIFICATIONS VIEW
-    function renderNotif() {
-        const notifs = readNotifications();
-        
-        let dynamicNotifsHtml = "";
-        if (notifs.length > 0) {
-            dynamicNotifsHtml = notifs.map((n, i) => {
-                const timeAgo = formatTimeAgo(n.timestamp);
-                return `
-                    <div style="${i > 0 ? 'border-top:1px solid var(--panel-line-soft); padding-top:14px;' : ''}">
-                        <div style="font-weight:600; font-size:14px; color:#1f2937;">${n.title}</div>
-                        <div style="font-size:12.5px; color:var(--txt-dim); margin-top:2px;">${n.text}</div>
-                        <div style="font-size:11px; color:#9ca3af; margin-top:4px;">${timeAgo}</div>
-                    </div>
-                `;
-            }).join('');
-        } else {
-            dynamicNotifsHtml = `
-                <div style="text-align:center; padding: 20px 0; color: var(--txt-dim); font-size: 13px;">
-                    No new status notifications.
-                </div>
-            `;
-        }
-
-        return `
-            <div class="panel">
-                <div class="panel-head" style="display:flex; justify-content:space-between; align-items:center;">
-                    <h3>Notifications Inbox</h3>
-                    ${notifs.length > 0 ? `<button class="btn-sm btn-ghost" onclick="clearNotifs()" style="font-size:11px; padding: 4px 8px; border: 1px solid var(--panel-line-soft); border-radius: 4px; cursor:pointer;">Clear All</button>` : ''}
-                </div>
-                <div class="panel-body" style="display:flex; flex-direction:column; gap:14px; padding: 22px;">
-                    ${dynamicNotifsHtml}
-                    
-                    <div style="border-top:2px dashed var(--panel-line-soft); padding-top:14px; margin-top: 10px;">
-                        <h4 style="font-size:12px; text-transform:uppercase; color:#9ca3af; letter-spacing:0.5px; margin-bottom:12px;">System Broadcasts</h4>
-                        <div>
-                            <div style="font-weight:600; font-size:14px; color:#1f2937;">Repair Ticket Assigned — INH-3-8395</div>
-                            <div style="font-size:12.5px; color:var(--txt-dim); margin-top:2px;">Finishing inspection failed for WO 8395. Critical defect owner: 2ASSY. Action: Sand & Repaint.</div>
-                            <div style="font-size:11px; color:#9ca3af; margin-top:4px;">5 minutes ago</div>
-                        </div>
-                        <div style="border-top:1px solid var(--panel-line-soft); padding-top:14px; margin-top:14px;">
-                            <div style="font-weight:600; font-size:14px; color:#1f2937;">Material Supplement Arrived — INH-4-8396</div>
-                            <div style="font-size:12.5px; color:var(--txt-dim); margin-top:2px;">Requested Rubber Seal Gaskets are now ready for pickup in Room 2 (Bin B-12).</div>
-                            <div style="font-size:11px; color:#9ca3af; margin-top:4px;">30 minutes ago</div>
-                        </div>
-                        <div style="border-top:1px solid var(--panel-line-soft); padding-top:14px; margin-top:14px;">
-                            <div style="font-weight:600; font-size:14px; color:#1f2937;">System Maintenance Complete</div>
-                            <div style="font-size:12.5px; color:var(--txt-dim); margin-top:2px;">The QMS Server database sync has completed. Data load speeds optimized.</div>
-                            <div style="font-size:11px; color:#9ca3af; margin-top:4px;">1 day ago</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
-    // 7. PROFILE ACCOUNT VIEW
-    function renderProfile() {
-        const branches = [
-            "VFR2.1 Finishing Yard",
-            "VFR2.1 Assembly Yard",
-            "VFR1.0 Main Factory",
-            "VFR3.0 Packaging Site",
-            "ITW Office Site"
-        ];
-        
-        const branchOptions = branches.map(b => `
-            <option value="${b}" ${userProfile.worksiteBranch === b ? 'selected' : ''}>${b}</option>
-        `).join('');
-
-        return `
-            <div class="panel">
-                <div class="panel-head"><h3>${userProfile.role} Profile</h3></div>
-                <div class="panel-body">
-                    <div class="field-grid">
-                        <div><div class="fk">Full Name</div><div class="fv">${userProfile.fullName}</div></div>
-                        <div><div class="fk">Employee ID</div><div class="fv mono">${userProfile.employeeId}</div></div>
-                        <div><div class="fk">Role Assignee</div><div class="fv">${userProfile.role}</div></div>
-                        <div><div class="fk">Active Shift</div><div class="fv">${userProfile.shift}</div></div>
-                        <div>
-                            <div class="fk">Worksite Branch</div>
-                            <select id="profileBranchSelect" style="padding: 6px 12px; border-radius: 8px; border: 1px solid var(--panel-line); font-size: 13.5px; font-weight: 600; outline: none; background: #ffffff; color: #1f2937; margin-top: 4px; transition: border-color 0.15s;" onchange="updateProfileBranch(this.value)">
-                                ${branchOptions}
-                            </select>
-                        </div>
-                        <div><div class="fk">Authorized Departments</div><div class="fv">${userProfile.departments}</div></div>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
-    function updateProfileBranch(val) {
-        userProfile.worksiteBranch = val;
-        showToast(`Worksite Branch updated to: ${val}`);
-    }
-
-    /* ================= MODAL CONTROLS ================= */
-    function openModal(id) {
-        document.getElementById(id).classList.add('open');
-    }
-
-    function openCompleteModal(id) {
-        const ticket = ticketsState[id];
-        if (ticket) {
-            const hours = Math.floor(ticket.repairSeconds / 3600);
-            const minutes = Math.floor((ticket.repairSeconds % 3600) / 60);
-            
-            document.getElementById('completeHours').value = hours;
-            document.getElementById('completeMinutes').value = minutes;
-        }
-        openModal('modalComplete');
-    }
-
-    function closeModal(id) {
-        document.getElementById(id).classList.remove('open');
-    }
-
-    function confirmPause() {
-        closeModal('modalPause');
-        const ticket = ticketsState[currentTicketId];
-        if (ticket) {
-            const reason = document.querySelector('input[name="pr"]:checked').value;
-            ticket.repairRunning = false;
-            ticket.status = 'Paused';
-            persistTicketStatus(currentTicketId, {
-                pauseReason: reason,
-                pausedAt: new Date().toISOString()
-            });
-            showToast(`Repair paused: ${reason}`);
-            go('working', currentTicketId);
-        }
-    }
-
-    function confirmComplete() {
-        closeModal('modalComplete');
-        const ticket = ticketsState[currentTicketId];
-        if (ticket) {
-            const summary = document.getElementById('completeSummary').value;
-            const resultVal = document.querySelector('input[name="rr"]:checked').value;
-            const hours = parseInt(document.getElementById('completeHours').value) || 0;
-            const mins = parseInt(document.getElementById('completeMinutes').value) || 0;
-            
-            ticket.repairRunning = false;
-            ticket.status = 'Completed';
-            ticket.summary = summary;
-            ticket.result = resultVal;
-            ticket.repairSeconds = (hours * 3600) + (mins * 60);
-            persistTicketStatus(currentTicketId, {
-                summary,
-                result: resultVal,
-                completedAt: new Date().toISOString()
-            });
-
-            showToast('Ticket completed.');
-            go('tickets');
-        }
-    }
-
-    function showToast(msg) {
-        document.getElementById('toastMsg').textContent = msg;
-        const toast = document.getElementById('toast');
-        toast.style.display = 'flex';
-        clearTimeout(window._toastTimer);
-        window._toastTimer = setTimeout(() => {
-            toast.style.display = 'none';
-        }, 3000);
-    }
-
-    // Modal overlay background click close
-    document.querySelectorAll('.modal-overlay').forEach(overlay => {
-        overlay.addEventListener('click', e => {
-            if (e.target === overlay) {
-                closeModal(overlay.id);
-            }
-        });
-    });
-
-    /* ================= PRINT QUARANTINE FORM ================= */
-    function openQuarantine(id) {
-        const ticket = ticketsState[id];
-        if (!ticket) return;
-        
-        const t = ticket.meta;
-        const inspectorName = t.source ? t.source.inspectorName : 'N/A';
-        const inspectorDept = t.source ? t.source.inspectorDept : 'N/A';
-        const inspectedDate = t.source ? t.source.inspectedDate.substring(0, 10) : 'N/A';
-        
-        // Mock image slots for printable view
-        const photoSlots = Array.from({ length: 5 }).map(() => `
-            <div class="qr-photo">
-                QC Inspection Image Reference<br>
-                [Defect Location Detail]
-            </div>
-        `).join('');
-
-        document.getElementById('qrDocBody').innerHTML = `
-            <div class="qr-topline">
-                <div class="qr-h1">QUARANTINE REPORT</div>
-                <div class="qr-meta-box">
-                    <div class="row"><b>Report No.</b> ${t.id}</div>
-                    <div class="row"><b>Inspection Date</b> ${inspectedDate}</div>
-                </div>
-            </div>
-            <div class="qr-section-title">GENERAL PRODUCT &amp; WORK ORDER INFORMATION</div>
-            <div class="qr-grid">
-                <div class="qr-cell full"><div class="en">Customer Name</div><div class="vn">Tên khách hàng</div><div class="val">${t.customer || 'Fleetwood Fine Furniture'}</div></div>
-                <div class="qr-cell"><div class="en">Worksite Branch</div><div class="vn">Chi nhánh sản xuất</div><div class="val">${t.branch || 'VFR2.1'}</div></div>
-                <div class="qr-cell"><div class="en">Item Name / Part Description</div><div class="vn">Tên sản phẩm</div><div class="val">${t.itemName || 'N/A'}</div></div>
-                <div class="qr-cell"><div class="en">Works Order (WO) No.</div><div class="vn">Số lệnh sản xuất</div><div class="val mono">${t.wo}</div></div>
-                <div class="qr-cell"><div class="en">Item Code</div><div class="vn">Mã sản phẩm</div><div class="val mono">${t.itemCode}</div></div>
-                <div class="qr-cell"><div class="en">Total Order Qty</div><div class="vn">Tổng số lượng đặt hàng</div><div class="val">${t.qtyOrder || 'N/A'}</div></div>
-                <div class="qr-cell"><div class="en">Quarantine Qty</div><div class="vn">Số lượng bị cách ly</div><div class="val">${t.qtyQuarantine || 1}</div></div>
-                <div class="qr-cell"><div class="en">Responsible Department</div><div class="vn">Bộ phận chịu trách nhiệm</div><div class="val">${t.defectOwner || 'N/A'}</div></div>
-                <div class="qr-cell full"><div class="en">Defect Stage / Location Found</div><div class="vn">Nơi phát hiện lỗi</div><div class="val">${t.whereDetected || 'Finishing'}</div></div>
-                <div class="qr-cell full"><div class="en">Defects Description</div><div class="vn">Mô tả chi tiết lỗi</div><div class="val"><b>[${t.defectCode || ''}]</b> ${t.defectDescription || 'Surface crack/defect found'}</div></div>
-            </div>
-
-            <div class="qr-section-title">QC ATTACHED INSPECTION PHOTOS / HÌNH ẢNH MINH HỌA</div>
-            <div class="qr-photos">${photoSlots}</div>
-
-            <div class="qr-section-title">CORRECTIVE &amp; PREVENTIVE DISPOSITION ACTION</div>
-            <div class="qr-grid">
-                <div class="qr-cell"><div class="en">Planned Corrective Action</div><div class="vn">Hành động khắc phục dự kiến</div><div class="val">${t.correctiveAction || 'Sửa hàng - kiểm lại'} (Assigned: ${t.fromDept || 'Mechanical Repair'})</div></div>
-                <div class="qr-cell"><div class="en">Preventive Action Plan</div><div class="vn">Hành động phòng ngừa</div><div class="val">Ensure machine alignments are verified before starting batch production.</div></div>
-                <div class="qr-cell"><div class="en">QC Inspector Signature</div><div class="vn">Người lập báo cáo</div><div class="val"><b>${inspectorName}</b> (${inspectorDept})</div></div>
-                <div class="qr-cell"><div class="en">Disposition Assignee Signature</div><div class="vn">Người chịu trách nhiệm sửa</div><div class="val"><b>${userProfile.fullName}</b> (${userProfile.role})</div></div>
-            </div>
-        `;
-        
-        openModal('modalQuarantine');
-    }
-
-    /* ================= INITIAL LOAD AT WAKEUP ================= */
-    // Load logged-in user information dynamically from localStorage
-    const savedUsername = localStorage.getItem('username');
-    const savedRole = localStorage.getItem('role');
-    const savedUserId = localStorage.getItem('userId');
-
-    if (savedUsername) {
-        userProfile.fullName = savedUsername;
-    }
-    if (savedRole) {
-        if (savedRole === 'Production Worker') {
-            window.location.href = '/production-worker.html';
-        }
-        userProfile.role = savedRole;
-        document.title = `${savedRole} - Quality Management System`;
-    }
-    if (savedUserId) {
-        userProfile.employeeId = `EMP-${savedUserId}`;
-    }
-
-    // Function to update user UI components
-    function updateLoggedUserUI() {
-        if (savedUsername) {
-            document.querySelectorAll('.sb-user .nm').forEach(el => el.textContent = savedUsername);
-            const initials = savedUsername.split(' ')
-                .map(n => n[0])
-                .filter(Boolean)
-                .join('')
-                .substring(0, 2)
-                .toUpperCase();
-            if (initials) {
-                document.querySelectorAll('.sb-user .av').forEach(el => el.textContent = initials);
-            }
-        }
-        if (savedRole) {
-            document.querySelectorAll('.sb-user .rl').forEach(el => el.textContent = savedRole);
-        }
-    }
-
-    // Run UI update immediately if DOM is ready, and also on DOMContentLoaded
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', updateLoggedUserUI);
-    } else {
-        updateLoggedUserUI();
-    }
-
-    function logout() {
-        localStorage.removeItem('token');
-        localStorage.removeItem('userId');
-        localStorage.removeItem('username');
-        localStorage.removeItem('role');
-        window.location.href = '/index.html';
-    }
-
-    // Listen to storage changes to update ticket status in real-time
-    window.addEventListener('storage', (e) => {
-        if (e.key === REPAIR_TICKET_STATUS_KEY) {
-            try {
-                const storedStatuses = readStoredRepairTicketStatuses();
-                let hasChanges = false;
-                inspectionData.forEach((ticket, index) => {
-                    const defaultState = getDefaultStatus(index);
-                    const saved = storedStatuses[ticket.id] || storedStatuses[ticket.itemCode];
-                    const storedStatus = applyStoredRepairStatus(saved, defaultState.status, defaultState.repairSeconds, defaultState.repairRunning);
-                    
-                    const tState = ticketsState[ticket.id];
-                    if (tState) {
-                        const oldStatus = tState.status;
-                        const newStatus = storedStatus.status;
-                        
-                        tState.status = storedStatus.status;
-                        tState.repairSeconds = storedStatus.repairSeconds;
-                        tState.repairRunning = storedStatus.repairRunning;
-                        tState.updatedAt = storedStatus.updatedAt;
-                        if (saved && saved.completedAt) {
-                            tState.completedAt = saved.completedAt;
-                        }
-
-                        if (oldStatus !== newStatus) {
-                            hasChanges = true;
-                            addNotification(
-                                `Ticket ${ticket.id} Status Changed`,
-                                `Ticket status updated from "${oldStatus}" to "${newStatus}" by Production Worker.`
-                            );
-                        }
-                    }
+            // Find all tickets that match either the ticketId or scannedBarcode or itemCode
+            const matchingTickets = inspectionData.filter(item => 
+                item.id === ticketId || 
+                item.itemCode === ticketId || 
+                (scannedBarcode && (item.id === scannedBarcode || item.itemCode === scannedBarcode))
+            );
+
+            // If we found matching tickets from inspectionData, update all of them
+            if (matchingTickets.length > 0) {
+                matchingTickets.forEach(t => {
+                    statuses[t.id] = {
+                        ...(statuses[t.id] || {}),
+                        ...details,
+                        status,
+                        updatedAt: new Date().toISOString()
+                    };
                 });
-                
-                updateSidebarBadges();
-                
-                // If the user is currently viewing the updated list/detail/working, refresh it
-                if (currentView === 'tickets') {
-                    const listContainer = document.getElementById('ticketsListContainer');
-                    if (listContainer) listContainer.innerHTML = renderTicketsListContent();
-                } else if (currentView === 'detail' && currentTicketId) {
-                    go('detail', currentTicketId);
-                } else if (currentView === 'working' && currentTicketId) {
-                    go('working', currentTicketId);
-                } else if (currentView === 'notif') {
-                    const container = document.getElementById('content');
-                    if (container) container.innerHTML = renderNotif();
+            }
+
+            // Always update the explicit ticketId and scannedBarcode keys as well for safety
+            statuses[ticketId] = {
+                ...(statuses[ticketId] || {}),
+                ...details,
+                status,
+                updatedAt: new Date().toISOString()
+            };
+            if (scannedBarcode) {
+                statuses[scannedBarcode] = {
+                    ...(statuses[scannedBarcode] || {}),
+                    ...details,
+                    status,
+                    updatedAt: new Date().toISOString()
+                };
+            }
+
+            writeRepairTicketStatuses(statuses);
+        }
+
+        // Load inspection data from public/inspection-data.json
+        let inspectionData = [];
+        async function fetchInspectionData() {
+            try {
+                const res = await fetch('/inspection-data.json');
+                if (res.ok) {
+                    inspectionData = await res.json();
+                    console.log('Successfully loaded inspection data:', inspectionData.length);
+                    // Update initial value of partcode input with the first item's Partcode from dataset
+                    if (inspectionData.length > 0) {
+                        const input = document.getElementById('partcode-input');
+                        if (input && (input.value === 'INH-3-8395' || input.value === '01829265-WP')) {
+                            input.value = inspectionData[0].partcode || inspectionData[0].itemName || inspectionData[0].id;
+                        }
+                    }
+                } else {
+                    console.error('Failed to load inspection data');
                 }
             } catch (err) {
-                console.error('Failed to sync statuses on storage event:', err);
+                console.error('Error loading inspection data:', err);
             }
         }
-    });
+        fetchInspectionData();
 
-    loadInspectionData();
-</script>
+        // Mock items database
+        const mockDatabase = {
+            '01829265-WP': {
+                id: 'INH-3-8395',
+                partcode: '01829265-WP',
+                name: 'Nightstand 28 inch — Left Single Metro',
+                defect: 'A-04 (Crack / broken)'
+            },
+            '01835419-WP': {
+                id: 'INH-2-8482',
+                partcode: '01835419-WP',
+                name: 'Dresser 6-Drawer — Metro',
+                defect: 'V-08 (Veneer lay-up not correct with specs)'
+            },
+            'INH-3-8395': {
+                id: 'INH-3-8395',
+                partcode: '01829265-WP',
+                name: 'Nightstand 28 inch — Left Single Metro',
+                defect: 'A-04 (Crack / broken)'
+            },
+            'INH-4-8396': {
+                id: 'INH-4-8396',
+                partcode: '01835419-WP',
+                name: 'Dresser 6-Drawer — Metro',
+                defect: 'Oil leakage at joint seal'
+            },
+            'MOCK-PASS-123': {
+                id: 'MOCK-PASS-123',
+                partcode: 'MOCK-PASS-123',
+                name: 'Bedside Nightstand — Left Passed Unit',
+                defect: 'No defects, passed QA check',
+                passQty: 1
+            },
+            'DEFAULT': {
+                id: 'UNKNOWN-ITEM',
+                partcode: 'UNKNOWN-PART',
+                name: 'Custom Inspection Material Unit',
+                defect: 'Unspecified Surface Imperfection'
+            }
+        };
+
+        function getItemData(id) {
+            // Find item by partcode, itemName, ID, or itemCode
+            const found = inspectionData.find(item => 
+                (item.partcode && item.partcode === id) || 
+                (item.itemName && item.itemName === id) || 
+                item.id === id || 
+                item.itemCode === id
+            );
+            if (found) {
+                let passQty = 0;
+                if (found.source && found.source.passQty !== undefined) {
+                    passQty = Number(found.source.passQty);
+                } else if (found.passQty !== undefined) {
+                    passQty = Number(found.passQty);
+                }
+                return {
+                    id: found.id,
+                    name: found.itemName || found.itemCode || 'Unknown Item',
+                    defect: found.defectDescription || found.defectCode || 'No defect description',
+                    passQty: passQty
+                };
+            }
+            // Fallback to mockDatabase
+            if (mockDatabase[id]) {
+                return {
+                    ...mockDatabase[id],
+                    passQty: mockDatabase[id].passQty || 0
+                };
+            }
+            // Search mock database values for partcode/name matching
+            for (const key in mockDatabase) {
+                if (mockDatabase[key].partcode === id || mockDatabase[key].name === id) {
+                    return {
+                        ...mockDatabase[key],
+                        passQty: mockDatabase[key].passQty || 0
+                    };
+                }
+            }
+            return {
+                ...mockDatabase['DEFAULT'],
+                passQty: mockDatabase['DEFAULT'].passQty || 0
+            };
+        }
+
+        function showError(message) {
+            const errDiv = document.getElementById('barcode-error');
+            if (errDiv) {
+                errDiv.textContent = message;
+                errDiv.style.display = 'block';
+            } else {
+                alert(message);
+            }
+        }
+
+        function clearError() {
+            const errDiv = document.getElementById('barcode-error');
+            if (errDiv) {
+                errDiv.textContent = '';
+                errDiv.style.display = 'none';
+            }
+        }
+
+        // Clear error message when user starts typing again
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputEl = document.getElementById('partcode-input');
+            if (inputEl) {
+                inputEl.addEventListener('input', clearError);
+            }
+        });
+
+        function goToStep(step) {
+            // Hide all views
+            for (let i = 1; i <= 5; i++) {
+                document.getElementById(`view-step${i}`).style.display = 'none';
+                document.getElementById(`step${i}-indicator`).classList.remove('active', 'completed');
+            }
+            document.getElementById('view-success').style.display = 'none';
+            document.getElementById('view-active-repair').style.display = 'none';
+            document.getElementById('view-completion-success').style.display = 'none';
+
+            if (elapsedTimerInterval) {
+                clearInterval(elapsedTimerInterval);
+                elapsedTimerInterval = null;
+            }
+
+            // Show stepper if we are past Step 1
+            if (step > 1) {
+                document.getElementById('stepperContainer').style.display = 'flex';
+                // Calculate progress line fill width
+                const fillPercent = ((step - 1) / 4) * 100;
+                document.getElementById('stepperLineFill').style.width = `${fillPercent}%`;
+            } else {
+                document.getElementById('stepperContainer').style.display = 'none';
+            }
+
+            // Set indicators
+            for (let i = 1; i <= 5; i++) {
+                const ind = document.getElementById(`step${i}-indicator`);
+                if (i < step) {
+                    ind.classList.add('completed');
+                } else if (i === step) {
+                    ind.classList.add('active');
+                }
+            }
+
+            // Render view
+            document.getElementById(`view-step${step}`).style.display = 'block';
+            currentStep = step;
+
+            // Initialize step specifics
+            if (step === 3) {
+                const title = document.getElementById('step3-title');
+                const desc = document.getElementById('step3-desc');
+
+                if (selectedInputMode === 'manual') {
+                    title.textContent = 'Manual Enter Partcode';
+                    desc.textContent = 'Enter the repair item Partcode manually using the text field.';
+                    document.getElementById('step3-manual-ui').style.display = 'block';
+                    document.getElementById('step3-scan-ui').style.display = 'none';
+                } else {
+                    title.textContent = 'Scan Partcode';
+                    desc.textContent = 'Position the camera viewfinder over the item Partcode.';
+                    document.getElementById('step3-manual-ui').style.display = 'none';
+                    document.getElementById('step3-scan-ui').style.display = 'block';
+                }
+            } else if (step === 5) {
+                document.getElementById('summary-id').textContent = scannedBarcode;
+
+                const item = getItemData(scannedBarcode);
+                document.getElementById('summary-name').textContent = item.name;
+
+                workerCount = document.getElementById('worker-count').value || 1;
+                document.getElementById('summary-workers').textContent = `${workerCount} Assigned Worker(s)`;
+                document.getElementById('summary-location').textContent = activeLocation || 'Not Assigned';
+            }
+        }
+
+        function selectMode(mode) {
+            selectedInputMode = mode;
+
+            document.getElementById('mode-manual-card').classList.remove('selected');
+            document.getElementById('mode-scan-card').classList.remove('selected');
+
+            document.querySelector('input[value="manual"]').checked = false;
+            document.querySelector('input[value="scan"]').checked = false;
+
+            document.getElementById(`mode-${mode}-card`).classList.add('selected');
+            document.querySelector(`input[value="${mode}"]`).checked = true;
+        }
+
+        function submitBarcode() {
+            const val = document.getElementById('partcode-input').value.trim();
+            if (!val) {
+                showError('Please enter a valid Partcode');
+                return;
+            }
+
+            clearError();
+
+            // Check if Partcode or ID or item code exists in loaded inspection data
+            const exists = inspectionData.some(item => 
+                (item.partcode && item.partcode === val) || 
+                (item.itemName && item.itemName === val) || 
+                item.id === val || 
+                item.itemCode === val
+            ) || (val in mockDatabase);
+            if (!exists) {
+                showError(`Partcode "${val}" does not exist in the input data.`);
+                return;
+            }
+
+            scannedBarcode = val;
+
+            // Check if item is already under repair
+            let underRepair = JSON.parse(localStorage.getItem('qms_under_repair') || '{}');
+            if (underRepair[val]) {
+                showUnderRepairScreen(val);
+                return;
+            }
+
+            loadItemDetails(val);
+            goToStep(4);
+        }
+
+        function simulateScan() {
+            let val = '';
+            if (inspectionData.length > 0) {
+                // Select a random record from loaded data
+                const randomRecord = inspectionData[Math.floor(Math.random() * inspectionData.length)];
+                // Retrieve its partcode, item name (if matching partcode pattern), or other fields as fallback
+                val = randomRecord.partcode || randomRecord.itemName || randomRecord.itemCode || randomRecord.id;
+            } else {
+                const choices = ['01829265-WP', '01835419-WP'];
+                val = choices[Math.floor(Math.random() * choices.length)];
+            }
+            scannedBarcode = val;
+
+            // Set values
+            document.getElementById('partcode-input').value = val;
+            clearError();
+
+            // Flash viewfinder visual effect
+            const vf = document.querySelector('.scanner-viewfinder');
+            vf.style.borderColor = 'var(--success-color)';
+            vf.style.background = '#e8f5e9';
+
+            setTimeout(() => {
+                vf.style.borderColor = 'var(--primary-color)';
+                vf.style.background = '#fafbfc';
+                
+                // Check if item is already under repair
+                let underRepair = JSON.parse(localStorage.getItem('qms_under_repair') || '{}');
+                if (underRepair[val]) {
+                    showUnderRepairScreen(val);
+                } else {
+                    loadItemDetails(val);
+                    goToStep(4);
+                }
+            }, 800);
+        }
+
+        function loadItemDetails(id) {
+            const item = getItemData(id);
+
+            document.getElementById('info-id').textContent = item.id;
+            document.getElementById('info-name').textContent = item.name;
+            document.getElementById('info-condition').textContent = item.defect;
+
+            // Reset location state for the new item
+            activeLocation = '';
+            document.getElementById('location-input').value = '';
+            document.getElementById('location-error').style.display = 'none';
+
+            const banner = document.getElementById('no-repair-banner');
+            const returnBtn = document.getElementById('step4-return-btn');
+            
+            const locInputGroup = document.getElementById('location-input-group');
+            const locSuccessGroup = document.getElementById('location-success-group');
+            const workerInput = document.getElementById('worker-input-group');
+            const nextBtn = document.getElementById('step4-next-btn');
+
+            if (item.passQty === 1) {
+                if (banner) banner.style.display = 'block';
+                if (locInputGroup) locInputGroup.style.display = 'none';
+                if (locSuccessGroup) locSuccessGroup.style.display = 'none';
+                if (workerInput) workerInput.style.display = 'none';
+                if (nextBtn) nextBtn.style.display = 'none';
+                if (returnBtn) returnBtn.style.display = 'inline-block';
+            } else {
+                if (banner) banner.style.display = 'none';
+                if (locInputGroup) locInputGroup.style.display = 'block';
+                if (locSuccessGroup) locSuccessGroup.style.display = 'none';
+                if (workerInput) workerInput.style.display = 'none';
+                if (nextBtn) nextBtn.style.display = 'none';
+                if (returnBtn) returnBtn.style.display = 'none';
+                
+                // Set default mode for location input
+                setLocInputMode('scan');
+            }
+        }
+
+        function setLocInputMode(mode) {
+            locInputMode = mode;
+            const scanBtn = document.getElementById('loc-btn-scan');
+            const manualBtn = document.getElementById('loc-btn-manual');
+            const scanUI = document.getElementById('loc-scan-ui');
+            const manualUI = document.getElementById('loc-manual-ui');
+
+            if (mode === 'scan') {
+                scanBtn.classList.remove('btn-secondary');
+                scanBtn.classList.add('btn-primary');
+                manualBtn.classList.remove('btn-primary');
+                manualBtn.classList.add('btn-secondary');
+                scanUI.style.display = 'block';
+                manualUI.style.display = 'none';
+            } else {
+                scanBtn.classList.remove('btn-primary');
+                scanBtn.classList.add('btn-secondary');
+                manualBtn.classList.remove('btn-secondary');
+                manualBtn.classList.add('btn-primary');
+                scanUI.style.display = 'none';
+                manualUI.style.display = 'block';
+            }
+            document.getElementById('location-error').style.display = 'none';
+        }
+
+        function simulateLocationScan() {
+            const locPresets = ['LOC-CAR2-S5', 'LOC-CAR1-S2', 'LOC-RCV-04', 'LOC-CAR3-S1', 'LOC-CAR1-S6'];
+            // Try to extract from item whereDetected
+            const item = getItemData(scannedBarcode);
+            let targetLoc = '';
+            if (item && item.id) {
+                // Find in inspectionData
+                const found = inspectionData.find(x => x.id === item.id);
+                if (found && found.whereDetected) {
+                    const parts = found.whereDetected.split(' — ');
+                    if (parts.length > 1) {
+                        targetLoc = 'LOC-' + parts[1];
+                    } else {
+                        targetLoc = 'LOC-' + found.whereDetected;
+                    }
+                }
+            }
+            if (!targetLoc) {
+                targetLoc = locPresets[Math.floor(Math.random() * locPresets.length)];
+            }
+            
+            // Clean up name format (e.g., spaces to dashes)
+            targetLoc = targetLoc.replace(/\s+/g, '-');
+
+            // Flash visual effect
+            const vf = document.querySelector('#loc-scan-ui .scanner-viewfinder');
+            if (vf) {
+                vf.style.borderColor = 'var(--success-color)';
+                vf.style.background = '#e8f5e9';
+            }
+
+            setTimeout(() => {
+                if (vf) {
+                    vf.style.borderColor = 'var(--primary-color)';
+                    vf.style.background = '#fafbfc';
+                }
+                updateActiveLocation(targetLoc);
+            }, 800);
+        }
+
+        function submitLocationManual() {
+            const val = document.getElementById('location-input').value.trim();
+            if (!val) {
+                showLocationError('Please enter a location code');
+                return;
+            }
+            updateActiveLocation(val);
+        }
+
+        function updateActiveLocation(loc) {
+            activeLocation = loc;
+            
+            document.getElementById('active-location-name').textContent = loc;
+            
+            // Hide input UI, show success UI
+            document.getElementById('location-input-group').style.display = 'none';
+            document.getElementById('location-success-group').style.display = 'flex';
+            
+            // Show worker input group and next button
+            document.getElementById('worker-input-group').style.display = 'block';
+            document.getElementById('step4-next-btn').style.display = 'inline-block';
+        }
+
+        function showLocationError(msg) {
+            const errDiv = document.getElementById('location-error');
+            if (errDiv) {
+                errDiv.textContent = msg;
+                errDiv.style.display = 'block';
+            }
+        }
+
+        function resetLocationInput() {
+            activeLocation = '';
+            document.getElementById('location-input').value = '';
+            document.getElementById('location-error').style.display = 'none';
+            
+            document.getElementById('location-input-group').style.display = 'block';
+            document.getElementById('location-success-group').style.display = 'none';
+            document.getElementById('worker-input-group').style.display = 'none';
+            document.getElementById('step4-next-btn').style.display = 'none';
+        }
+
+        function confirmStart() {
+            // Save active repair state
+            let underRepair = JSON.parse(localStorage.getItem('qms_under_repair') || '{}');
+            const item = getItemData(scannedBarcode);
+            const ticketId = item.id || scannedBarcode;
+            const startedAt = new Date().toISOString();
+            underRepair[scannedBarcode] = {
+                ticketId: ticketId,
+                id: scannedBarcode,
+                name: item.name,
+                defect: item.defect,
+                workers: workerCount,
+                location: activeLocation,
+                startTime: startedAt
+            };
+            localStorage.setItem('qms_under_repair', JSON.stringify(underRepair));
+            updateRepairTicketStatus(ticketId, 'In Progress', {
+                repairRunning: true,
+                repairSeconds: 0,
+                startedAt: startedAt,
+                workers: workerCount,
+                location: activeLocation
+            });
+
+            // Hide stepper, show success screen
+            document.getElementById('stepperContainer').style.display = 'none';
+            document.getElementById('view-step5').style.display = 'none';
+            document.getElementById('view-success').style.display = 'block';
+        }
+
+        function showUnderRepairScreen(id) {
+            // Hide stepper and other steps
+            document.getElementById('stepperContainer').style.display = 'none';
+            for (let i = 1; i <= 5; i++) {
+                document.getElementById(`view-step${i}`).style.display = 'none';
+            }
+            document.getElementById('view-success').style.display = 'none';
+            document.getElementById('view-active-repair').style.display = 'none';
+            document.getElementById('view-completion-success').style.display = 'none';
+
+            // Load repair data from localStorage
+            let underRepair = JSON.parse(localStorage.getItem('qms_under_repair') || '{}');
+            const repairData = underRepair[id];
+            if (!repairData) return;
+
+            scannedBarcode = id; // keep tracking of the current barcode
+
+            document.getElementById('active-id').textContent = repairData.id;
+            document.getElementById('active-name').textContent = repairData.name;
+            document.getElementById('active-defect').textContent = repairData.defect;
+            document.getElementById('active-workers').textContent = `${repairData.workers} Assigned Worker(s)`;
+            document.getElementById('active-location').textContent = repairData.location || 'Not Assigned';
+
+            const startTime = new Date(repairData.startTime);
+            document.getElementById('active-start-time').textContent = startTime.toLocaleString();
+
+            // Start active timer update
+            if (elapsedTimerInterval) clearInterval(elapsedTimerInterval);
+
+            function updateTimer() {
+                const now = new Date();
+                const diffMs = now - startTime;
+                if (diffMs < 0) {
+                    document.getElementById('active-elapsed').textContent = "00:00:00";
+                    return;
+                }
+                const diffSecs = Math.floor(diffMs / 1000);
+                const hours = Math.floor(diffSecs / 3600);
+                const minutes = Math.floor((diffSecs % 3600) / 60);
+                const seconds = diffSecs % 60;
+
+                const pad = (num) => String(num).padStart(2, '0');
+                document.getElementById('active-elapsed').textContent = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+            }
+
+            updateTimer();
+            elapsedTimerInterval = setInterval(updateTimer, 1000);
+
+            document.getElementById('view-active-repair').style.display = 'block';
+        }
+
+        function confirmEndRepair() {
+            if (elapsedTimerInterval) {
+                clearInterval(elapsedTimerInterval);
+                elapsedTimerInterval = null;
+            }
+
+            // Retrieve repair data before deleting it
+            let underRepair = JSON.parse(localStorage.getItem('qms_under_repair') || '{}');
+            const repairData = underRepair[scannedBarcode];
+            const item = getItemData(scannedBarcode);
+            const ticketId = repairData && repairData.ticketId ? repairData.ticketId : (item.id || scannedBarcode);
+
+            // Delete the repair process from the active list
+            delete underRepair[scannedBarcode];
+            localStorage.setItem('qms_under_repair', JSON.stringify(underRepair));
+
+            // Calculate elapsed time text
+            let elapsedText = "Unknown";
+            if (repairData && repairData.startTime) {
+                const start = new Date(repairData.startTime);
+                const end = new Date();
+                const diffMs = end - start;
+                const diffSecs = Math.max(0, Math.floor(diffMs / 1000));
+                const hours = Math.floor(diffSecs / 3600);
+                const minutes = Math.floor((diffSecs % 3600) / 60);
+                const seconds = diffSecs % 60;
+                const pad = (num) => String(num).padStart(2, '0');
+                elapsedText = `${pad(hours)}h ${pad(minutes)}m ${pad(seconds)}s`;
+                updateRepairTicketStatus(ticketId, 'Completed', {
+                    repairRunning: false,
+                    repairSeconds: diffSecs,
+                    completedAt: end.toISOString()
+                });
+            } else {
+                updateRepairTicketStatus(ticketId, 'Completed', {
+                    repairRunning: false,
+                    completedAt: new Date().toISOString()
+                });
+            }
+
+            // Set the success message
+            document.getElementById('completion-success-msg').innerHTML = `
+                The repair process for item <strong>${scannedBarcode}</strong> has been marked as done.<br>
+                Total duration: <strong>${elapsedText}</strong>.
+            `;
+
+            // Hide active screen, show completion success screen
+            document.getElementById('view-active-repair').style.display = 'none';
+            document.getElementById('view-completion-success').style.display = 'block';
+        }
+
+        function resetWorkflow() {
+            currentStep = 1;
+            selectedInputMode = 'manual';
+            scannedBarcode = '';
+            workerCount = 1;
+            activeLocation = '';
+
+            document.getElementById('partcode-input').value = inspectionData.length > 0 ? (inspectionData[0].partcode || inspectionData[0].itemName || inspectionData[0].id) : '01829265-WP';
+            document.getElementById('worker-count').value = 1;
+            clearError();
+
+            selectMode('manual');
+            goToStep(1);
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('userId');
+            localStorage.removeItem('username');
+            localStorage.removeItem('role');
+            window.location.href = '/index.html';
+        }
+
+        // Listen for storage clear to reset worker workflow in real-time
+        window.addEventListener('storage', (e) => {
+            if (e.key === REPAIR_TICKET_STATUS_KEY && !localStorage.getItem(REPAIR_TICKET_STATUS_KEY)) {
+                resetWorkflow();
+            }
+        });
+    </script>
 </body>
+
 </html>

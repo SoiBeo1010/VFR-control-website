@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QC Manager - Quality Management System</title>
+    <title>QC Manager — Defect Control | Quality Management System</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
@@ -1230,39 +1230,6 @@
                 grid-template-columns: repeat(2, 1fr);
             }
         }
-
-        /* Special styles for defect-control when embedded */
-        .sidebar {
-            display: none !important;
-        }
-        .main {
-            margin-left: 0 !important;
-            width: 100% !important;
-            background: #f4f7f5 !important;
-        }
-        body {
-            background: #f4f7f5 !important;
-        }
-        .topbar {
-            border-bottom: none !important;
-            padding: 10px 0 20px 0 !important;
-            background: transparent !important;
-        }
-        .tb-crumb {
-            display: none !important;
-        }
-        .tb-title {
-            font-size: 28px !important;
-            font-weight: 700 !important;
-            color: #1f2937 !important;
-            font-family: 'Oswald', sans-serif !important;
-        }
-        .tb-right {
-            display: none !important;
-        }
-        .content {
-            padding: 10px 0 50px 0 !important;
-        }
     </style>
 </head>
 <body>
@@ -1288,7 +1255,7 @@
             </div>
             <div class="sb-item" data-view="notif" onclick="go('notif')">
                 <span class="ic">&#128276;</span> Notifications 
-                <span class="bd">2</span>
+                <span class="bd" id="navNotifBadge">0</span>
             </div>
             <div class="sb-item" data-view="profile" onclick="go('profile')">
                 <span class="ic">&#128100;</span> Profile
@@ -1301,7 +1268,7 @@
             <div class="sb-user">
                 <div class="av">NA</div>
                 <div>
-                    <div class="nm">Nguyễn Văn A</div>
+                    <div class="nm">QC Manager</div>
                     <div class="rl">QC Manager</div>
                 </div>
             </div>
@@ -1343,7 +1310,7 @@
         </div>
         <div class="field" style="margin-top:12px;">
             <label>Notes</label>
-            <textarea id="pauseNotes" rows="2" placeholder="Ghi chú thêm..."></textarea>
+            <textarea id="pauseNotes" rows="2" placeholder="Ghi chÃº thÃªm..."></textarea>
         </div>
         <div class="modal-actions">
             <button class="btn-sm btn-ghost" onclick="closeModal('modalPause')">Cancel</button>
@@ -1357,7 +1324,7 @@
         <div class="modal-title">Complete Repair <span class="modal-close" onclick="closeModal('modalComplete')">&times;</span></div>
         <div class="field">
             <label>Repair Summary</label>
-            <textarea id="completeSummary" rows="3" placeholder="Mô tả kết quả sửa chữa...">Replaced defect component. Cleaned and fully tested. Machine operating normal.</textarea>
+            <textarea id="completeSummary" rows="3" placeholder="MÃ´ táº£ káº¿t quáº£ sá»­a chá»¯a...">Replaced defect component. Cleaned and fully tested. Machine operating normal.</textarea>
         </div>
         <div class="field">
             <label>Repair Result</label>
@@ -1408,15 +1375,16 @@
     let stageFilter = "All Stages";
     let priorityFilter = "All Priorities";
     let sortOption = "default";
+    let timeFilter = "all";
 
     // User profile state
     let userProfile = {
-        fullName: localStorage.getItem('username') || "Nguyễn Văn A",
+        fullName: localStorage.getItem('username') || "QC Manager",
         employeeId: localStorage.getItem('userId') ? `EMP-${localStorage.getItem('userId')}` : "EMP-4471",
         role: localStorage.getItem('role') || "QC Manager",
         shift: "Shift A (06:00 - 18:00)",
         worksiteBranch: "VFR2.1 Finishing Yard",
-        departments: "2ASSY, Finishing, Rework Mechanical"
+        departments: "Quality Control, QCD, Inspection"
     };
 
     const viewMeta = {
@@ -1429,14 +1397,6 @@
         profile: { crumb: "Account", title: "Profile" }
     };
 
-    /* ================= MOCK/COMPLETED HISTORY DATA ================= */
-    const staticHistory = [
-        { id: "INH-3-8301", itemCode: "015076-2A", part: "01809070-WP", defect: "A-04 (Crack/broken)", completed: "04 Jul 2026", time: "1h 15m", result: "PASS" },
-        { id: "INH-4-8290", itemCode: "012345-AB", part: "91122344-ZZ", defect: "D-014 (Joint Leakage)", completed: "03 Jul 2026", time: "2h 30m", result: "PASS" },
-        { id: "INH-5-8270", itemCode: "066577-BB", part: "33221100-YY", defect: "D-022 (Veneer Scratch)", completed: "02 Jul 2026", time: "1h 45m", result: "PASS" }
-    ];
-
-    /* ================= REPAIR TICKET STATUS BRIDGE (shared with Production Worker) ================= */
     const REPAIR_TICKET_STATUS_KEY = 'qms_repair_ticket_statuses';
     const REPAIR_TICKET_STATUSES = new Set(['Waiting Accept', 'In Progress', 'Paused', 'Completed', 'Overdue']);
     const REPAIR_STATUS_ALIASES = {
@@ -1576,14 +1536,14 @@
         }
 
         statuses[id] = next;
-
+        
         // Also persist under itemCode if available
         if (ticket.meta && ticket.meta.itemCode) {
             statuses[ticket.meta.itemCode] = next;
         }
 
         writeStoredRepairTicketStatuses(statuses);
-
+        
         // Also update local ticket state
         ticket.updatedAt = next.updatedAt;
         if (ticket.status === 'Completed') {
@@ -1599,6 +1559,13 @@
             updateSidebarBadges();
         }
     }
+
+    /* ================= MOCK/COMPLETED HISTORY DATA ================= */
+    const staticHistory = [
+        { id: "INH-3-8301", itemCode: "015076-2A", part: "01809070-WP", defect: "A-04 (Crack/broken)", completed: "04 Jul 2026", time: "1h 15m", result: "PASS" },
+        { id: "INH-4-8290", itemCode: "012345-AB", part: "91122344-ZZ", defect: "D-014 (Joint Leakage)", completed: "03 Jul 2026", time: "2h 30m", result: "PASS" },
+        { id: "INH-5-8270", itemCode: "066577-BB", part: "33221100-YY", defect: "D-022 (Veneer Scratch)", completed: "02 Jul 2026", time: "1h 45m", result: "PASS" }
+    ];
 
     /* ================= DATA IMPORT LOAD ================= */
     async function loadInspectionData() {
@@ -1627,24 +1594,24 @@
             {
                 id: "INH-3-8395",
                 itemCode: "015076-2A",
-                itemName: "Nightstand 28 inch — Left Single Metro",
+                itemName: "Nightstand 28 inch â€” Left Single Metro",
                 wo: "8395",
                 customer: "Fleetwood Fine Furniture",
                 branch: "VFR2.1",
                 qtyOrder: 10,
                 qtyQuarantine: 1,
                 defectOwner: "2ASSY",
-                whereDetected: "Finishing — 2QCD",
+                whereDetected: "Finishing â€” 2QCD",
                 defectCode: "A-04 (Crack / broken)",
                 defectDescription: "A-04 (Crack / broken)",
-                correctiveAction: "Sửa hàng - kiểm lại",
+                correctiveAction: "Sá»­a hÃ ng - kiá»ƒm láº¡i",
                 priority: "High",
                 deadline: "2026-07-05 17:30",
                 fromDept: "2ASSY",
                 supplement: { needed: false },
                 source: {
                     inspector: "17372",
-                    inspectorName: "Huỳnh Văn Út",
+                    inspectorName: "Huá»³nh VÄƒn Ãšt",
                     inspectorDept: "2QCD",
                     inspectionStage: "Finishing",
                     inspectedDate: "2026-07-05T10:55:27",
@@ -1656,14 +1623,14 @@
             {
                 id: "INH-4-8396",
                 itemCode: "012345-AB",
-                itemName: "Dresser 6-Drawer — Metro",
+                itemName: "Dresser 6-Drawer â€” Metro",
                 wo: "8396",
                 customer: "Fleetwood Fine Furniture",
                 branch: "VFR2.1",
                 qtyOrder: 180,
                 qtyQuarantine: 2,
                 defectOwner: "Assembly",
-                whereDetected: "IPQC — CAR1-S2",
+                whereDetected: "IPQC â€” CAR1-S2",
                 defectCode: "D-014 (Leakage)",
                 defectDescription: "Oil leakage at joint seal",
                 correctiveAction: "Reseal Joint & Clean",
@@ -1679,7 +1646,7 @@
                 },
                 source: {
                     inspector: "6701",
-                    inspectorName: "Trần Văn Hùng",
+                    inspectorName: "Tráº§n VÄƒn HÃ¹ng",
                     inspectorDept: "1QCD",
                     inspectionStage: "IPQC",
                     inspectedDate: "2026-07-05T09:12:00",
@@ -1729,6 +1696,7 @@
                 status: storedStatus.status,
                 repairSeconds: storedStatus.repairSeconds,
                 repairRunning: storedStatus.repairRunning,
+                updatedAt: storedStatus.updatedAt,
                 checklist: ['Check defect area', 'Perform corrective action', 'Functional inspection', 'Clean item'],
                 checklistChecked: [true, false, false, false],
                 notes: index === 1 ? "Disassembled casing. Rubber seal looks worn out. Awaiting replacement to finish installation." : "",
@@ -1749,11 +1717,10 @@
         const count = Object.values(ticketsState).filter(t => t.status === 'Waiting Accept' || t.status === 'In Progress' || t.status === 'Paused' || t.status === 'Overdue').length;
         const navBadge = document.getElementById('navTicketBadge');
         if (navBadge) navBadge.textContent = count;
-        
-        // Notify parent of updated counts
-        if (window.parent && typeof window.parent.updateOuterDefectBadges === 'function') {
-            window.parent.updateOuterDefectBadges(count, 2);
-        }
+
+        const notifs = readNotifications();
+        const navNotifBadge = document.getElementById('navNotifBadge');
+        if (navNotifBadge) navNotifBadge.textContent = notifs.length;
     }
 
     /* ================= AUTH FLOW REMOVED ================= */
@@ -1894,7 +1861,7 @@
         }
 
         return `
-            <div style="margin-bottom:18px; font-size:13.5px; color:var(--txt-dim);">Xin chào, <b style="color:#1f2937;">Nguyễn Văn A</b> — here is your mechanical repair line overview.</div>
+            <div style="margin-bottom:18px; font-size:13.5px; color:var(--txt-dim);">Welcome, <b style="color:#1f2937;">${userProfile.fullName}</b> &mdash; here is your defect repair ticket overview.</div>
             
             <div class="grid-4">
                 <div class="kpi amber"><div class="num">${wait}</div><div class="lbl">Waiting Accept</div></div>
@@ -1921,15 +1888,15 @@
                     <div class="panel-body" style="display:flex; flex-direction:column; gap:14px;">
                         <div style="font-size:13px; line-height:1.4;">
                             <b>Repair Ticket Assigned</b>
-                            <div style="color:var(--txt-dim); font-size:12px; margin-top:2px;">Ticket INH-3-8395 — Finishing Inspection Failed · 5m ago</div>
+                            <div style="color:var(--txt-dim); font-size:12px; margin-top:2px;">Ticket INH-3-8395 â€” Finishing Inspection Failed Â· 5m ago</div>
                         </div>
                         <div style="font-size:13px; border-top:1px solid var(--panel-line-soft); padding-top:12px; line-height:1.4;">
                             <b>Material Stock Arrived</b>
-                            <div style="color:var(--txt-dim); font-size:12px; margin-top:2px;">Seal Gasket for INH-4-8396 is now available at Rack B3 · 30m ago</div>
+                            <div style="color:var(--txt-dim); font-size:12px; margin-top:2px;">Seal Gasket for INH-4-8396 is now available at Rack B3 Â· 30m ago</div>
                         </div>
                         <div style="font-size:13px; border-top:1px solid var(--panel-line-soft); padding-top:12px; line-height:1.4;">
                             <b>Supervisor QC Approval</b>
-                            <div style="color:var(--txt-dim); font-size:12px; margin-top:2px;">Job INH-2-8142 successfully passed QC verification · 1h ago</div>
+                            <div style="color:var(--txt-dim); font-size:12px; margin-top:2px;">Job INH-2-8142 successfully passed QC verification Â· 1h ago</div>
                         </div>
                     </div>
                 </div>
@@ -1943,7 +1910,7 @@
         inspectionData.forEach(t => {
             let stage = t.source && t.source.inspectionStage;
             if (!stage && t.whereDetected) {
-                const parts = t.whereDetected.split('—');
+                const parts = t.whereDetected.split('â€”');
                 stage = parts[0] ? parts[0].trim() : '';
             }
             if (stage) {
@@ -1980,8 +1947,13 @@
                     <option ${priorityFilter === 'Medium' ? 'selected' : ''}>Medium</option>
                     <option ${priorityFilter === 'Low' ? 'selected' : ''}>Low</option>
                 </select>
+                <select id="timeFilterSelect" onchange="handleTimeFilter(this.value)">
+                    <option value="all" ${timeFilter === 'all' ? 'selected' : ''}>All Time</option>
+                    <option value="today" ${timeFilter === 'today' ? 'selected' : ''}>Changed Today</option>
+                </select>
                 <select id="sortSelect" onchange="handleSort(this.value)">
                     <option value="default" ${sortOption === 'default' ? 'selected' : ''}>Default Sort</option>
+                    <option value="updated" ${sortOption === 'updated' ? 'selected' : ''}>Recently Updated (Newest first)</option>
                     <option value="priority" ${sortOption === 'priority' ? 'selected' : ''}>Priority (High to Low)</option>
                     <option value="deadline" ${sortOption === 'deadline' ? 'selected' : ''}>Deadline (Soonest first)</option>
                     <option value="id" ${sortOption === 'id' ? 'selected' : ''}>Ticket ID (Newest first)</option>
@@ -2008,18 +1980,33 @@
             });
         } else if (sortOption === "id") {
             filtered.sort((a, b) => b.id.localeCompare(a.id));
+        } else if (sortOption === "updated") {
+            filtered.sort((a, b) => {
+                const ua = ticketsState[a.id].updatedAt || '';
+                const ub = ticketsState[b.id].updatedAt || '';
+                if (!ua && !ub) return 0;
+                if (!ua) return 1;
+                if (!ub) return -1;
+                return ub.localeCompare(ua);
+            });
         }
 
         if (filtered.length === 0) {
             return `
                 <div class="panel" style="text-align:center; padding:40px; color:var(--txt-dim);">
-                    <div style="font-size:32px; margin-bottom:12px;">🔍</div>
+                    <div style="font-size:32px; margin-bottom:12px;">ðŸ”</div>
                     <div style="font-weight:600;">No matching repair tickets found.</div>
                 </div>
             `;
         }
         return filtered.map(t => {
             const state = ticketsState[t.id];
+            let formattedTime = '';
+            if (state.updatedAt) {
+                try {
+                    formattedTime = new Date(state.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                } catch(e) {}
+            }
             return `
                 <div class="wo-tag ${prClass(t.priority)}" onclick="go('detail', '${t.id}')">
                     <div class="wo-head">
@@ -2036,6 +2023,7 @@
                         <span>Department: <b>${t.fromDept || 'N/A'}</b></span>
                         <span>Priority: <b>${t.priority}</b></span>
                         <span>Inspector: <b>${t.source ? t.source.inspectorName : 'N/A'}</b></span>
+                        ${formattedTime ? `<span style="margin-left:auto; color:var(--txt-dim); font-size:11px;">Updated: <b>${formattedTime}</b></span>` : ''}
                     </div>
                 </div>
             `;
@@ -2057,7 +2045,7 @@
             
             let ticketStage = t.source && t.source.inspectionStage;
             if (!ticketStage && t.whereDetected) {
-                const parts = t.whereDetected.split('—');
+                const parts = t.whereDetected.split('â€”');
                 ticketStage = parts[0] ? parts[0].trim() : '';
             }
             const matchesStage = stageFilter === "All Stages" || 
@@ -2066,7 +2054,24 @@
             const matchesPriority = priorityFilter === "All Priorities" || 
                 (t.priority && t.priority.toLowerCase() === priorityFilter.toLowerCase());
             
-            return matchesSearch && matchesStatus && matchesStage && matchesPriority;
+            // Time filter check (Changed Today)
+            let matchesTime = true;
+            if (timeFilter === 'today') {
+                matchesTime = false;
+                if (state.updatedAt) {
+                    try {
+                        const date = new Date(state.updatedAt);
+                        const today = new Date();
+                        matchesTime = date.getDate() === today.getDate() &&
+                            date.getMonth() === today.getMonth() &&
+                            date.getFullYear() === today.getFullYear();
+                    } catch(e) {
+                        matchesTime = false;
+                    }
+                }
+            }
+            
+            return matchesSearch && matchesStatus && matchesStage && matchesPriority && matchesTime;
         });
     }
 
@@ -2090,6 +2095,11 @@
         document.getElementById('ticketsListContainer').innerHTML = renderTicketsListContent();
     }
 
+    function handleTimeFilter(val) {
+        timeFilter = val;
+        document.getElementById('ticketsListContainer').innerHTML = renderTicketsListContent();
+    }
+
     function handleSort(val) {
         sortOption = val;
         document.getElementById('ticketsListContainer').innerHTML = renderTicketsListContent();
@@ -2103,7 +2113,7 @@
         let actionButtons = "";
         if (ticket.status === 'Waiting Accept') {
             actionButtons = `
-                <button class="btn-sm btn-red" onclick="showToast('Ticket rejected — returned to Supervisor')">Reject Ticket</button>
+                <button class="btn-sm btn-red" onclick="showToast('Ticket rejected â€” returned to Supervisor')">Reject Ticket</button>
                 <button class="btn-sm btn-steel" onclick="acceptTicket('${t.id}')">Approve &amp; Accept Job</button>
             `;
         } else if (ticket.status === 'In Progress' || ticket.status === 'Paused' || ticket.status === 'Overdue') {
@@ -2114,7 +2124,7 @@
             `;
         } else {
             actionButtons = `
-                <div style="font-size: 13px; font-weight: 700; color: var(--good); background: var(--good-dim); padding: 8px 12px; border-radius: 8px;">✓ Ticket Fully Completed</div>
+                <div style="font-size: 13px; font-weight: 700; color: var(--good); background: var(--good-dim); padding: 8px 12px; border-radius: 8px;">âœ“ Ticket Fully Completed</div>
             `;
         }
 
@@ -2190,7 +2200,7 @@
                             <div class="sect-title">Repair Instructions</div>
                             <div style="font-size:11.5px; color:var(--txt-dim); margin-bottom:10px; font-weight:600; text-transform:uppercase;">From QC Manager</div>
                             <div class="field-grid" style="grid-template-columns:1fr;">
-                                <div><div class="fk">Corrective Action Method</div><div class="fv" style="color:var(--amber);">${t.correctiveAction || 'Sửa hàng'}</div></div>
+                                <div><div class="fk">Corrective Action Method</div><div class="fv" style="color:var(--amber);">${t.correctiveAction || 'Sá»­a hÃ ng'}</div></div>
                                 <div><div class="fk">Priority Level</div><div class="fv" style="color:${t.priority === 'High' ? 'var(--red)' : t.priority === 'Medium' ? '#f59e0b' : 'var(--txt-dim)'};">${t.priority}</div></div>
                                 <div><div class="fk">Target Deadline</div><div class="fv mono">${t.deadline || 'Today 18:00'}</div></div>
                             </div>
@@ -2238,7 +2248,8 @@
         if (ticket) {
             ticket.status = "In Progress";
             ticket.repairRunning = true;
-            showToast('Ticket accepted successfully — starting timer');
+            persistTicketStatus(id);
+            showToast('Ticket accepted successfully â€” starting timer');
             go('working', id);
         }
     }
@@ -2266,6 +2277,7 @@
         
         ticket.status = "In Progress";
         ticket.repairRunning = true;
+        persistTicketStatus(id);
         updateSidebarBadges();
         
         showToast('Repair started. Time tracking is running.');
@@ -2277,6 +2289,9 @@
         if (ticket) {
             ticket.repairRunning = false;
             ticket.status = 'Paused';
+            persistTicketStatus(id, {
+                pausedAt: new Date().toISOString()
+            });
             updateSidebarBadges();
             showToast('Repair stopped (Paused).');
             if (currentView === 'detail' && currentTicketId === id) {
@@ -2322,12 +2337,12 @@
             <div class="timer-box">
                 <div>
                     <div class="tval" id="timerVal">${formatTime(ticket.repairSeconds)}</div>
-                    <div class="tlbl" id="timerLabel">${ticket.repairRunning ? 'Repair Timer — Running' : 'Repair Timer — Stopped/Paused'}</div>
+                    <div class="tlbl" id="timerLabel">${ticket.repairRunning ? 'Repair Timer â€” Running' : 'Repair Timer â€” Stopped/Paused'}</div>
                 </div>
                 <div style="display:flex; gap:8px;">
                     ${ticket.repairRunning ? 
                         `<button class="btn-sm btn-amber" onclick="openModal('modalPause')">&#10074;&#10074; Stop Repair</button>` : 
-                        `<button class="btn-sm btn-steel" onclick="toggleTimer('${t.id}', true)">▶ Start Timer / Resume</button>`
+                        `<button class="btn-sm btn-steel" onclick="toggleTimer('${t.id}', true)">â–¶ Start Timer / Resume</button>`
                     }
                     <button class="btn-sm btn-green" onclick="openCompleteModal('${t.id}')">&#10003; Complete Repair</button>
                 </div>
@@ -2380,6 +2395,8 @@
         const ticket = ticketsState[id];
         if (ticket) {
             ticket.repairRunning = start;
+            ticket.status = start ? 'In Progress' : 'Paused';
+            persistTicketStatus(id);
             go('working', id);
         }
     }
@@ -2438,17 +2455,25 @@
     function renderHistory() {
         const completedTickets = Object.values(ticketsState).filter(t => t.status === "Completed");
         
-        const historyRows = completedTickets.map(h => `
-            <tr>
-                <td class="mono">${h.meta.id}</td>
-                <td class="mono">${h.meta.itemCode}</td>
-                <td>${h.meta.itemName || 'N/A'}</td>
-                <td>${h.meta.defectCode || 'N/A'}</td>
-                <td>05 Jul 2026</td>
-                <td>${formatTime(h.repairSeconds)}</td>
-                <td><span class="pass-tag">PASS</span></td>
-            </tr>
-        `).join('');
+        const historyRows = completedTickets.map(h => {
+            let completedDate = '05 Jul 2026';
+            if (h.completedAt) {
+                try {
+                    completedDate = new Date(h.completedAt).toLocaleDateString();
+                } catch(e) {}
+            }
+            return `
+                <tr>
+                    <td class="mono">${h.meta.id}</td>
+                    <td class="mono">${h.meta.itemCode}</td>
+                    <td>${h.meta.itemName || 'N/A'}</td>
+                    <td>${h.meta.defectCode || 'N/A'}</td>
+                    <td>${completedDate}</td>
+                    <td>${formatTime(h.repairSeconds)}</td>
+                    <td><span class="pass-tag">PASS</span></td>
+                </tr>
+            `;
+        }).join('');
 
         const staticHistoryRows = staticHistory.map(h => `
             <tr>
@@ -2499,24 +2524,54 @@
 
     // 6. NOTIFICATIONS VIEW
     function renderNotif() {
+        const notifs = readNotifications();
+        
+        let dynamicNotifsHtml = "";
+        if (notifs.length > 0) {
+            dynamicNotifsHtml = notifs.map((n, i) => {
+                const timeAgo = formatTimeAgo(n.timestamp);
+                return `
+                    <div style="${i > 0 ? 'border-top:1px solid var(--panel-line-soft); padding-top:14px;' : ''}">
+                        <div style="font-weight:600; font-size:14px; color:#1f2937;">${n.title}</div>
+                        <div style="font-size:12.5px; color:var(--txt-dim); margin-top:2px;">${n.text}</div>
+                        <div style="font-size:11px; color:#9ca3af; margin-top:4px;">${timeAgo}</div>
+                    </div>
+                `;
+            }).join('');
+        } else {
+            dynamicNotifsHtml = `
+                <div style="text-align:center; padding: 20px 0; color: var(--txt-dim); font-size: 13px;">
+                    No new status notifications.
+                </div>
+            `;
+        }
+
         return `
             <div class="panel">
-                <div class="panel-head"><h3>Notifications Inbox</h3></div>
+                <div class="panel-head" style="display:flex; justify-content:space-between; align-items:center;">
+                    <h3>Notifications Inbox</h3>
+                    ${notifs.length > 0 ? `<button class="btn-sm btn-ghost" onclick="clearNotifs()" style="font-size:11px; padding: 4px 8px; border: 1px solid var(--panel-line-soft); border-radius: 4px; cursor:pointer;">Clear All</button>` : ''}
+                </div>
                 <div class="panel-body" style="display:flex; flex-direction:column; gap:14px; padding: 22px;">
-                    <div>
-                        <div style="font-weight:600; font-size:14px; color:#1f2937;">Repair Ticket Assigned — INH-3-8395</div>
-                        <div style="font-size:12.5px; color:var(--txt-dim); margin-top:2px;">Finishing inspection failed for WO 8395. Critical defect owner: 2ASSY. Action: Sand & Repaint.</div>
-                        <div style="font-size:11px; color:#9ca3af; margin-top:4px;">5 minutes ago</div>
-                    </div>
-                    <div style="border-top:1px solid var(--panel-line-soft); padding-top:14px;">
-                        <div style="font-weight:600; font-size:14px; color:#1f2937;">Material Supplement Arrived — INH-4-8396</div>
-                        <div style="font-size:12.5px; color:var(--txt-dim); margin-top:2px;">Requested Rubber Seal Gaskets are now ready for pickup in Room 2 (Bin B-12).</div>
-                        <div style="font-size:11px; color:#9ca3af; margin-top:4px;">30 minutes ago</div>
-                    </div>
-                    <div style="border-top:1px solid var(--panel-line-soft); padding-top:14px;">
-                        <div style="font-weight:600; font-size:14px; color:#1f2937;">System Maintenance Complete</div>
-                        <div style="font-size:12.5px; color:var(--txt-dim); margin-top:2px;">The QMS Server database sync has completed. Data load speeds optimized.</div>
-                        <div style="font-size:11px; color:#9ca3af; margin-top:4px;">1 day ago</div>
+                    ${dynamicNotifsHtml}
+                    
+                    <div style="border-top:2px dashed var(--panel-line-soft); padding-top:14px; margin-top: 10px;">
+                        <h4 style="font-size:12px; text-transform:uppercase; color:#9ca3af; letter-spacing:0.5px; margin-bottom:12px;">System Broadcasts</h4>
+                        <div>
+                            <div style="font-weight:600; font-size:14px; color:#1f2937;">Repair Ticket Assigned â€” INH-3-8395</div>
+                            <div style="font-size:12.5px; color:var(--txt-dim); margin-top:2px;">Finishing inspection failed for WO 8395. Critical defect owner: 2ASSY. Action: Sand & Repaint.</div>
+                            <div style="font-size:11px; color:#9ca3af; margin-top:4px;">5 minutes ago</div>
+                        </div>
+                        <div style="border-top:1px solid var(--panel-line-soft); padding-top:14px; margin-top:14px;">
+                            <div style="font-weight:600; font-size:14px; color:#1f2937;">Material Supplement Arrived â€” INH-4-8396</div>
+                            <div style="font-size:12.5px; color:var(--txt-dim); margin-top:2px;">Requested Rubber Seal Gaskets are now ready for pickup in Room 2 (Bin B-12).</div>
+                            <div style="font-size:11px; color:#9ca3af; margin-top:4px;">30 minutes ago</div>
+                        </div>
+                        <div style="border-top:1px solid var(--panel-line-soft); padding-top:14px; margin-top:14px;">
+                            <div style="font-weight:600; font-size:14px; color:#1f2937;">System Maintenance Complete</div>
+                            <div style="font-size:12.5px; color:var(--txt-dim); margin-top:2px;">The QMS Server database sync has completed. Data load speeds optimized.</div>
+                            <div style="font-size:11px; color:#9ca3af; margin-top:4px;">1 day ago</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -2592,6 +2647,10 @@
             const reason = document.querySelector('input[name="pr"]:checked').value;
             ticket.repairRunning = false;
             ticket.status = 'Paused';
+            persistTicketStatus(currentTicketId, {
+                pauseReason: reason,
+                pausedAt: new Date().toISOString()
+            });
             showToast(`Repair paused: ${reason}`);
             go('working', currentTicketId);
         }
@@ -2611,6 +2670,11 @@
             ticket.summary = summary;
             ticket.result = resultVal;
             ticket.repairSeconds = (hours * 3600) + (mins * 60);
+            persistTicketStatus(currentTicketId, {
+                summary,
+                result: resultVal,
+                completedAt: new Date().toISOString()
+            });
 
             showToast('Ticket completed.');
             go('tickets');
@@ -2664,27 +2728,27 @@
             </div>
             <div class="qr-section-title">GENERAL PRODUCT &amp; WORK ORDER INFORMATION</div>
             <div class="qr-grid">
-                <div class="qr-cell full"><div class="en">Customer Name</div><div class="vn">Tên khách hàng</div><div class="val">${t.customer || 'Fleetwood Fine Furniture'}</div></div>
-                <div class="qr-cell"><div class="en">Worksite Branch</div><div class="vn">Chi nhánh sản xuất</div><div class="val">${t.branch || 'VFR2.1'}</div></div>
-                <div class="qr-cell"><div class="en">Item Name / Part Description</div><div class="vn">Tên sản phẩm</div><div class="val">${t.itemName || 'N/A'}</div></div>
-                <div class="qr-cell"><div class="en">Works Order (WO) No.</div><div class="vn">Số lệnh sản xuất</div><div class="val mono">${t.wo}</div></div>
-                <div class="qr-cell"><div class="en">Item Code</div><div class="vn">Mã sản phẩm</div><div class="val mono">${t.itemCode}</div></div>
-                <div class="qr-cell"><div class="en">Total Order Qty</div><div class="vn">Tổng số lượng đặt hàng</div><div class="val">${t.qtyOrder || 'N/A'}</div></div>
-                <div class="qr-cell"><div class="en">Quarantine Qty</div><div class="vn">Số lượng bị cách ly</div><div class="val">${t.qtyQuarantine || 1}</div></div>
-                <div class="qr-cell"><div class="en">Responsible Department</div><div class="vn">Bộ phận chịu trách nhiệm</div><div class="val">${t.defectOwner || 'N/A'}</div></div>
-                <div class="qr-cell full"><div class="en">Defect Stage / Location Found</div><div class="vn">Nơi phát hiện lỗi</div><div class="val">${t.whereDetected || 'Finishing'}</div></div>
-                <div class="qr-cell full"><div class="en">Defects Description</div><div class="vn">Mô tả chi tiết lỗi</div><div class="val"><b>[${t.defectCode || ''}]</b> ${t.defectDescription || 'Surface crack/defect found'}</div></div>
+                <div class="qr-cell full"><div class="en">Customer Name</div><div class="vn">TÃªn khÃ¡ch hÃ ng</div><div class="val">${t.customer || 'Fleetwood Fine Furniture'}</div></div>
+                <div class="qr-cell"><div class="en">Worksite Branch</div><div class="vn">Chi nhÃ¡nh sáº£n xuáº¥t</div><div class="val">${t.branch || 'VFR2.1'}</div></div>
+                <div class="qr-cell"><div class="en">Item Name / Part Description</div><div class="vn">TÃªn sáº£n pháº©m</div><div class="val">${t.itemName || 'N/A'}</div></div>
+                <div class="qr-cell"><div class="en">Works Order (WO) No.</div><div class="vn">Sá»‘ lá»‡nh sáº£n xuáº¥t</div><div class="val mono">${t.wo}</div></div>
+                <div class="qr-cell"><div class="en">Item Code</div><div class="vn">MÃ£ sáº£n pháº©m</div><div class="val mono">${t.itemCode}</div></div>
+                <div class="qr-cell"><div class="en">Total Order Qty</div><div class="vn">Tá»•ng sá»‘ lÆ°á»£ng Ä‘áº·t hÃ ng</div><div class="val">${t.qtyOrder || 'N/A'}</div></div>
+                <div class="qr-cell"><div class="en">Quarantine Qty</div><div class="vn">Sá»‘ lÆ°á»£ng bá»‹ cÃ¡ch ly</div><div class="val">${t.qtyQuarantine || 1}</div></div>
+                <div class="qr-cell"><div class="en">Responsible Department</div><div class="vn">Bá»™ pháº­n chá»‹u trÃ¡ch nhiá»‡m</div><div class="val">${t.defectOwner || 'N/A'}</div></div>
+                <div class="qr-cell full"><div class="en">Defect Stage / Location Found</div><div class="vn">NÆ¡i phÃ¡t hiá»‡n lá»—i</div><div class="val">${t.whereDetected || 'Finishing'}</div></div>
+                <div class="qr-cell full"><div class="en">Defects Description</div><div class="vn">MÃ´ táº£ chi tiáº¿t lá»—i</div><div class="val"><b>[${t.defectCode || ''}]</b> ${t.defectDescription || 'Surface crack/defect found'}</div></div>
             </div>
 
-            <div class="qr-section-title">QC ATTACHED INSPECTION PHOTOS / HÌNH ẢNH MINH HỌA</div>
+            <div class="qr-section-title">QC ATTACHED INSPECTION PHOTOS / HÃŒNH áº¢NH MINH Há»ŒA</div>
             <div class="qr-photos">${photoSlots}</div>
 
             <div class="qr-section-title">CORRECTIVE &amp; PREVENTIVE DISPOSITION ACTION</div>
             <div class="qr-grid">
-                <div class="qr-cell"><div class="en">Planned Corrective Action</div><div class="vn">Hành động khắc phục dự kiến</div><div class="val">${t.correctiveAction || 'Sửa hàng - kiểm lại'} (Assigned: ${t.fromDept || 'Mechanical Repair'})</div></div>
-                <div class="qr-cell"><div class="en">Preventive Action Plan</div><div class="vn">Hành động phòng ngừa</div><div class="val">Ensure machine alignments are verified before starting batch production.</div></div>
-                <div class="qr-cell"><div class="en">QC Inspector Signature</div><div class="vn">Người lập báo cáo</div><div class="val"><b>${inspectorName}</b> (${inspectorDept})</div></div>
-                <div class="qr-cell"><div class="en">Disposition Assignee Signature</div><div class="vn">Người chịu trách nhiệm sửa</div><div class="val"><b>${userProfile.fullName}</b> (${userProfile.role})</div></div>
+                <div class="qr-cell"><div class="en">Planned Corrective Action</div><div class="vn">HÃ nh Ä‘á»™ng kháº¯c phá»¥c dá»± kiáº¿n</div><div class="val">${t.correctiveAction || 'Sá»­a hÃ ng - kiá»ƒm láº¡i'} (Assigned: ${t.fromDept || 'Mechanical Repair'})</div></div>
+                <div class="qr-cell"><div class="en">Preventive Action Plan</div><div class="vn">HÃ nh Ä‘á»™ng phÃ²ng ngá»«a</div><div class="val">Ensure machine alignments are verified before starting batch production.</div></div>
+                <div class="qr-cell"><div class="en">QC Inspector Signature</div><div class="vn">NgÆ°á»i láº­p bÃ¡o cÃ¡o</div><div class="val"><b>${inspectorName}</b> (${inspectorDept})</div></div>
+                <div class="qr-cell"><div class="en">Disposition Assignee Signature</div><div class="vn">NgÆ°á»i chá»‹u trÃ¡ch nhiá»‡m sá»­a</div><div class="val"><b>${userProfile.fullName}</b> (${userProfile.role})</div></div>
             </div>
         `;
         
@@ -2701,11 +2765,16 @@
         userProfile.fullName = savedUsername;
     }
     if (savedRole) {
+        // This page is for QC Manager only — redirect others to their correct page
         if (savedRole === 'Production Worker') {
             window.location.href = '/production-worker.html';
+        } else if (savedRole === 'Production Manager') {
+            window.location.href = '/production-manager.html';
+        } else if (savedRole !== 'QC Manager') {
+            window.location.href = '/index.html';
         }
         userProfile.role = savedRole;
-        document.title = `${savedRole} - Quality Management System`;
+        document.title = `QC Manager — Defect Control | Quality Management System`;
     }
     if (savedUserId) {
         userProfile.employeeId = `EMP-${savedUserId}`;
@@ -2760,7 +2829,7 @@
                     if (tState) {
                         const oldStatus = tState.status;
                         const newStatus = storedStatus.status;
-
+                        
                         tState.status = storedStatus.status;
                         tState.repairSeconds = storedStatus.repairSeconds;
                         tState.repairRunning = storedStatus.repairRunning;
@@ -2778,7 +2847,7 @@
                         }
                     }
                 });
-
+                
                 updateSidebarBadges();
                 
                 // If the user is currently viewing the updated list/detail/working, refresh it

@@ -1370,7 +1370,7 @@ def create_repair_plan(plan: RepairPlan, current_user: dict = Depends(get_curren
 @app.get("/api/production-worker/repair-plans")
 def get_repair_plans(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
     """Get assigned repair plans (Production Worker)"""
-    if current_user['role'] not in ('Production Worker', 'Production Manager'):
+    if current_user['role'] not in ('Production Worker', 'Production Manager', 'QC Manager'):
         raise HTTPException(status_code=403, detail="Unauthorized")
     
     try:
@@ -1414,7 +1414,7 @@ def get_repair_plans(current_user: dict = Depends(get_current_user), db: Session
 @app.post("/api/production-worker/repair-plans/{plan_id}/start")
 def start_repair_plan(plan_id: int, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
     """Start an assigned repair plan and mark it in progress."""
-    if current_user['role'] not in ('Production Worker', 'Production Manager'):
+    if current_user['role'] not in ('Production Worker', 'Production Manager', 'QC Manager'):
         raise HTTPException(status_code=403, detail="Unauthorized")
 
     try:
@@ -1444,7 +1444,7 @@ def start_repair_plan(plan_id: int, current_user: dict = Depends(get_current_use
 @app.post("/api/production-worker/repair-completion")
 def complete_repair(completion: RepairCompletion, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
     """Complete repair and record details (Production Worker)"""
-    if current_user['role'] not in ('Production Worker', 'Production Manager'):
+    if current_user['role'] not in ('Production Worker', 'Production Manager', 'QC Manager'):
         raise HTTPException(status_code=403, detail="Unauthorized")
     
     try:
@@ -1467,6 +1467,58 @@ def complete_repair(completion: RepairCompletion, current_user: dict = Depends(g
         db.refresh(new_completion)
         
         return {"completion_id": new_completion.completion_id, "status": "completed"}
+    
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============ QC MANAGER DEFECT CONTROL ENDPOINTS ============
+
+@app.get("/api/qc-manager/defect-control/notifications")
+def qcm_get_defect_notifications(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Get notifications for QC Manager Defect Control (mirrors Production Manager notifications)"""
+    if current_user['role'] not in ('QC Manager', 'Production Manager'):
+        raise HTTPException(status_code=403, detail="Unauthorized")
+    
+    try:
+        assignments = db.query(OwnerAssignmentDB).all()
+        result = []
+        
+        for oa in assignments:
+            quarantine = db.query(QuarantineReportDB).filter(QuarantineReportDB.quarantine_id == oa.quarantine_id).first()
+            inspection = db.query(InspectionDB).filter(InspectionDB.inspection_id == quarantine.inspection_id).first() if quarantine else None
+            
+            result.append({
+                "assignment_id": oa.assignment_id,
+                "priority": oa.priority,
+                "product_id": inspection.product_id if inspection else "N/A",
+                "batch_number": inspection.batch_number if inspection else "N/A",
+                "assigned_date": oa.assigned_date.isoformat() if oa.assigned_date else None
+            })
+        
+        return {"notifications": result}
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/qc-manager/defect-control/repair-plan")
+def qcm_create_repair_plan(plan: RepairPlan, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Create repair plan (QC Manager Defect Control — mirrors Production Manager repair-plan)"""
+    if current_user['role'] not in ('QC Manager', 'Production Manager'):
+        raise HTTPException(status_code=403, detail="Unauthorized")
+    
+    try:
+        new_plan = RepairPlanDB(
+            assignment_id=plan.assignment_id,
+            plan_description=plan.plan_description,
+            estimated_days=plan.estimated_days,
+            assigned_worker_id=plan.assigned_worker_id
+        )
+        db.add(new_plan)
+        db.commit()
+        db.refresh(new_plan)
+        
+        return {"plan_id": new_plan.plan_id, "status": "created"}
     
     except Exception as e:
         db.rollback()
