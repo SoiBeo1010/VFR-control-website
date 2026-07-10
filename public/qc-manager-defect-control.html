@@ -1478,6 +1478,22 @@
             profile: { crumb: "Account", title: "Profile" }
         };
 
+        // Short QR ID Generator for decoupled Report IDs
+        function generateUUID() {
+            return 'QR-' + Math.floor(100000 + Math.random() * 900000);
+        }
+
+        // Master SKU Generator to unify duplicate items under unified codes
+        const masterSkuMap = {};
+        let skuCounter = 10001;
+        function getMasterSku(itemName) {
+            if (!itemName) return "MSKU-99999";
+            if (!masterSkuMap[itemName]) {
+                masterSkuMap[itemName] = `MSKU-${skuCounter++}`;
+            }
+            return masterSkuMap[itemName];
+        }
+
         const REPAIR_TICKET_STATUS_KEY = 'qms_repair_ticket_statuses';
         const REPAIR_TICKET_STATUSES = new Set(['Waiting Accept', 'In Progress', 'Paused', 'Completed', 'Overdue']);
         const REPAIR_STATUS_ALIASES = {
@@ -1572,7 +1588,13 @@
                     status: fallbackStatus,
                     repairSeconds: fallbackSeconds,
                     repairRunning: fallbackRunning,
-                    updatedAt: null
+                    updatedAt: null,
+                    startedAt: null,
+                    completedAt: null,
+                    scanDate: null,
+                    isLegacyQuarantined: null,
+                    masterSku: null,
+                    reportId: null
                 };
             }
 
@@ -1588,7 +1610,18 @@
                 repairSeconds = Math.max(repairSeconds, secondsSince(saved.startedAt));
             }
 
-            return { status, repairSeconds, repairRunning, updatedAt: saved.updatedAt || null };
+            return {
+                status,
+                repairSeconds,
+                repairRunning,
+                updatedAt: saved.updatedAt || null,
+                startedAt: saved.startedAt || null,
+                completedAt: saved.completedAt || null,
+                scanDate: saved.scanDate || null,
+                isLegacyQuarantined: saved.isLegacyQuarantined !== undefined ? saved.isLegacyQuarantined : null,
+                masterSku: saved.masterSku || null,
+                reportId: saved.reportId || null
+            };
         }
 
         function persistTicketStatus(id, extra = {}) {
@@ -1609,11 +1642,24 @@
                 updatedAt: new Date().toISOString()
             };
 
+            // Hydrate scan date if not present
+            next.scanDate = previous.scanDate || extra.scanDate || ticket.scanDate || (ticket.meta && ticket.meta.source ? ticket.meta.source.inspectedDate : null) || new Date().toISOString();
+
+            // Hydrate new decoupling/quarantine fields
+            next.isLegacyQuarantined = typeof ticket.isLegacyQuarantined === 'boolean' ? ticket.isLegacyQuarantined : (typeof previous.isLegacyQuarantined === 'boolean' ? previous.isLegacyQuarantined : (typeof extra.isLegacyQuarantined === 'boolean' ? extra.isLegacyQuarantined : false));
+            next.masterSku = ticket.masterSku || previous.masterSku || extra.masterSku || null;
+            next.reportId = ticket.reportId || previous.reportId || extra.reportId || null;
+
             if (ticket.repairRunning) {
-                next.startedAt = extra.startedAt || startTimeFromSeconds(ticket.repairSeconds);
+                next.startedAt = previous.startedAt || extra.startedAt || ticket.startedAt || startTimeFromSeconds(ticket.repairSeconds);
             }
             if (ticket.status === 'Completed') {
-                next.completedAt = extra.completedAt || new Date().toISOString();
+                next.completedAt = previous.completedAt || extra.completedAt || ticket.completedAt || new Date().toISOString();
+                // Fallback: if startedAt is missing, compute it from completedAt and repairSeconds
+                if (!next.startedAt) {
+                    const compTime = new Date(next.completedAt).getTime();
+                    next.startedAt = new Date(compTime - (ticket.repairSeconds * 1000)).toISOString();
+                }
             }
 
             statuses[id] = next;
@@ -1627,9 +1673,12 @@
 
             // Also update local ticket state
             ticket.updatedAt = next.updatedAt;
-            if (ticket.status === 'Completed') {
-                ticket.completedAt = next.completedAt;
-            }
+            ticket.scanDate = next.scanDate;
+            ticket.startedAt = next.startedAt;
+            ticket.completedAt = next.completedAt;
+            ticket.isLegacyQuarantined = next.isLegacyQuarantined;
+            ticket.masterSku = next.masterSku;
+            ticket.reportId = next.reportId;
 
             // Add notification if status changed
             if (oldStatus !== newStatus) {
@@ -1643,9 +1692,9 @@
 
         /* ================= MOCK/COMPLETED HISTORY DATA ================= */
         const staticHistory = [
-            { id: "INH-3-8301", itemCode: "015076-2A", part: "01809070-WP", defect: "A-04 (Crack/broken)", completed: "04 Jul 2026", time: "1h 15m", result: "PASS" },
-            { id: "INH-4-8290", itemCode: "012345-AB", part: "91122344-ZZ", defect: "D-014 (Joint Leakage)", completed: "03 Jul 2026", time: "2h 30m", result: "PASS" },
-            { id: "INH-5-8270", itemCode: "066577-BB", part: "33221100-YY", defect: "D-022 (Veneer Scratch)", completed: "02 Jul 2026", time: "1h 45m", result: "PASS" }
+            { id: "INH-3-8301", itemCode: "015076-2A", masterSku: "MSKU-10001", part: "01809070-WP", defect: "A-04 (Crack/broken)", scanDate: "2026-07-04T08:30:00.000Z", startedAt: "2026-07-04T09:15:00.000Z", completedAt: "2026-07-04T10:30:00.000Z", result: "PASS" },
+            { id: "INH-4-8290", itemCode: "012345-AB", masterSku: "MSKU-10002", part: "91122344-ZZ", defect: "D-014 (Joint Leakage)", scanDate: "2026-07-03T10:00:00.000Z", startedAt: "2026-07-03T11:30:00.000Z", completedAt: "2026-07-03T14:00:00.000Z", result: "PASS" },
+            { id: "INH-5-8270", itemCode: "066577-BB", masterSku: "MSKU-10003", part: "33221100-YY", defect: "D-022 (Veneer Scratch)", scanDate: "2026-07-02T12:15:00.000Z", startedAt: "2026-07-02T13:00:00.000Z", completedAt: "2026-07-02T14:45:00.000Z", result: "PASS" }
         ];
 
         /* ================= DATA IMPORT LOAD ================= */
@@ -1767,10 +1816,33 @@
         function initializeTickets() {
             const storedStatuses = readStoredRepairTicketStatuses();
 
+            // Track duplicate legacy itemCodes to flag them under Quarantine Code strategy
+            const seenItemCodes = new Set();
+
             inspectionData.forEach((ticket, index) => {
                 const defaultState = getDefaultStatus(index);
                 const saved = storedStatuses[ticket.id] || storedStatuses[ticket.itemCode];
                 const storedStatus = applyStoredRepairStatus(saved, defaultState.status, defaultState.repairSeconds, defaultState.repairRunning);
+
+                // Analyze legacy duplicates to filter out
+                const isLegacy = ticket.id.startsWith("INH-");
+                let isLegacyQuarantined = false;
+                if (isLegacy) {
+                    if (seenItemCodes.has(ticket.itemCode)) {
+                        isLegacyQuarantined = true;
+                    } else {
+                        seenItemCodes.add(ticket.itemCode);
+                    }
+                }
+
+                if (storedStatus.isLegacyQuarantined !== null) {
+                    isLegacyQuarantined = storedStatus.isLegacyQuarantined;
+                }
+
+                // Hydrate Unified SKU and Unique Report ID
+                const masterSku = storedStatus.masterSku || getMasterSku(ticket.itemName);
+                const reportId = masterSku;
+                const needsPersist = (storedStatus.reportId !== masterSku);
 
                 ticketsState[ticket.id] = {
                     meta: ticket,
@@ -1778,6 +1850,12 @@
                     repairSeconds: storedStatus.repairSeconds,
                     repairRunning: storedStatus.repairRunning,
                     updatedAt: storedStatus.updatedAt,
+                    startedAt: storedStatus.startedAt,
+                    completedAt: storedStatus.completedAt,
+                    scanDate: storedStatus.scanDate || storedStatus.updatedAt || (ticket.source ? ticket.source.inspectedDate : null) || new Date().toISOString(),
+                    isLegacyQuarantined: isLegacyQuarantined,
+                    masterSku: masterSku,
+                    reportId: reportId,
                     checklist: ['Check defect area', 'Perform corrective action', 'Functional inspection', 'Clean item'],
                     checklistChecked: [true, false, false, false],
                     notes: index === 1 ? "Disassembled casing. Rubber seal looks worn out. Awaiting replacement to finish installation." : "",
@@ -1788,6 +1866,11 @@
                     summary: "",
                     result: ""
                 };
+
+                // Auto-sync back to stored status if not saved or needs migration
+                if (needsPersist || !saved || saved.reportId === undefined || saved.masterSku === undefined) {
+                    persistTicketStatus(ticket.id);
+                }
             });
 
             // Initial Badge setup
@@ -1795,7 +1878,7 @@
         }
 
         function updateSidebarBadges() {
-            const count = Object.values(ticketsState).filter(t => t.status === 'Waiting Accept' || t.status === 'In Progress' || t.status === 'Paused' || t.status === 'Overdue').length;
+            const count = Object.values(ticketsState).filter(t => !t.isLegacyQuarantined && (t.status === 'Waiting Accept' || t.status === 'In Progress' || t.status === 'Paused' || t.status === 'Overdue')).length;
             const navBadge = document.getElementById('navTicketBadge');
             if (navBadge) navBadge.textContent = count;
 
@@ -1860,6 +1943,12 @@
                         tState.repairSeconds = storedStatus.repairSeconds;
                         tState.repairRunning = storedStatus.repairRunning;
                         tState.updatedAt = storedStatus.updatedAt;
+                        tState.startedAt = storedStatus.startedAt;
+                        tState.completedAt = storedStatus.completedAt;
+                        tState.scanDate = storedStatus.scanDate;
+                        tState.isLegacyQuarantined = storedStatus.isLegacyQuarantined !== null ? storedStatus.isLegacyQuarantined : tState.isLegacyQuarantined;
+                        tState.masterSku = storedStatus.masterSku || tState.masterSku;
+                        tState.reportId = storedStatus.reportId || tState.reportId;
                     }
                 });
             } catch (err) {
@@ -1908,12 +1997,12 @@
 
         // 1. DASHBOARD OVERVIEW
         function renderDashboard() {
-            const wait = Object.values(ticketsState).filter(t => t.status === "Waiting Accept").length;
-            const prog = Object.values(ticketsState).filter(t => t.status === "In Progress" || t.status === "Paused").length;
-            const done = Object.values(ticketsState).filter(t => t.status === "Completed").length;
-            const over = Object.values(ticketsState).filter(t => t.status === "Overdue").length;
+            const wait = Object.values(ticketsState).filter(t => !t.isLegacyQuarantined && t.status === "Waiting Accept").length;
+            const prog = Object.values(ticketsState).filter(t => !t.isLegacyQuarantined && (t.status === "In Progress" || t.status === "Paused")).length;
+            const done = Object.values(ticketsState).filter(t => !t.isLegacyQuarantined && t.status === "Completed").length;
+            const over = Object.values(ticketsState).filter(t => !t.isLegacyQuarantined && t.status === "Overdue").length;
 
-            const upcoming = Object.values(ticketsState).find(t => t.status === "Waiting Accept") || Object.values(ticketsState)[0];
+            const upcoming = Object.values(ticketsState).find(t => !t.isLegacyQuarantined && t.status === "Waiting Accept") || Object.values(ticketsState).find(t => !t.isLegacyQuarantined);
 
             let upcomingHtml = "";
             if (upcoming) {
@@ -2093,7 +2182,7 @@
                     <div class="wo-head">
                         <div class="wo-ids">
                             <div class="wo-id"><div class="k">WO No.</div><div class="v">${t.wo}</div></div>
-                            <div class="wo-id"><div class="k">Ticket ID</div><div class="v">${t.id}</div></div>
+                            <div class="wo-id"><div class="k">Ticket ID</div><div class="v" style="color:var(--amber); font-weight:700;">${state.reportId || state.masterSku || 'N/A'}</div></div>
                             <div class="wo-id"><div class="k">Item Code</div><div class="v">${t.itemCode}</div></div>
                             <div class="wo-id"><div class="k">Stage</div><div class="v" style="font-family:'Inter';">${t.source ? t.source.inspectionStage : 'Final'}</div></div>
                         </div>
@@ -2152,7 +2241,9 @@
                     }
                 }
 
-                return matchesSearch && matchesStatus && matchesStage && matchesPriority && matchesTime;
+                const matchesQuarantine = !state.isLegacyQuarantined;
+
+                return matchesSearch && matchesStatus && matchesStage && matchesPriority && matchesTime && matchesQuarantine;
             });
         }
 
@@ -2213,11 +2304,9 @@
             <div class="back-link" onclick="go('tickets')">&#8592; Back to Work Queue</div>
             
             <div class="detail-head">
-                <div class="idline">Ticket ${t.id} <span class="status-chip ${statusClass(ticket.status)}">${ticket.status}</span></div>
+                <div class="idline">Ticket: ${ticket.reportId || ticket.masterSku || 'N/A'} <span class="status-chip ${statusClass(ticket.status)}">${ticket.status}</span></div>
                 <div style="display:flex; gap:10px; align-items:center; flex-wrap: wrap;">
                     <button class="btn-sm btn-ghost" onclick="openQuarantine('${t.id}')">&#128196; View Quarantine Report</button>
-                    <button class="btn-sm btn-ghost" style="border-color: var(--amber); color: var(--amber);" onclick="scanLocation('${t.id}')">&#128248; Update location (scan)</button>
-                    ${(ticket.status !== 'In Progress' && ticket.status !== 'Completed') ? `<button class="btn-sm btn-ghost" style="border-color: var(--amber); color: var(--amber);" onclick="scanStartRepair('${t.id}')">&#9658; Start repair (scan)</button>` : ''}
                     <button class="btn-sm btn-ghost" style="border-color: var(--amber); color: var(--amber); font-weight: bold;" onclick="openSupplementForm('${t.id}')">+ Create Supplement Request</button>
                     ${actionButtons}
                 </div>
@@ -2229,6 +2318,7 @@
                         <div class="panel-body">
                             <div class="sect-title">Product Information</div>
                             <div class="field-grid">
+                                <div style="grid-column:1/3;"><div class="fk">Quarantine Report ID</div><div class="fv mono" style="color:var(--amber); font-weight:700; font-size:14px;">${ticket.reportId || ticket.masterSku || 'N/A'}</div></div>
                                 <div><div class="fk">Branch</div><div class="fv mono">${t.branch || 'VFR2.1'}</div></div>
                                 <div><div class="fk">Work Order No.</div><div class="fv mono">${t.wo}</div></div>
                                 <div><div class="fk">Item Code</div><div class="fv mono">${t.itemCode}</div></div>
@@ -2412,7 +2502,7 @@
             
             <div style="display:flex; gap:18px; font-size:13px; color:var(--txt-dim); margin-bottom:14px; font-weight:600;">
                 <span>WO: <b class="mono" style="color:#1f2937;">${t.wo}</b></span>
-                <span>Ticket ID: <b class="mono" style="color:#1f2937;">${t.id}</b></span>
+                <span>Ticket ID: <b class="mono" style="color:var(--amber);">${ticket.reportId || ticket.masterSku || 'N/A'}</b></span>
                 <span>Item: <b class="mono" style="color:#1f2937;">${t.itemCode}</b></span>
             </div>
 
@@ -2546,28 +2636,39 @@
                 }
                 return `
                 <tr>
-                    <td class="mono">${h.meta.id}</td>
+                    <td class="mono" style="font-weight: 600; color: var(--amber);">${h.reportId || h.masterSku || 'N/A'}</td>
                     <td class="mono">${h.meta.itemCode}</td>
                     <td>${h.meta.itemName || 'N/A'}</td>
                     <td>${h.meta.defectCode || 'N/A'}</td>
                     <td>${completedDate}</td>
                     <td>${formatTime(h.repairSeconds)}</td>
-                    <td><span class="pass-tag">PASS</span></td>
                 </tr>
             `;
             }).join('');
 
-            const staticHistoryRows = staticHistory.map(h => `
-            <tr>
-                <td class="mono">${h.id}</td>
-                <td class="mono">${h.itemCode}</td>
-                <td>${h.part}</td>
-                <td>${h.defect}</td>
-                <td>${h.completed}</td>
-                <td>${h.time}</td>
-                <td><span class="pass-tag">${h.result}</span></td>
-            </tr>
-        `).join('');
+            const staticHistoryRows = staticHistory.map(h => {
+                let completedDate = '05 Jul 2026';
+                if (h.completedAt) {
+                    try {
+                        completedDate = new Date(h.completedAt).toLocaleDateString();
+                    } catch(e) {}
+                }
+                let duration = '01:15:00';
+                if (h.startedAt && h.completedAt) {
+                    const diff = Math.floor((new Date(h.completedAt) - new Date(h.startedAt)) / 1000);
+                    duration = formatTime(diff);
+                }
+                return `
+                <tr>
+                    <td class="mono" style="font-weight: 600; color: var(--amber);">${h.masterSku || 'N/A'}</td>
+                    <td class="mono">${h.itemCode}</td>
+                    <td>${h.part}</td>
+                    <td>${h.defect}</td>
+                    <td>${completedDate}</td>
+                    <td>${duration}</td>
+                </tr>
+            `;
+            }).join('');
 
             return `
             <div class="grid-4">
@@ -2575,6 +2676,11 @@
                 <div class="kpi"><div class="num">1.4h</div><div class="lbl">Avg Repair Duration</div></div>
                 <div class="kpi green"><div class="num">97%</div><div class="lbl">First Time Right</div></div>
                 <div class="kpi red"><div class="num">3%</div><div class="lbl">QC Rework Rate</div></div>
+            </div>
+            
+            <div style="background: var(--good-dim); border-left: 4px solid var(--good); padding: 12px 16px; border-radius: 8px; margin-top: 16px; margin-bottom: 16px; font-size: 13.5px; color: var(--good); font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                <span>ℹ️</span>
+                <span>All completed repair tickets are displayed on this page for verification and historical tracking.</span>
             </div>
             
             <div class="panel">
@@ -2591,7 +2697,6 @@
                                 <th>Defect Case</th>
                                 <th>Completed Date</th>
                                 <th>Actual Duration</th>
-                                <th>QC Verification</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -2804,7 +2909,7 @@
             <div class="qr-topline">
                 <div class="qr-h1">QUARANTINE REPORT</div>
                 <div class="qr-meta-box">
-                    <div class="row"><b>Report No.</b> ${t.id}</div>
+                    <div class="row"><b>Report No.</b> ${ticket.reportId || t.id}</div>
                     <div class="row"><b>Inspection Date</b> ${inspectedDate}</div>
                 </div>
             </div>

@@ -75,10 +75,10 @@
                     localStorage.setItem('username', data.username);
                     localStorage.setItem('role', data.role);
                     
-                    // Clear cached repair ticket statuses when signing in
-                    localStorage.removeItem('qms_repair_ticket_statuses');
-                    localStorage.removeItem('qms_under_repair');
-                    localStorage.removeItem('qms_notifications');
+                    // Clear cached repair ticket statuses when signing in (disabled to allow demo role sync)
+                    // localStorage.removeItem('qms_repair_ticket_statuses');
+                    // localStorage.removeItem('qms_under_repair');
+                    // localStorage.removeItem('qms_notifications');
                     
                     // Redirect based on role
                     const roleMap = {
