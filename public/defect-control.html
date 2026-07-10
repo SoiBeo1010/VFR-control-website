@@ -607,8 +607,8 @@
         }
 
         .st-wait { background: #fee2e2; color: var(--red); }
-        .st-progress { background: var(--amber-dim); color: var(--amber); }
-        .st-paused { background: #fef3c7; color: #d97706; }
+        .st-progress { background: #fef9c3; color: #ca8a04; }
+        .st-paused { background: #ffedd5; color: #ea580c; }
         .st-completed { background: var(--good-dim); color: var(--good); }
         .st-overdue { background: #fef2f2; border: 1px solid var(--red); color: var(--red); }
 
@@ -1408,6 +1408,10 @@
     let stageFilter = "All Stages";
     let priorityFilter = "All Priorities";
     let sortOption = "default";
+    let historyFromDate = "";
+    let historyToDate = "";
+    let historyQuickFilter = "all";
+
 
     // User profile state
     let userProfile = {
@@ -1431,9 +1435,9 @@
 
     /* ================= MOCK/COMPLETED HISTORY DATA ================= */
     const staticHistory = [
-        { id: "INH-3-8301", itemCode: "015076-2A", part: "01809070-WP", defect: "A-04 (Crack/broken)", completed: "04 Jul 2026", time: "1h 15m", result: "PASS" },
-        { id: "INH-4-8290", itemCode: "012345-AB", part: "91122344-ZZ", defect: "D-014 (Joint Leakage)", completed: "03 Jul 2026", time: "2h 30m", result: "PASS" },
-        { id: "INH-5-8270", itemCode: "066577-BB", part: "33221100-YY", defect: "D-022 (Veneer Scratch)", completed: "02 Jul 2026", time: "1h 45m", result: "PASS" }
+        { id: "INH-3-8301", itemCode: "015076-2A", part: "01809070-WP", defect: "A-04 (Crack/broken)", scanDate: "2026-07-04T08:30:00.000Z", startedAt: "2026-07-04T09:15:00.000Z", completedAt: "2026-07-04T10:30:00.000Z", result: "PASS" },
+        { id: "INH-4-8290", itemCode: "012345-AB", part: "91122344-ZZ", defect: "D-014 (Joint Leakage)", scanDate: "2026-07-03T10:00:00.000Z", startedAt: "2026-07-03T11:30:00.000Z", completedAt: "2026-07-03T14:00:00.000Z", result: "PASS" },
+        { id: "INH-5-8270", itemCode: "066577-BB", part: "33221100-YY", defect: "D-022 (Veneer Scratch)", scanDate: "2026-07-02T12:15:00.000Z", startedAt: "2026-07-02T13:00:00.000Z", completedAt: "2026-07-02T14:45:00.000Z", result: "PASS" }
     ];
 
     /* ================= REPAIR TICKET STATUS BRIDGE (shared with Production Worker) ================= */
@@ -1531,7 +1535,10 @@
                 status: fallbackStatus,
                 repairSeconds: fallbackSeconds,
                 repairRunning: fallbackRunning,
-                updatedAt: null
+                updatedAt: null,
+                startedAt: null,
+                completedAt: null,
+                scanDate: null
             };
         }
 
@@ -1547,7 +1554,15 @@
             repairSeconds = Math.max(repairSeconds, secondsSince(saved.startedAt));
         }
 
-        return { status, repairSeconds, repairRunning, updatedAt: saved.updatedAt || null };
+        return { 
+            status, 
+            repairSeconds, 
+            repairRunning, 
+            updatedAt: saved.updatedAt || null,
+            startedAt: saved.startedAt || null,
+            completedAt: saved.completedAt || null,
+            scanDate: saved.scanDate || null
+        };
     }
 
     function persistTicketStatus(id, extra = {}) {
@@ -1568,11 +1583,19 @@
             updatedAt: new Date().toISOString()
         };
 
+        // Hydrate scan date if not present
+        next.scanDate = previous.scanDate || extra.scanDate || ticket.scanDate || (ticket.meta && ticket.meta.source ? ticket.meta.source.inspectedDate : null) || new Date().toISOString();
+
         if (ticket.repairRunning) {
-            next.startedAt = extra.startedAt || startTimeFromSeconds(ticket.repairSeconds);
+            next.startedAt = previous.startedAt || extra.startedAt || ticket.startedAt || startTimeFromSeconds(ticket.repairSeconds);
         }
         if (ticket.status === 'Completed') {
-            next.completedAt = extra.completedAt || new Date().toISOString();
+            next.completedAt = previous.completedAt || extra.completedAt || ticket.completedAt || new Date().toISOString();
+            // Fallback: if startedAt is missing, compute it from completedAt and repairSeconds
+            if (!next.startedAt) {
+                const compTime = new Date(next.completedAt).getTime();
+                next.startedAt = new Date(compTime - (ticket.repairSeconds * 1000)).toISOString();
+            }
         }
 
         statuses[id] = next;
@@ -1586,9 +1609,9 @@
 
         // Also update local ticket state
         ticket.updatedAt = next.updatedAt;
-        if (ticket.status === 'Completed') {
-            ticket.completedAt = next.completedAt;
-        }
+        ticket.scanDate = next.scanDate;
+        ticket.startedAt = next.startedAt;
+        ticket.completedAt = next.completedAt;
 
         // Add notification if status changed
         if (oldStatus !== newStatus) {
@@ -1729,6 +1752,10 @@
                 status: storedStatus.status,
                 repairSeconds: storedStatus.repairSeconds,
                 repairRunning: storedStatus.repairRunning,
+                updatedAt: storedStatus.updatedAt,
+                startedAt: storedStatus.startedAt,
+                completedAt: storedStatus.completedAt,
+                scanDate: storedStatus.scanDate,
                 checklist: ['Check defect area', 'Perform corrective action', 'Functional inspection', 'Clean item'],
                 checklistChecked: [true, false, false, false],
                 notes: index === 1 ? "Disassembled casing. Rubber seal looks worn out. Awaiting replacement to finish installation." : "",
@@ -1812,6 +1839,9 @@
                     tState.repairSeconds = storedStatus.repairSeconds;
                     tState.repairRunning = storedStatus.repairRunning;
                     tState.updatedAt = storedStatus.updatedAt;
+                    tState.startedAt = storedStatus.startedAt;
+                    tState.completedAt = storedStatus.completedAt;
+                    tState.scanDate = storedStatus.scanDate;
                 }
             });
         } catch (err) {
@@ -2435,40 +2465,227 @@
         }
     }
 
-    // 5. REPAIR COMPLETED HISTORY VIEW
-    function renderHistory() {
+    // Helper to format ISO DateTime string to user-friendly YYYY-MM-DD HH:mm:ss format
+    function formatDateTime(isoString) {
+        if (!isoString) return 'N/A';
+        try {
+            const d = new Date(isoString);
+            if (isNaN(d.getTime())) return isoString;
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            const hours = String(d.getHours()).padStart(2, '0');
+            const minutes = String(d.getMinutes()).padStart(2, '0');
+            const seconds = String(d.getSeconds()).padStart(2, '0');
+            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+        } catch(e) {
+            return isoString;
+        }
+    }
+
+    // Helper to calculate End Repair - Start Repair and format as a duration
+    function calculateActualDuration(startedAt, completedAt) {
+        if (!startedAt || !completedAt) return 'N/A';
+        try {
+            const start = new Date(startedAt);
+            const end = new Date(completedAt);
+            const diffMs = end - start;
+            if (isNaN(diffMs) || diffMs < 0) return 'N/A';
+            
+            const diffSecs = Math.floor(diffMs / 1000);
+            const h = Math.floor(diffSecs / 3600);
+            const m = Math.floor((diffSecs % 3600) / 60);
+            const s = diffSecs % 60;
+            
+            let parts = [];
+            if (h > 0) parts.push(`${h}h`);
+            if (m > 0 || h > 0) parts.push(`${m}m`);
+            parts.push(`${s}s`);
+            return parts.join(' ');
+        } catch(e) {
+            return 'N/A';
+        }
+    }
+
+    // Filtering logic for the Repair History logs
+    function filterHistoryRecords() {
         const completedTickets = Object.values(ticketsState).filter(t => t.status === "Completed");
         
-        const historyRows = completedTickets.map(h => `
-            <tr>
-                <td class="mono">${h.meta.id}</td>
-                <td class="mono">${h.meta.itemCode}</td>
-                <td>${h.meta.itemName || 'N/A'}</td>
-                <td>${h.meta.defectCode || 'N/A'}</td>
-                <td>05 Jul 2026</td>
-                <td>${formatTime(h.repairSeconds)}</td>
-                <td><span class="pass-tag">PASS</span></td>
-            </tr>
-        `).join('');
+        const allHistory = [
+            ...completedTickets.map(t => ({
+                id: t.meta.id,
+                itemCode: t.meta.itemCode,
+                part: t.meta.itemName || 'N/A',
+                defect: t.meta.defectCode || 'N/A',
+                scanDate: t.scanDate || (t.meta.source ? t.meta.source.inspectedDate : ''),
+                startedAt: t.startedAt || '',
+                completedAt: t.completedAt || '',
+                result: t.result === "Successful" ? "PASS" : "REWORK"
+            })),
+            ...staticHistory.map(h => ({
+                id: h.id,
+                itemCode: h.itemCode,
+                part: h.part,
+                defect: h.defect,
+                scanDate: h.scanDate,
+                startedAt: h.startedAt,
+                completedAt: h.completedAt,
+                result: h.result
+            }))
+        ];
 
-        const staticHistoryRows = staticHistory.map(h => `
-            <tr>
-                <td class="mono">${h.id}</td>
-                <td class="mono">${h.itemCode}</td>
-                <td>${h.part}</td>
-                <td>${h.defect}</td>
-                <td>${h.completed}</td>
-                <td>${h.time}</td>
-                <td><span class="pass-tag">${h.result}</span></td>
-            </tr>
-        `).join('');
+        return allHistory.filter(item => {
+            const recordDate = new Date(item.completedAt || item.scanDate || item.startedAt);
+            if (isNaN(recordDate.getTime())) return true;
+            
+            // Custom Date Range filter
+            if (historyFromDate) {
+                const fromLimit = new Date(historyFromDate + "T00:00:00");
+                if (recordDate < fromLimit) return false;
+            }
+            if (historyToDate) {
+                const toLimit = new Date(historyToDate + "T23:59:59");
+                if (recordDate > toLimit) return false;
+            }
+            
+            // Quick Filter options
+            if (historyQuickFilter === "latest_today") {
+                const today = new Date();
+                const isSameDay = recordDate.getDate() === today.getDate() &&
+                    recordDate.getMonth() === today.getMonth() &&
+                    recordDate.getFullYear() === today.getFullYear();
+                if (!isSameDay) return false;
+            } else if (historyQuickFilter === "latest_7days") {
+                const limit = new Date();
+                limit.setDate(limit.getDate() - 7);
+                if (recordDate < limit) return false;
+            } else if (historyQuickFilter === "latest_30days") {
+                const limit = new Date();
+                limit.setDate(limit.getDate() - 30);
+                if (recordDate < limit) return false;
+            } else if (historyQuickFilter === "previous_7days") {
+                const limit = new Date();
+                limit.setDate(limit.getDate() - 7);
+                if (recordDate >= limit) return false;
+            } else if (historyQuickFilter === "previous_30days") {
+                const limit = new Date();
+                limit.setDate(limit.getDate() - 30);
+                if (recordDate >= limit) return false;
+            }
+            
+            return true;
+        });
+    }
 
+    // Generate table content dynamically
+    function renderHistoryRowsContent() {
+        const filtered = filterHistoryRecords();
+        if (filtered.length === 0) {
+            return `
+                <tr>
+                    <td colspan="9" style="text-align:center; padding:30px; color:var(--txt-dim); font-weight: 500;">No repair history logs found for selected filters.</td>
+                </tr>
+            `;
+        }
+        return filtered.map(h => {
+            const durationStr = calculateActualDuration(h.startedAt, h.completedAt);
+            return `
+                <tr>
+                    <td class="mono">${h.id}</td>
+                    <td class="mono">${h.itemCode}</td>
+                    <td>${h.part}</td>
+                    <td>${h.defect}</td>
+                    <td class="mono">${formatDateTime(h.scanDate)}</td>
+                    <td class="mono">${formatDateTime(h.startedAt)}</td>
+                    <td class="mono">${formatDateTime(h.completedAt)}</td>
+                    <td class="mono">${durationStr}</td>
+                    <td><span class="${h.result === 'PASS' ? 'pass-tag' : 'rework-tag'}" style="padding: 2px 6px; font-size:11px; font-weight:700; border-radius:4px; ${h.result === 'PASS' ? 'color: var(--good);' : 'color: var(--red);'}">${h.result}</span></td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    // History filter handlers
+    window.handleHistoryQuickFilter = function(val) {
+        historyQuickFilter = val;
+        refreshHistoryTable();
+    };
+
+    window.handleHistoryFromDate = function(val) {
+        historyFromDate = val;
+        refreshHistoryTable();
+    };
+
+    window.handleHistoryToDate = function(val) {
+        historyToDate = val;
+        refreshHistoryTable();
+    };
+
+    window.resetHistoryFilters = function() {
+        historyQuickFilter = "all";
+        historyFromDate = "";
+        historyToDate = "";
+        
+        const qSelect = document.getElementById('historyQuickFilterSelect');
+        const fromInput = document.getElementById('historyFromDateInput');
+        const toInput = document.getElementById('historyToDateInput');
+        
+        if (qSelect) qSelect.value = "all";
+        if (fromInput) fromInput.value = "";
+        if (toInput) toInput.value = "";
+        
+        refreshHistoryTable();
+    };
+
+    function refreshHistoryTable() {
+        const tbody = document.getElementById('historyTableBody');
+        if (tbody) {
+            tbody.innerHTML = renderHistoryRowsContent();
+        }
+        const totalKPI = document.getElementById('historyTotalKPI');
+        if (totalKPI) {
+            const completedCount = filterHistoryRecords().length;
+            totalKPI.textContent = completedCount;
+        }
+    }
+
+    // 5. REPAIR COMPLETED HISTORY VIEW
+    function renderHistory() {
+        const totalCompleted = filterHistoryRecords().length;
+        
         return `
             <div class="grid-4">
-                <div class="kpi green"><div class="num">${completedTickets.length + staticHistory.length}</div><div class="lbl">Total Completed</div></div>
+                <div class="kpi green"><div class="num" id="historyTotalKPI">${totalCompleted}</div><div class="lbl">Total Completed</div></div>
                 <div class="kpi"><div class="num">1.4h</div><div class="lbl">Avg Repair Duration</div></div>
                 <div class="kpi green"><div class="num">97%</div><div class="lbl">First Time Right</div></div>
                 <div class="kpi red"><div class="num">3%</div><div class="lbl">QC Rework Rate</div></div>
+            </div>
+
+            <!-- SEARCH / FILTERING TOOLBAR -->
+            <div class="search-bar" style="margin-bottom: 16px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; background: white; padding: 16px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 13px; font-weight: 600; color: var(--txt-dim);">Quick Filter:</span>
+                    <select id="historyQuickFilterSelect" onchange="handleHistoryQuickFilter(this.value)" style="padding: 8px 12px; border: 1px solid var(--panel-line); border-radius: 8px; font-size: 13px; font-family: inherit; outline: none; background: white; cursor: pointer; min-width: 160px;">
+                        <option value="all" ${historyQuickFilter === 'all' ? 'selected' : ''}>All Time</option>
+                        <option value="latest_today" ${historyQuickFilter === 'latest_today' ? 'selected' : ''}>Latest (Today)</option>
+                        <option value="latest_7days" ${historyQuickFilter === 'latest_7days' ? 'selected' : ''}>Latest (Last 7 Days)</option>
+                        <option value="latest_30days" ${historyQuickFilter === 'latest_30days' ? 'selected' : ''}>Latest (Last 30 Days)</option>
+                        <option value="previous_7days" ${historyQuickFilter === 'previous_7days' ? 'selected' : ''}>Previous (Older than 7 Days)</option>
+                        <option value="previous_30days" ${historyQuickFilter === 'previous_30days' ? 'selected' : ''}>Previous (Older than 30 Days)</option>
+                    </select>
+                </div>
+                
+                <div style="display: flex; align-items: center; gap: 8px; margin-left: 12px;">
+                    <span style="font-size: 13px; font-weight: 600; color: var(--txt-dim);">From:</span>
+                    <input type="date" id="historyFromDateInput" value="${historyFromDate}" onchange="handleHistoryFromDate(this.value)" style="padding: 8px 12px; border: 1px solid var(--panel-line); border-radius: 8px; font-size: 13px; font-family: inherit; outline: none; background: white;">
+                </div>
+                
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 13px; font-weight: 600; color: var(--txt-dim);">To:</span>
+                    <input type="date" id="historyToDateInput" value="${historyToDate}" onchange="handleHistoryToDate(this.value)" style="padding: 8px 12px; border: 1px solid var(--panel-line); border-radius: 8px; font-size: 13px; font-family: inherit; outline: none; background: white;">
+                </div>
+
+                <button class="btn-sm btn-ghost" onclick="resetHistoryFilters()" style="margin-left: auto; padding: 8px 16px; font-size: 13px;">Reset Filters</button>
             </div>
             
             <div class="panel">
@@ -2483,14 +2700,15 @@
                                 <th>Item Code</th>
                                 <th>Description / Part</th>
                                 <th>Defect Case</th>
-                                <th>Completed Date</th>
+                                <th>Scan Date</th>
+                                <th>Start Repair</th>
+                                <th>End Repair</th>
                                 <th>Actual Duration</th>
                                 <th>QC Verification</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            ${historyRows}
-                            ${staticHistoryRows}
+                        <tbody id="historyTableBody">
+                            ${renderHistoryRowsContent()}
                         </tbody>
                     </table>
                 </div>
