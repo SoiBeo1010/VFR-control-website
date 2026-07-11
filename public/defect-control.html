@@ -1286,6 +1286,9 @@
             <div class="sb-item" data-view="history" onclick="go('history')">
                 <span class="ic">&#128337;</span> Repair History
             </div>
+            <div class="sb-item" data-view="cost" onclick="go('cost')">
+                <span class="ic">&#128181;</span> Cost Management
+            </div>
             <div class="sb-item" data-view="notif" onclick="go('notif')">
                 <span class="ic">&#128276;</span> Notifications 
                 <span class="bd">2</span>
@@ -1429,6 +1432,7 @@
         detail: { crumb: "My Repair Tickets", title: "Repair Ticket Detail" },
         working: { crumb: "Repair Ticket", title: "Repair Working" },
         history: { crumb: "Records", title: "Repair History" },
+        cost: { crumb: "Costs", title: "Cost Management" },
         notif: { crumb: "Inbox", title: "Notifications" },
         profile: { crumb: "Account", title: "Profile" }
     };
@@ -1940,6 +1944,7 @@
         else if (view === 'detail') container.innerHTML = renderDetail(currentTicketId);
         else if (view === 'working') container.innerHTML = renderWorking(currentTicketId);
         else if (view === 'history') container.innerHTML = renderHistory();
+        else if (view === 'cost') container.innerHTML = renderCostManagement();
         else if (view === 'notif') container.innerHTML = renderNotif();
         else if (view === 'profile') container.innerHTML = renderProfile();
 
@@ -2658,31 +2663,241 @@
         });
     }
 
+    function getMaterialUnitCost(materialName) {
+        if (!materialName) return 0;
+        const nameLower = materialName.toLowerCase().trim();
+        if (nameLower.includes('alder60')) {
+            return 15.00;
+        } else if (nameLower.includes('plywood 9x') || nameLower.includes('plywood 9mm')) {
+            return 22.50;
+        } else if (nameLower.includes('plywood 12x') || nameLower.includes('plywood 12mm')) {
+            return 28.00;
+        } else if (nameLower.includes('replacement board')) {
+            return 12.00;
+        } else if (nameLower.includes('veneer layup')) {
+            return 18.50;
+        } else if (nameLower.includes('gasket') || nameLower.includes('rubber gasket')) {
+            return 6.20;
+        } else if (nameLower.includes('bolt') || nameLower.includes('bolt m6')) {
+            return 1.50;
+        } else if (nameLower.includes('glue') || nameLower.includes('wood glue')) {
+            return 4.75;
+        }
+        return 10.00;
+    }
+
     // Generate table content dynamically
     function renderHistoryRowsContent() {
         const filtered = filterHistoryRecords();
         if (filtered.length === 0) {
             return `
                 <tr>
-                    <td colspan="8" style="text-align:center; padding:30px; color:var(--txt-dim); font-weight: 500;">No repair history logs found for selected filters.</td>
+                    <td colspan="12" style="text-align:center; padding:30px; color:var(--txt-dim); font-weight: 500;">No repair history logs found for selected filters.</td>
                 </tr>
             `;
         }
-        return filtered.map(h => {
-            const durationStr = calculateActualDuration(h.startedAt, h.completedAt);
+
+        const allRows = [];
+        filtered.forEach(item => {
+            const t = ticketsState[item.id];
+            const supp = t ? t.supplement : null;
+
+            // Robust fallback logic for property name mismatches (camelCase vs snake_case)
+            const reportId = item.reportId || (t && t.reportId) || 'N/A';
+            const itemCode = item.itemCode || (t && (t.itemCode || t.meta.itemCode || t.meta.item_code)) || 'N/A';
+            const partName = item.part || (t && (t.part || t.meta.itemName || t.meta.part || t.meta.partcode)) || 'N/A';
+            const defectCode = item.defect || (t && (t.defect || t.meta.defectCode || t.meta.defect_code || t.meta.defect)) || 'N/A';
+            const scanDateStr = item.scanDate ? formatDateTime(item.scanDate) : 'N/A';
+            const startedAtStr = item.startedAt ? formatDateTime(item.startedAt) : 'N/A';
+            const completedAtStr = item.completedAt ? formatDateTime(item.completedAt) : 'N/A';
+            const durationStr = calculateActualDuration(item.startedAt, item.completedAt);
+
+            if (supp && supp.needed) {
+                if (Array.isArray(supp.details) && supp.details.length > 0) {
+                    supp.details.forEach(detail => {
+                        const name = detail.name || 'Material Supplement';
+                        const unitCost = getMaterialUnitCost(name);
+                        const qty = Number(detail.qty) || 0;
+                        allRows.push({
+                            reportId, itemCode, partName, defectCode, scanDateStr, startedAtStr, completedAtStr, durationStr,
+                            name: name,
+                            unitCost: unitCost,
+                            qty: qty,
+                            cost: qty * unitCost
+                        });
+                    });
+                } else {
+                    const name = supp.partName || 'Material Supplement';
+                    const unitCost = getMaterialUnitCost(name);
+                    const qty = Number(supp.qty) || 0;
+                    allRows.push({
+                        reportId, itemCode, partName, defectCode, scanDateStr, startedAtStr, completedAtStr, durationStr,
+                        name: name,
+                        unitCost: unitCost,
+                        qty: qty,
+                        cost: qty * unitCost
+                    });
+                }
+            } else {
+                allRows.push({
+                    reportId, itemCode, partName, defectCode, scanDateStr, startedAtStr, completedAtStr, durationStr,
+                    name: 'N/A',
+                    unitCost: 0,
+                    qty: 0,
+                    cost: 0
+                });
+            }
+        });
+
+        return allRows.map(r => `
+            <tr>
+                <td class="mono" style="font-weight: 600; color: var(--amber);">${r.reportId}</td>
+                <td class="mono">${r.itemCode}</td>
+                <td>${r.partName}</td>
+                <td>${r.defectCode}</td>
+                <td class="mono">${r.scanDateStr}</td>
+                <td class="mono">${r.startedAtStr}</td>
+                <td class="mono">${r.completedAtStr}</td>
+                <td class="mono">${r.durationStr}</td>
+                <td>${r.name}</td>
+                <td>$${r.unitCost.toFixed(2)}</td>
+                <td>${r.qty}</td>
+                <td><strong>$${r.cost.toFixed(2)}</strong></td>
+            </tr>
+        `).join('');
+    }
+
+    // Helper to get detailed Material Cost and Labor Cost for a ticket
+    function getTicketCosts(h) {
+        // Material cost calculation
+        let materialCost = 0;
+        let materialNames = 'N/A';
+        let materialQty = 0;
+        if (h.supplement && h.supplement.needed) {
+            if (Array.isArray(h.supplement.details) && h.supplement.details.length > 0) {
+                materialCost = h.supplement.details.reduce((sum, m) => sum + (Number(m.qty) || 0) * getMaterialUnitCost(m.name), 0);
+                materialNames = h.supplement.details.map(m => m.name).join(', ');
+                materialQty = h.supplement.details.reduce((sum, m) => sum + (Number(m.qty) || 0), 0);
+            } else {
+                const name = h.supplement.partName || 'Material Supplement';
+                const qty = Number(h.supplement.qty) || 0;
+                materialCost = qty * getMaterialUnitCost(name);
+                materialNames = name;
+                materialQty = qty;
+            }
+        }
+
+        // Labor cost calculation ($25.00/hour rate based on actual duration)
+        let durationSeconds = 4500; // default 1h 15m
+        if (h.repairSeconds) {
+            durationSeconds = h.repairSeconds;
+        } else if (h.startedAt && h.completedAt) {
+            durationSeconds = Math.floor((new Date(h.completedAt) - new Date(h.startedAt)) / 1000);
+        }
+        const laborCost = (durationSeconds / 3600) * 25.00;
+
+        return {
+            materialCost,
+            materialNames,
+            materialQty,
+            laborCost,
+            totalCost: materialCost + laborCost,
+            durationSeconds
+        };
+    }
+
+    // New function/module to render Cost Management
+    function renderCostManagement() {
+        const completedTickets = Object.values(ticketsState).filter(t => t.status === "Completed");
+
+        const allTickets = [
+            ...completedTickets.map(t => ({
+                id: t.meta.id,
+                reportId: t.reportId || t.masterSku || 'N/A',
+                itemCode: t.itemCode || t.meta.itemCode || t.meta.item_code || 'N/A',
+                part: t.part || t.meta.itemName || t.meta.part || t.meta.partcode || 'N/A',
+                supplement: t.supplement,
+                repairSeconds: t.repairSeconds,
+                startedAt: t.startedAt,
+                completedAt: t.completedAt
+            })),
+            ...staticHistory.map(h => ({
+                id: h.id,
+                reportId: h.masterSku || 'N/A',
+                itemCode: h.itemCode,
+                part: h.part,
+                supplement: h.supplement,
+                repairSeconds: 0,
+                startedAt: h.startedAt,
+                completedAt: h.completedAt
+            }))
+        ];
+
+        let totalMaterialCost = 0;
+        let totalLaborCost = 0;
+        let totalCopq = 0;
+
+        const rowsHtml = allTickets.map(h => {
+            const costs = getTicketCosts(h);
+            totalMaterialCost += costs.materialCost;
+            totalLaborCost += costs.laborCost;
+            totalCopq += costs.totalCost;
+
             return `
                 <tr>
                     <td class="mono" style="font-weight: 600; color: var(--amber);">${h.reportId}</td>
                     <td class="mono">${h.itemCode}</td>
                     <td>${h.part}</td>
-                    <td>${h.defect}</td>
-                    <td class="mono">${formatDateTime(h.scanDate)}</td>
-                    <td class="mono">${formatDateTime(h.startedAt)}</td>
-                    <td class="mono">${formatDateTime(h.completedAt)}</td>
-                    <td class="mono">${durationStr}</td>
+                    <td>$${costs.materialCost.toFixed(2)}</td>
+                    <td>$${costs.laborCost.toFixed(2)}</td>
+                    <td><strong>$${costs.totalCost.toFixed(2)}</strong></td>
                 </tr>
             `;
         }).join('');
+
+        return `
+            <div class="grid-4">
+                <div class="kpi green">
+                    <div class="num">${allTickets.length}</div>
+                    <div class="lbl">Completed Repairs</div>
+                </div>
+                <div class="kpi">
+                    <div class="num">$${totalMaterialCost.toFixed(2)}</div>
+                    <div class="lbl">Total Material Cost</div>
+                </div>
+                <div class="kpi">
+                    <div class="num">$${totalLaborCost.toFixed(2)}</div>
+                    <div class="lbl">Total Labor Cost</div>
+                </div>
+                <div class="kpi red">
+                    <div class="num">$${totalCopq.toFixed(2)}</div>
+                    <div class="lbl">Total Quality Loss (COPQ)</div>
+                </div>
+            </div>
+
+            <div class="panel" style="margin-top: 24px;">
+                <div class="panel-head">
+                    <h3>Completed Repairs Cost Ledger</h3>
+                </div>
+                <div class="panel-body" style="padding:0; overflow-x:auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Ticket ID</th>
+                                <th>Item Code</th>
+                                <th>Description / Part</th>
+                                <th>Material Cost</th>
+                                <th>Labor Cost</th>
+                                <th>Total Cost (COPQ)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rowsHtml}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
     }
 
     // History filter handlers
@@ -2789,6 +3004,10 @@
                                 <th>Start Repair</th>
                                 <th>End Repair</th>
                                 <th>Actual Duration</th>
+                                <th>Material Name</th>
+                                <th>Unit Cost ($)</th>
+                                <th>Quantity</th>
+                                <th>Material Cost</th>
                             </tr>
                         </thead>
                         <tbody id="historyTableBody">
@@ -3095,6 +3314,12 @@
                 } else if (currentView === 'notif') {
                     const container = document.getElementById('content');
                     if (container) container.innerHTML = renderNotif();
+                } else if (currentView === 'history') {
+                    const container = document.getElementById('content');
+                    if (container) container.innerHTML = renderHistory();
+                } else if (currentView === 'cost') {
+                    const container = document.getElementById('content');
+                    if (container) container.innerHTML = renderCostManagement();
                 }
             } catch (err) {
                 console.error('Failed to sync statuses on storage event:', err);

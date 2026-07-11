@@ -2680,25 +2680,65 @@
         if (filtered.length === 0) {
             return `
                 <tr>
-                    <td colspan="8" style="text-align:center; padding:30px; color:var(--txt-dim); font-weight: 500;">No repair history logs found for selected filters.</td>
+                    <td colspan="10" style="text-align:center; padding:30px; color:var(--txt-dim); font-weight: 500;">No repair history logs found for selected filters.</td>
                 </tr>
             `;
         }
-        return filtered.map(h => {
-            const durationStr = calculateActualDuration(h.startedAt, h.completedAt);
-            return `
-                <tr>
-                    <td class="mono" style="font-weight: 600; color: var(--amber);">${h.reportId}</td>
-                    <td class="mono">${h.itemCode}</td>
-                    <td>${h.part}</td>
-                    <td>${h.defect}</td>
-                    <td class="mono">${formatDateTime(h.scanDate)}</td>
-                    <td class="mono">${formatDateTime(h.startedAt)}</td>
-                    <td class="mono">${formatDateTime(h.completedAt)}</td>
-                    <td class="mono">${durationStr}</td>
-                </tr>
-            `;
-        }).join('');
+
+        const allRows = [];
+        filtered.forEach(item => {
+            const t = ticketsState[item.id];
+            const supp = t ? t.supplement : null;
+
+            // Make property name retrieval extremely robust
+            const reportId = item.reportId || (t && t.reportId) || 'N/A';
+            const itemCode = item.itemCode || (t && (t.itemCode || t.meta.itemCode || t.meta.item_code)) || 'N/A';
+            const partName = item.part || (t && (t.part || t.meta.itemName || t.meta.part || t.meta.partcode)) || 'N/A';
+            const defectCode = item.defect || (t && (t.defect || t.meta.defectCode || t.meta.defect_code || t.meta.defect)) || 'N/A';
+            const scanDateStr = item.scanDate ? formatDateTime(item.scanDate) : 'N/A';
+            const startedAtStr = item.startedAt ? formatDateTime(item.startedAt) : 'N/A';
+            const completedAtStr = item.completedAt ? formatDateTime(item.completedAt) : 'N/A';
+            const durationStr = calculateActualDuration(item.startedAt, item.completedAt);
+
+            if (supp && supp.needed) {
+                if (Array.isArray(supp.details) && supp.details.length > 0) {
+                    supp.details.forEach(detail => {
+                        allRows.push({
+                            reportId, itemCode, partName, defectCode, scanDateStr, startedAtStr, completedAtStr, durationStr,
+                            materialName: detail.name || 'Material Supplement',
+                            quantity: Number(detail.qty) || 0
+                        });
+                    });
+                } else {
+                    allRows.push({
+                        reportId, itemCode, partName, defectCode, scanDateStr, startedAtStr, completedAtStr, durationStr,
+                        materialName: supp.partName || 'Material Supplement',
+                        quantity: Number(supp.qty) || 0
+                    });
+                }
+            } else {
+                allRows.push({
+                    reportId, itemCode, partName, defectCode, scanDateStr, startedAtStr, completedAtStr, durationStr,
+                    materialName: 'N/A',
+                    quantity: 0
+                });
+            }
+        });
+
+        return allRows.map(r => `
+            <tr>
+                <td class="mono" style="font-weight: 600; color: var(--amber);">${r.reportId}</td>
+                <td class="mono">${r.itemCode}</td>
+                <td>${r.partName}</td>
+                <td>${r.defectCode}</td>
+                <td class="mono">${r.scanDateStr}</td>
+                <td class="mono">${r.startedAtStr}</td>
+                <td class="mono">${r.completedAtStr}</td>
+                <td class="mono">${r.durationStr}</td>
+                <td>${r.materialName}</td>
+                <td>${r.quantity}</td>
+            </tr>
+        `).join('');
     }
 
     // History filter handlers
@@ -2805,6 +2845,8 @@
                                 <th>Start Repair</th>
                                 <th>End Repair</th>
                                 <th>Actual Duration</th>
+                                <th>Material Name</th>
+                                <th>Quantity</th>
                             </tr>
                         </thead>
                         <tbody id="historyTableBody">
@@ -3841,6 +3883,9 @@
                     <div class="sup-form-group flex-1">
                         <label>Material Code <span class="required-star">(*)</span> ➕</label>
                         <select id="sup-material-code">
+                            <option value="012-02-00005">012-02-00005 (Alder60 - Alder60)</option>
+                            <option value="013-02-00054">013-02-00054 (Plywood 9x1220x2440mm, bleached poplar BB Grade, TSCA VI (MR))</option>
+                            <option value="013-02-00055">013-02-00055 (Plywood 12x1220x2440mm, bleached poplar BB Grade, TSCA VI (MR))</option>
                             <option value="MAT-01829265-WP">MAT-01829265-WP (Replacement Board 18mm)</option>
                             <option value="MAT-01835419-WP">MAT-01835419-WP (Veneer Layup Board)</option>
                             <option value="MAT-33221100-YY">MAT-33221100-YY (High Temp Rubber Gasket)</option>
