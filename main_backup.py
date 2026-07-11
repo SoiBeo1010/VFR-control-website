@@ -746,13 +746,23 @@ def get_qc_dashboard_source(
 def initialize_database(db: Session = Depends(get_db)):
     """Initialize database with schema and default users"""
     try:
+        # Migrate existing users from 'Higher Department' to 'Warehouse' and 'higher_dept_1' to 'warehouse_1'
+        from sqlalchemy import text
+        try:
+            db.execute(text("UPDATE users SET role = 'Warehouse' WHERE role = 'Higher Department'"))
+            db.execute(text("UPDATE users SET username = 'warehouse_1' WHERE username = 'higher_dept_1'"))
+            db.commit()
+        except Exception as migrate_err:
+            db.rollback()
+            print(f"Migration error: {migrate_err}")
+
         # Create default users for each role
         default_users = [
             ("qc_worker_1", "password123", "QC Worker"),
             ("qc_manager_1", "password123", "QC Manager"),
             ("prod_manager_1", "password123", "Production Manager"),
             ("prod_worker_1", "password123", "Production Worker"),
-            ("higher_dept_1", "password123", "Higher Department")
+            ("warehouse_1", "password123", "Warehouse")
         ]
         
         for username, password, role in default_users:
@@ -1485,12 +1495,12 @@ def complete_repair(completion: RepairCompletion, current_user: dict = Depends(g
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
-# ============ HIGHER DEPARTMENT ENDPOINTS ============
+# ============ WAREHOUSE ENDPOINTS ============
 
-@app.get("/api/higher-department/repairs-for-approval")
+@app.get("/api/warehouse/repairs-for-approval")
 def get_repairs_for_approval(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    """Get repairs pending approval (Higher Department)"""
-    if current_user['role'] != 'Higher Department':
+    """Get repairs pending approval (Warehouse)"""
+    if current_user['role'] != 'Warehouse':
         raise HTTPException(status_code=403, detail="Unauthorized")
     
     try:
@@ -1517,10 +1527,10 @@ def get_repairs_for_approval(current_user: dict = Depends(get_current_user), db:
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/api/higher-department/approve-repair")
+@app.post("/api/warehouse/approve-repair")
 def approve_repair(approval: Approval, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    """Approve or reject repair (Higher Department)"""
-    if current_user['role'] != 'Higher Department':
+    """Approve or reject repair (Warehouse)"""
+    if current_user['role'] != 'Warehouse':
         raise HTTPException(status_code=403, detail="Unauthorized")
     
     try:

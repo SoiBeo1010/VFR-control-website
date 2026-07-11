@@ -168,25 +168,28 @@ Just delete `qms_system.db` and run the app again. A fresh one will be created!
 | File location | Separate DB server | `qms_system.db` file |
 | Backup | mysqldump command | Copy the `.db` file |
 | Performance | Faster for large data | Perfect for dev/test |
+| Warehouse | warehouse_1 | password123 |
 
 ---
 
-## Testing the System
-
-After login, you can immediately test:
+## Testing the Flow (Step-by-Step)
 
 ### QC Worker Test:
-1. Create an inspection
-2. Add defects to it
-3. Create a quarantine report
+1. Run the application
+2. Open in browser: `http://localhost:8000/`
+3. Click "Init DB" if needed
+4. Login as `qc_worker_1` / `password123`
+5. Perform product inspection
+6. Create defect list
+7. Generate quarantine report
 
 ### QC Manager Test:
-1. Review quarantine reports
-2. Assign problem owner and repair department
-3. Set priority
+1. Login as `qc_manager_1`
+2. View quarantine reports
+3. Assign problem owner and repair department
 
 ### Production Manager Test:
-1. View notifications
+1. Login as `prod_manager_1`
 2. Create repair plan
 3. Assign to production worker
 
@@ -195,7 +198,7 @@ After login, you can immediately test:
 2. Complete repair
 3. Document root cause and cost
 
-### Higher Department Test:
+### Warehouse Test:
 1. View repairs for approval
 2. Review root cause and preventive action
 3. Approve or reject

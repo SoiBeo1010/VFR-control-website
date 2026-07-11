@@ -368,14 +368,14 @@
                         <h2
                             style="font-size: 1.6rem; color: var(--text-color); margin-bottom: 1rem; font-weight: bold;">
                             Main Menu</h2>
-                        <p style="color: var(--text-light); margin-bottom: 2rem;">Scan or enter a quarantine item's partcode to
+                        <p style="color: var(--text-light); margin-bottom: 2rem;">Scan or enter a quarantine item's report code (Master SKU) to
                             assign workers and start the repair operation.</p>
 
                         <div style="font-size: 5rem; margin-bottom: 2rem;">🛠️</div>
 
                         <button class="btn btn-primary" onclick="goToStep(2)"
                             style="width: 100%; padding: 1rem; font-size: 1.1rem; border-radius: 8px;">
-                            Scan / Enter Partcode
+                            Scan / Enter Quarantine Code
                         </button>
                     </div>
 
@@ -392,12 +392,12 @@
                                 <input type="radio" name="input_mode" value="manual" checked>
                                 <span class="option-icon">⌨️</span>
                                 <div class="option-title">Manual Enter</div>
-                                <div class="option-desc">Type in the partcode</div>
+                                <div class="option-desc">Type in the quarantine report code</div>
                             </div>
                             <div class="option-card" onclick="selectMode('scan')" id="mode-scan-card">
                                 <input type="radio" name="input_mode" value="scan">
                                 <span class="option-icon">📷</span>
-                                <div class="option-title">Scan Partcode</div>
+                                <div class="option-title">Scan Quarantine Code</div>
                                 <div class="option-desc">Use device camera scanner</div>
                             </div>
                         </div>
@@ -411,7 +411,7 @@
                     <!-- STEP 3: Input / Scan Partcode -->
                     <div id="view-step3" style="display: none;">
                         <h2 style="font-size: 1.4rem; color: var(--text-color); margin-bottom: 0.5rem; font-weight: bold;"
-                            id="step3-title">Input Partcode</h2>
+                            id="step3-title">Input Quarantine Code</h2>
                         <p style="color: var(--text-light); font-size: 0.9rem; margin-bottom: 1.5rem;" id="step3-desc">
                         </p>
 
@@ -419,9 +419,9 @@
                         <div id="step3-manual-ui">
                             <div style="margin-bottom: 1rem;">
                                 <label
-                                    style="display: block; font-size: 12px; font-weight: bold; margin-bottom: 6px; color: var(--text-light); text-transform: uppercase;">Partcode</label>
-                                <input type="text" id="partcode-input" class="form-input" placeholder="e.g. 01829265-WP"
-                                    value="01829265-WP">
+                                    style="display: block; font-size: 12px; font-weight: bold; margin-bottom: 6px; color: var(--text-light); text-transform: uppercase;">Quarantine Report Code</label>
+                                <input type="text" id="partcode-input" class="form-input" placeholder="e.g. MSKU-10001"
+                                    value="MSKU-10001">
                             </div>
                             <div id="barcode-error" style="color: var(--danger-color); font-size: 13.5px; font-weight: 500; margin-top: -0.5rem; margin-bottom: 1rem; display: none;"></div>
                             <button class="btn btn-primary" onclick="submitBarcode()"
@@ -436,7 +436,7 @@
                                 <div class="viewfinder-corner tr"></div>
                                 <div class="viewfinder-corner bl"></div>
                                 <div class="viewfinder-corner br"></div>
-                                <div style="font-size: 2.5rem; opacity: 0.15;">Partcode</div>
+                                <div style="font-size: 2.0rem; opacity: 0.15;">Quarantine Code</div>
                             </div>
                             <button class="btn btn-primary" onclick="simulateScan()"
                                 style="width: 100%; padding: 0.75rem;">Simulate Scan</button>
@@ -717,6 +717,66 @@
             writeRepairTicketStatuses(statuses);
         }
 
+        const masterSkuMap = {};
+        let skuCounter = 10001;
+        function getMasterSku(itemName) {
+            if (!itemName) return "MSKU-99999";
+            if (!masterSkuMap[itemName]) {
+                masterSkuMap[itemName] = `MSKU-${skuCounter++}`;
+            }
+            return masterSkuMap[itemName];
+        }
+
+        function initializeTickets() {
+            const storedStatuses = readRepairTicketStatuses();
+            const seenItemCodes = new Set();
+            let needsWrite = false;
+
+            inspectionData.forEach((ticket, index) => {
+                const saved = storedStatuses[ticket.id] || storedStatuses[ticket.itemCode];
+                
+                // Analyze legacy duplicates to filter out
+                const isLegacy = ticket.id.startsWith("INH-");
+                let isLegacyQuarantined = false;
+                if (isLegacy) {
+                    if (seenItemCodes.has(ticket.itemCode)) {
+                        isLegacyQuarantined = true;
+                    } else {
+                        seenItemCodes.add(ticket.itemCode);
+                    }
+                }
+                
+                if (saved && saved.isLegacyQuarantined !== undefined) {
+                    isLegacyQuarantined = saved.isLegacyQuarantined;
+                }
+
+                // Hydrate Unified SKU and Report ID
+                const masterSku = (saved && saved.masterSku) || getMasterSku(ticket.itemName);
+                const reportId = masterSku;
+
+                if (!saved || saved.reportId !== reportId || saved.masterSku !== masterSku || saved.isLegacyQuarantined !== isLegacyQuarantined) {
+                    storedStatuses[ticket.id] = {
+                        status: (saved && saved.status) || 'Waiting Accept',
+                        repairSeconds: (saved && saved.repairSeconds) || 0,
+                        repairRunning: (saved && saved.repairRunning) || false,
+                        updatedAt: (saved && saved.updatedAt) || new Date().toISOString(),
+                        scanDate: (saved && saved.scanDate) || (ticket.source ? ticket.source.inspectedDate : null) || new Date().toISOString(),
+                        isLegacyQuarantined: isLegacyQuarantined,
+                        masterSku: masterSku,
+                        reportId: reportId
+                    };
+                    
+                    // Also mirror under itemCode
+                    storedStatuses[ticket.itemCode] = storedStatuses[ticket.id];
+                    needsWrite = true;
+                }
+            });
+
+            if (needsWrite) {
+                writeRepairTicketStatuses(storedStatuses);
+            }
+        }
+
         // Load inspection data from public/inspection-data.json
         let inspectionData = [];
         async function fetchInspectionData() {
@@ -725,11 +785,18 @@
                 if (res.ok) {
                     inspectionData = await res.json();
                     console.log('Successfully loaded inspection data:', inspectionData.length);
-                    // Update initial value of partcode input with the first item's Partcode from dataset
+                    
+                    // Hydrate local cache and match master SKUs
+                    initializeTickets();
+
+                    // Update initial value of partcode input with the first item's Report ID
                     if (inspectionData.length > 0) {
                         const input = document.getElementById('partcode-input');
-                        if (input && (input.value === 'INH-3-8395' || input.value === '01829265-WP')) {
-                            input.value = inspectionData[0].partcode || inspectionData[0].itemName || inspectionData[0].id;
+                        if (input && (input.value === 'INH-3-8395' || input.value === '01829265-WP' || input.value === 'MSKU-10001')) {
+                            const statuses = readRepairTicketStatuses();
+                            const firstTicketId = inspectionData[0].id;
+                            const stored = statuses[firstTicketId];
+                            input.value = (stored && stored.reportId) ? stored.reportId : 'MSKU-10001';
                         }
                     }
                 } else {
@@ -897,13 +964,13 @@
                 const desc = document.getElementById('step3-desc');
 
                 if (selectedInputMode === 'manual') {
-                    title.textContent = 'Manual Enter Partcode';
-                    desc.textContent = 'Enter the repair item Partcode manually using the text field.';
+                    title.textContent = 'Manual Enter Quarantine Code';
+                    desc.textContent = 'Enter the repair item Quarantine Report Code (Master SKU) manually using the text field.';
                     document.getElementById('step3-manual-ui').style.display = 'block';
                     document.getElementById('step3-scan-ui').style.display = 'none';
                 } else {
-                    title.textContent = 'Scan Partcode';
-                    desc.textContent = 'Position the camera viewfinder over the item Partcode.';
+                    title.textContent = 'Scan Quarantine Code';
+                    desc.textContent = 'Position the camera viewfinder over the item Quarantine Report Code.';
                     document.getElementById('step3-manual-ui').style.display = 'none';
                     document.getElementById('step3-scan-ui').style.display = 'block';
                 }
@@ -926,47 +993,78 @@
         function submitBarcode() {
             const val = document.getElementById('partcode-input').value.trim();
             if (!val) {
-                showError('Please enter a valid Partcode');
+                showError('Please enter a valid Quarantine Report Code / Master SKU');
                 return;
             }
 
             clearError();
 
+            // First look up by quarantine report code (masterSku / reportId) in local storage
+            const statuses = readRepairTicketStatuses();
+            let resolvedId = null;
+            for (const id in statuses) {
+                const stored = statuses[id];
+                if (stored && (stored.reportId === val || stored.masterSku === val)) {
+                    resolvedId = id;
+                    break;
+                }
+            }
+
+            const queryVal = resolvedId || val;
+
             // Check if Partcode or ID or item code exists in loaded inspection data
             const exists = inspectionData.some(item => 
-                (item.partcode && item.partcode === val) || 
-                (item.itemName && item.itemName === val) || 
-                item.id === val || 
-                item.itemCode === val
-            ) || (val in mockDatabase);
+                (item.partcode && item.partcode === queryVal) || 
+                (item.itemName && item.itemName === queryVal) || 
+                item.id === queryVal || 
+                item.itemCode === queryVal
+            ) || (queryVal in mockDatabase);
+            
             if (!exists) {
-                showError(`Partcode "${val}" does not exist in the input data.`);
+                showError(`Quarantine Report Code "${val}" does not exist or has not been initialized.`);
                 return;
             }
 
-            scannedBarcode = val;
+            // Check if any matching status entry for this code / resolved ID is already completed
+            let isAlreadyCompleted = false;
+            for (const key in statuses) {
+                const stored = statuses[key];
+                if (stored && (key === queryVal || key === val || stored.reportId === val || stored.masterSku === val || stored.reportId === queryVal || stored.masterSku === queryVal)) {
+                    if (stored.status === 'Completed') {
+                        isAlreadyCompleted = true;
+                        break;
+                    }
+                }
+            }
+
+            if (isAlreadyCompleted) {
+                showError(`Quarantine Report Code "${val}" has already been completed and cannot be repaired again.`);
+                return;
+            }
+
+            scannedBarcode = queryVal;
 
             // Check if item is already under repair
             let underRepair = JSON.parse(localStorage.getItem('qms_under_repair') || '{}');
-            if (underRepair[val]) {
-                showUnderRepairScreen(val);
+            if (underRepair[queryVal]) {
+                showUnderRepairScreen(queryVal);
                 return;
             }
 
-            loadItemDetails(val);
+            loadItemDetails(queryVal);
             goToStep(4);
         }
 
         function simulateScan() {
             let val = '';
+            const statuses = readRepairTicketStatuses();
             if (inspectionData.length > 0) {
                 // Select a random record from loaded data
                 const randomRecord = inspectionData[Math.floor(Math.random() * inspectionData.length)];
-                // Retrieve its partcode, item name (if matching partcode pattern), or other fields as fallback
-                val = randomRecord.partcode || randomRecord.itemName || randomRecord.itemCode || randomRecord.id;
+                const stored = statuses[randomRecord.id];
+                val = (stored && stored.reportId) ? stored.reportId : 'MSKU-10001';
             } else {
-                const choices = ['01829265-WP', '01835419-WP'];
-                val = choices[Math.floor(Math.random() * choices.length)];
+                val = 'MSKU-10001';
             }
             scannedBarcode = val;
 
@@ -1022,7 +1120,15 @@
             
             // Refresh info summaries
             const item = getItemData(scannedBarcode);
-            const statusSummary = `<strong>Partcode:</strong> ${scannedBarcode} | <strong>Item ID:</strong> ${item.id}<br><strong>Name:</strong> ${item.name}`;
+            const statuses = readRepairTicketStatuses();
+            const stored = statuses[scannedBarcode];
+            const reportId = (stored && stored.reportId) ? stored.reportId : (stored && stored.masterSku ? stored.masterSku : 'N/A');
+            
+            const rawTicket = inspectionData.find(t => t.id === scannedBarcode);
+            const itemCode = rawTicket ? rawTicket.itemCode : 'N/A';
+            const itemName = rawTicket ? rawTicket.itemName : item.name;
+
+            const statusSummary = `<strong>Quarantine Report ID:</strong> ${reportId} | <strong>Item ID:</strong> ${item.id}<br><strong>Item Code:</strong> ${itemCode} | <strong>Name:</strong> ${itemName}`;
             
             document.getElementById('step4-item-info-summary').innerHTML = statusSummary;
             document.getElementById('step4-location-info-summary').innerHTML = statusSummary;
