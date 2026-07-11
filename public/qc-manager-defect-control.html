@@ -1,11 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QC Manager — Defect Control | Quality Management System</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -22,8 +25,10 @@
 
         /* Design tokens matching original production-worker.html */
         :root {
-            --amber: #1b4d3e; /* Primary: Dark forest green */
-            --amber-dim: #e8f5e9; /* Light green bg */
+            --amber: #1b4d3e;
+            /* Primary: Dark forest green */
+            --amber-dim: #e8f5e9;
+            /* Light green bg */
             --ink: #ffffff;
             --panel: #ffffff;
             --panel-line: #e5e7eb;
@@ -35,7 +40,11 @@
             --txt-dim: #4b5563;
         }
 
-        h1, h2, h3, h4, .disp {
+        h1,
+        h2,
+        h3,
+        h4,
+        .disp {
             font-family: 'Oswald', sans-serif;
             letter-spacing: .02em;
             text-transform: none;
@@ -64,7 +73,7 @@
             align-items: center;
             justify-content: center;
             background: linear-gradient(160deg, rgba(27, 77, 62, .98), rgba(15, 43, 35, .95)),
-                        repeating-linear-gradient(135deg, rgba(232, 245, 233, .04) 0 2px, transparent 2px 24px);
+                repeating-linear-gradient(135deg, rgba(232, 245, 233, .04) 0 2px, transparent 2px 24px);
             background-color: #113228;
         }
 
@@ -80,7 +89,9 @@
         .login-card:before {
             content: "";
             position: absolute;
-            top: 0; left: 0; right: 0;
+            top: 0;
+            left: 0;
+            right: 0;
             height: 6px;
             background: linear-gradient(90deg, var(--amber), var(--good));
             border-radius: 12px 12px 0 0;
@@ -213,7 +224,9 @@
             background: #ffffff;
             border-right: 1px solid var(--panel-line);
             position: fixed;
-            top: 0; bottom: 0; left: 0;
+            top: 0;
+            bottom: 0;
+            left: 0;
             display: flex;
             flex-direction: column;
             padding: 20px 18px 16px;
@@ -459,9 +472,17 @@
             border-left: 4px solid var(--amber);
         }
 
-        .kpi.amber { border-left-color: #f59e0b; }
-        .kpi.green { border-left-color: var(--good); }
-        .kpi.red { border-left-color: var(--red); }
+        .kpi.amber {
+            border-left-color: #f59e0b;
+        }
+
+        .kpi.green {
+            border-left-color: var(--good);
+        }
+
+        .kpi.red {
+            border-left-color: var(--red);
+        }
 
         .kpi .num {
             font-family: 'Oswald', sans-serif;
@@ -546,14 +567,24 @@
         .wo-tag:before {
             content: "";
             position: absolute;
-            left: 0; top: 0; bottom: 0;
+            left: 0;
+            top: 0;
+            bottom: 0;
             width: 6px;
             background: var(--amber);
         }
 
-        .wo-tag.p-high:before { background: var(--red); }
-        .wo-tag.p-medium:before { background: #f59e0b; }
-        .wo-tag.p-low:before { background: var(--txt-dim); }
+        .wo-tag.p-high:before {
+            background: var(--red);
+        }
+
+        .wo-tag.p-medium:before {
+            background: #f59e0b;
+        }
+
+        .wo-tag.p-low:before {
+            background: var(--txt-dim);
+        }
 
         .wo-tag:after {
             content: "";
@@ -606,11 +637,31 @@
             white-space: nowrap;
         }
 
-        .st-wait { background: #fee2e2; color: var(--red); }
-        .st-progress { background: var(--amber-dim); color: var(--amber); }
-        .st-paused { background: #fef3c7; color: #d97706; }
-        .st-completed { background: var(--good-dim); color: var(--good); }
-        .st-overdue { background: #fef2f2; border: 1px solid var(--red); color: var(--red); }
+        .st-wait {
+            background: #fee2e2;
+            color: var(--red);
+        }
+
+        .st-progress {
+            background: var(--amber-dim);
+            color: var(--amber);
+        }
+
+        .st-paused {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .st-completed {
+            background: var(--good-dim);
+            color: var(--good);
+        }
+
+        .st-overdue {
+            background: #fef2f2;
+            border: 1px solid var(--red);
+            color: var(--red);
+        }
 
         .wo-meta {
             display: flex;
@@ -707,7 +758,8 @@
             flex-wrap: wrap;
         }
 
-        .search-bar input, .search-bar select {
+        .search-bar input,
+        .search-bar select {
             padding: 10px 12px;
             border: 1px solid var(--panel-line);
             border-radius: 8px;
@@ -718,7 +770,8 @@
             color: #1f2937;
         }
 
-        .search-bar input:focus, .search-bar select:focus {
+        .search-bar input:focus,
+        .search-bar select:focus {
             border-color: var(--amber);
         }
 
@@ -855,7 +908,8 @@
             font-size: 11px;
             text-transform: uppercase;
             letter-spacing: .06em;
-            color: #a3e635; /* bright lime green label to show running */
+            color: #a3e635;
+            /* bright lime green label to show running */
             margin-top: 2px;
             font-weight: 600;
         }
@@ -1174,9 +1228,12 @@
                 visibility: hidden;
                 background: none !important;
             }
-            .quarantine-print, .quarantine-print * {
+
+            .quarantine-print,
+            .quarantine-print * {
                 visibility: visible;
             }
+
             .quarantine-print {
                 position: absolute;
                 top: 0;
@@ -1185,20 +1242,24 @@
                 padding: 0;
                 margin: 0;
             }
+
             .qr-actions {
                 display: none;
             }
+
             .qr-section-title {
                 background: #111111 !important;
                 color: #ffffff !important;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
             }
+
             .modal-overlay {
                 position: absolute;
                 background: none;
                 backdrop-filter: none;
             }
+
             .modal-box {
                 box-shadow: none;
                 max-height: none;
@@ -1213,631 +1274,651 @@
             .sidebar {
                 display: none;
             }
+
             .main {
                 margin-left: 0;
                 width: 100%;
             }
+
             .grid-4 {
                 grid-template-columns: 1fr 1fr;
             }
+
             .two-col {
                 grid-template-columns: 1fr;
             }
+
             .field-grid {
                 grid-template-columns: 1fr;
             }
+
             .qr-photos {
                 grid-template-columns: repeat(2, 1fr);
             }
         }
     </style>
 </head>
+
 <body>
 
-<!-- ============ APP SHELL ============ -->
-<div id="appShell">
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <div class="sb-brand">
-            <div class="sq">Q</div>
-            <div class="name">QMS</div>
+    <!-- ============ APP SHELL ============ -->
+    <div id="appShell">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sb-brand">
+                <div class="sq">Q</div>
+                <div class="name">QMS</div>
+            </div>
+            <div class="sb-nav">
+                <div class="sb-item active" data-view="dashboard" onclick="go('dashboard')">
+                    <span class="ic">&#9635;</span> Dashboard
+                </div>
+                <div class="sb-item" data-view="tickets" onclick="go('tickets')">
+                    <span class="ic">&#128203;</span> My Repair Tickets
+                    <span class="bd" id="navTicketBadge">0</span>
+                </div>
+                <div class="sb-item" data-view="history" onclick="go('history')">
+                    <span class="ic">&#128337;</span> Repair History
+                </div>
+                <div class="sb-item" data-view="notif" onclick="go('notif')">
+                    <span class="ic">&#128276;</span> Notifications
+                    <span class="bd" id="navNotifBadge">0</span>
+                </div>
+                <div class="sb-item" data-view="profile" onclick="go('profile')">
+                    <span class="ic">&#128100;</span> Profile
+                </div>
+                <div class="sb-item" onclick="logout()"
+                    style="color: var(--red); margin-top: 1.5rem; border-top: 1px solid var(--panel-line-soft); padding-top: 1rem;">
+                    <span class="ic">&#128274;</span> Logout
+                </div>
+            </div>
+            <div class="sb-foot">
+                <div class="sb-user">
+                    <div class="av">NA</div>
+                    <div>
+                        <div class="nm">QC Manager</div>
+                        <div class="rl">QC Manager</div>
+                    </div>
+                </div>
+                <div class="sb-logout" onclick="logout()">&#128274; Logout</div>
+            </div>
         </div>
-        <div class="sb-nav">
-            <div class="sb-item active" data-view="dashboard" onclick="go('dashboard')">
-                <span class="ic">&#9635;</span> Dashboard
-            </div>
-            <div class="sb-item" data-view="tickets" onclick="go('tickets')">
-                <span class="ic">&#128203;</span> My Repair Tickets 
-                <span class="bd" id="navTicketBadge">0</span>
-            </div>
-            <div class="sb-item" data-view="history" onclick="go('history')">
-                <span class="ic">&#128337;</span> Repair History
-            </div>
-            <div class="sb-item" data-view="notif" onclick="go('notif')">
-                <span class="ic">&#128276;</span> Notifications 
-                <span class="bd" id="navNotifBadge">0</span>
-            </div>
-            <div class="sb-item" data-view="profile" onclick="go('profile')">
-                <span class="ic">&#128100;</span> Profile
-            </div>
-            <div class="sb-item" onclick="logout()" style="color: var(--red); margin-top: 1.5rem; border-top: 1px solid var(--panel-line-soft); padding-top: 1rem;">
-                <span class="ic">&#128274;</span> Logout
-            </div>
-        </div>
-        <div class="sb-foot">
-            <div class="sb-user">
-                <div class="av">NA</div>
+
+        <!-- Main Container -->
+        <div class="main">
+            <div class="topbar">
                 <div>
-                    <div class="nm">QC Manager</div>
-                    <div class="rl">QC Manager</div>
+                    <div class="tb-crumb" id="tbCrumb">Overview</div>
+                    <div class="tb-title" id="tbTitle">Dashboard</div>
+                </div>
+                <div class="tb-right">
+                    <div class="icon-btn" onclick="go('notif')">&#128276;<span class="dot">2</span></div>
+                    <div class="icon-btn" onclick="go('profile')">&#9881;</div>
+                    <button onclick="logout()"
+                        style="background: var(--red); color: white; border: none; border-radius: 6px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; margin-left: 8px; margin-right: 8px; transition: background 0.15s;"
+                        onmouseover="this.style.background='#dc2626'"
+                        onmouseout="this.style.background='var(--red)'">Logout</button>
+                    <div class="sb-user" style="background:transparent; padding:0;">
+                        <div class="av" style="background:var(--amber);color:#ffffff;">NA</div>
+                    </div>
                 </div>
             </div>
-            <div class="sb-logout" onclick="logout()">&#128274; Logout</div>
+            <div class="content" id="content"></div>
         </div>
     </div>
 
-    <!-- Main Container -->
-    <div class="main">
-        <div class="topbar">
-            <div>
-                <div class="tb-crumb" id="tbCrumb">Overview</div>
-                <div class="tb-title" id="tbTitle">Dashboard</div>
+    <!-- ============ MODALS ============ -->
+    <div class="modal-overlay" id="modalPause">
+        <div class="modal-box">
+            <div class="modal-title">Pause Repair <span class="modal-close"
+                    onclick="closeModal('modalPause')">&times;</span></div>
+            <div
+                style="font-size:12px;color:var(--txt-dim);margin-bottom:6px;font-weight:600;text-transform:uppercase;">
+                Pause Reason</div>
+            <div id="pauseReasons">
+                <label class="radio-line"><input type="radio" name="pr" value="Waiting Material" checked> Waiting
+                    Material</label>
+                <label class="radio-line"><input type="radio" name="pr" value="Machine Busy"> Machine Busy</label>
+                <label class="radio-line"><input type="radio" name="pr" value="Need Supervisor"> Need Supervisor</label>
+                <label class="radio-line"><input type="radio" name="pr" value="Lunch"> Lunch</label>
+                <label class="radio-line"><input type="radio" name="pr" value="Other"> Other</label>
             </div>
-            <div class="tb-right">
-                <div class="icon-btn" onclick="go('notif')">&#128276;<span class="dot">2</span></div>
-                <div class="icon-btn" onclick="go('profile')">&#9881;</div>
-                <button onclick="logout()" style="background: var(--red); color: white; border: none; border-radius: 6px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; margin-left: 8px; margin-right: 8px; transition: background 0.15s;" onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='var(--red)'">Logout</button>
-                <div class="sb-user" style="background:transparent; padding:0;">
-                    <div class="av" style="background:var(--amber);color:#ffffff;">NA</div>
+            <div class="field" style="margin-top:12px;">
+                <label>Notes</label>
+                <textarea id="pauseNotes" rows="2" placeholder="Ghi chÃº thÃªm..."></textarea>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-sm btn-ghost" onclick="closeModal('modalPause')">Cancel</button>
+                <button class="btn-sm btn-amber" onclick="confirmPause()">Pause Repair</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalComplete">
+        <div class="modal-box wide">
+            <div class="modal-title">Complete Repair <span class="modal-close"
+                    onclick="closeModal('modalComplete')">&times;</span></div>
+            <div class="field">
+                <label>Repair Summary</label>
+                <textarea id="completeSummary" rows="3"
+                    placeholder="MÃ´ táº£ káº¿t quáº£ sá»­a chá»¯a...">Replaced defect component. Cleaned and fully tested. Machine operating normal.</textarea>
+            </div>
+            <div class="field">
+                <label>Repair Result</label>
+                <div style="display:flex;gap:16px;">
+                    <label class="radio-line"><input type="radio" name="rr" value="Successful" checked> Successful (QC
+                        Pass)</label>
+                    <label class="radio-line"><input type="radio" name="rr" value="Unsuccessful"> Unsuccessful (Need
+                        Rework)</label>
                 </div>
             </div>
-        </div>
-        <div class="content" id="content"></div>
-    </div>
-</div>
-
-<!-- ============ MODALS ============ -->
-<div class="modal-overlay" id="modalPause">
-    <div class="modal-box">
-        <div class="modal-title">Pause Repair <span class="modal-close" onclick="closeModal('modalPause')">&times;</span></div>
-        <div style="font-size:12px;color:var(--txt-dim);margin-bottom:6px;font-weight:600;text-transform:uppercase;">Pause Reason</div>
-        <div id="pauseReasons">
-            <label class="radio-line"><input type="radio" name="pr" value="Waiting Material" checked> Waiting Material</label>
-            <label class="radio-line"><input type="radio" name="pr" value="Machine Busy"> Machine Busy</label>
-            <label class="radio-line"><input type="radio" name="pr" value="Need Supervisor"> Need Supervisor</label>
-            <label class="radio-line"><input type="radio" name="pr" value="Lunch"> Lunch</label>
-            <label class="radio-line"><input type="radio" name="pr" value="Other"> Other</label>
-        </div>
-        <div class="field" style="margin-top:12px;">
-            <label>Notes</label>
-            <textarea id="pauseNotes" rows="2" placeholder="Ghi chÃº thÃªm..."></textarea>
-        </div>
-        <div class="modal-actions">
-            <button class="btn-sm btn-ghost" onclick="closeModal('modalPause')">Cancel</button>
-            <button class="btn-sm btn-amber" onclick="confirmPause()">Pause Repair</button>
-        </div>
-    </div>
-</div>
-
-<div class="modal-overlay" id="modalComplete">
-    <div class="modal-box wide">
-        <div class="modal-title">Complete Repair <span class="modal-close" onclick="closeModal('modalComplete')">&times;</span></div>
-        <div class="field">
-            <label>Repair Summary</label>
-            <textarea id="completeSummary" rows="3" placeholder="MÃ´ táº£ káº¿t quáº£ sá»­a chá»¯a...">Replaced defect component. Cleaned and fully tested. Machine operating normal.</textarea>
-        </div>
-        <div class="field">
-            <label>Repair Result</label>
-            <div style="display:flex;gap:16px;">
-                <label class="radio-line"><input type="radio" name="rr" value="Successful" checked> Successful (QC Pass)</label>
-                <label class="radio-line"><input type="radio" name="rr" value="Unsuccessful"> Unsuccessful (Need Rework)</label>
+            <div class="field">
+                <label>Used Time</label>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <input id="completeHours" type="number" value="1" min="0" max="24"
+                        style="width:64px;padding:8px;border:1px solid var(--panel-line);border-radius:8px;text-align:center;font-family:'IBM Plex Mono';outline:none;">
+                    <span style="font-size:12px;color:var(--txt-dim);font-weight:600;">hrs</span>
+                    <input id="completeMinutes" type="number" value="15" min="0" max="59"
+                        style="width:64px;padding:8px;border:1px solid var(--panel-line);border-radius:8px;text-align:center;font-family:'IBM Plex Mono';outline:none;">
+                    <span style="font-size:12px;color:var(--txt-dim);font-weight:600;">min</span>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-sm btn-ghost" onclick="closeModal('modalComplete')">Back</button>
+                <button class="btn-sm btn-green" onclick="confirmComplete()">Submit &amp; Complete</button>
             </div>
         </div>
-        <div class="field">
-            <label>Used Time</label>
-            <div style="display:flex;gap:8px;align-items:center;">
-                <input id="completeHours" type="number" value="1" min="0" max="24" style="width:64px;padding:8px;border:1px solid var(--panel-line);border-radius:8px;text-align:center;font-family:'IBM Plex Mono';outline:none;">
-                <span style="font-size:12px;color:var(--txt-dim);font-weight:600;">hrs</span>
-                <input id="completeMinutes" type="number" value="15" min="0" max="59" style="width:64px;padding:8px;border:1px solid var(--panel-line);border-radius:8px;text-align:center;font-family:'IBM Plex Mono';outline:none;">
-                <span style="font-size:12px;color:var(--txt-dim);font-weight:600;">min</span>
+    </div>
+
+    <!-- PRINTABLE QUARANTINE REPORT MODAL -->
+    <div class="modal-overlay" id="modalQuarantine">
+        <div class="modal-box wide quarantine-print">
+            <div class="qr-actions">
+                <button class="btn-sm btn-steel" onclick="window.print()">&#128424; Print</button>
+                <button class="btn-sm btn-ghost" onclick="closeModal('modalQuarantine')">Close</button>
             </div>
-        </div>
-        <div class="modal-actions">
-            <button class="btn-sm btn-ghost" onclick="closeModal('modalComplete')">Back</button>
-            <button class="btn-sm btn-green" onclick="confirmComplete()">Submit &amp; Complete</button>
+            <div class="qr-doc" id="qrDocBody"><!-- Filled dynamically --></div>
         </div>
     </div>
-</div>
 
-<!-- PRINTABLE QUARANTINE REPORT MODAL -->
-<div class="modal-overlay" id="modalQuarantine">
-    <div class="modal-box wide quarantine-print">
-        <div class="qr-actions">
-            <button class="btn-sm btn-steel" onclick="window.print()">&#128424; Print</button>
-            <button class="btn-sm btn-ghost" onclick="closeModal('modalQuarantine')">Close</button>
-        </div>
-        <div class="qr-doc" id="qrDocBody"><!-- Filled dynamically --></div>
-    </div>
-</div>
+    <div class="toast" id="toast"><span class="tk">&#10003;</span> <span id="toastMsg">Saved</span></div>
 
-<div class="toast" id="toast"><span class="tk">&#10003;</span> <span id="toastMsg">Saved</span></div>
+    <script>
+        /* ================= SYSTEM DATA & STATE ================= */
+        let inspectionData = [];
+        let ticketsState = {};
+        let currentTicketId = null;
+        let currentView = 'dashboard';
 
-<script>
-    /* ================= SYSTEM DATA & STATE ================= */
-    let inspectionData = [];
-    let ticketsState = {};
-    let currentTicketId = null;
-    let currentView = 'dashboard';
-    
-    // Search/filtering states
-    let searchQuery = "";
-    let statusFilter = "All Status";
-    let stageFilter = "All Stages";
-    let priorityFilter = "All Priorities";
-    let sortOption = "default";
-    let timeFilter = "all";
+        // Search/filtering states
+        let searchQuery = "";
+        let statusFilter = "All Status";
+        let stageFilter = "All Stages";
+        let priorityFilter = "All Priorities";
+        let sortOption = "default";
+        let timeFilter = "all";
 
-    // User profile state
-    let userProfile = {
-        fullName: localStorage.getItem('username') || "QC Manager",
-        employeeId: localStorage.getItem('userId') ? `EMP-${localStorage.getItem('userId')}` : "EMP-4471",
-        role: localStorage.getItem('role') || "QC Manager",
-        shift: "Shift A (06:00 - 18:00)",
-        worksiteBranch: "VFR2.1 Finishing Yard",
-        departments: "Quality Control, QCD, Inspection"
-    };
-
-    const viewMeta = {
-        dashboard: { crumb: "Overview", title: "Dashboard" },
-        tickets: { crumb: "Work Queue", title: "My Repair Tickets" },
-        detail: { crumb: "My Repair Tickets", title: "Repair Ticket Detail" },
-        working: { crumb: "Repair Ticket", title: "Repair Working" },
-        history: { crumb: "Records", title: "Repair History" },
-        notif: { crumb: "Inbox", title: "Notifications" },
-        profile: { crumb: "Account", title: "Profile" }
-    };
-
-    const REPAIR_TICKET_STATUS_KEY = 'qms_repair_ticket_statuses';
-    const REPAIR_TICKET_STATUSES = new Set(['Waiting Accept', 'In Progress', 'Paused', 'Completed', 'Overdue']);
-    const REPAIR_STATUS_ALIASES = {
-        pending: 'Waiting Accept',
-        created: 'Waiting Accept',
-        assigned: 'Waiting Accept',
-        waiting: 'Waiting Accept',
-        'waiting accept': 'Waiting Accept',
-        inprogress: 'In Progress',
-        'in progress': 'In Progress',
-        paused: 'Paused',
-        completed: 'Completed',
-        complete: 'Completed',
-        overdue: 'Overdue'
-    };
-
-    function readStoredRepairTicketStatuses() {
-        try {
-            return JSON.parse(localStorage.getItem(REPAIR_TICKET_STATUS_KEY) || '{}');
-        } catch (error) {
-            console.error('Failed to read repair ticket statuses:', error);
-            return {};
-        }
-    }
-
-    function writeStoredRepairTicketStatuses(statuses) {
-        localStorage.setItem(REPAIR_TICKET_STATUS_KEY, JSON.stringify(statuses));
-    }
-
-    function readNotifications() {
-        try {
-            return JSON.parse(localStorage.getItem('qms_notifications') || '[]');
-        } catch(e) {
-            return [];
-        }
-    }
-
-    function addNotification(title, text) {
-        const list = readNotifications();
-        list.unshift({
-            title,
-            text,
-            timestamp: new Date().toISOString()
-        });
-        localStorage.setItem('qms_notifications', JSON.stringify(list));
-    }
-
-    function formatTimeAgo(timestamp) {
-        if (!timestamp) return 'Just now';
-        try {
-            const diffMs = Date.now() - new Date(timestamp);
-            const diffMins = Math.floor(diffMs / 60000);
-            if (diffMins < 1) return 'Just now';
-            if (diffMins < 60) return `${diffMins}m ago`;
-            const diffHours = Math.floor(diffMins / 60);
-            if (diffHours < 24) return `${diffHours}h ago`;
-            return new Date(timestamp).toLocaleDateString();
-        } catch(e) {
-            return 'Just now';
-        }
-    }
-
-    function clearNotifs() {
-        localStorage.removeItem('qms_notifications');
-        updateSidebarBadges();
-        if (currentView === 'notif') {
-            const container = document.getElementById('content');
-            if (container) container.innerHTML = renderNotif();
-        }
-    }
-
-    function normalizeRepairStatus(status) {
-        const raw = String(status || '').trim();
-        if (!raw) return null;
-        const key = raw.toLowerCase().replace(/[-_]+/g, ' ');
-        return REPAIR_STATUS_ALIASES[key] || (REPAIR_TICKET_STATUSES.has(raw) ? raw : null);
-    }
-
-    function secondsSince(isoDate) {
-        const timestamp = Date.parse(isoDate);
-        if (!Number.isFinite(timestamp)) return 0;
-        return Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
-    }
-
-    function startTimeFromSeconds(seconds) {
-        return new Date(Date.now() - Math.max(0, Number(seconds) || 0) * 1000).toISOString();
-    }
-
-    function applyStoredRepairStatus(saved, fallbackStatus, fallbackSeconds, fallbackRunning) {
-        if (!saved) {
-            return {
-                status: fallbackStatus,
-                repairSeconds: fallbackSeconds,
-                repairRunning: fallbackRunning,
-                updatedAt: null
-            };
-        }
-
-        const status = normalizeRepairStatus(saved.status) || fallbackStatus;
-        const repairRunning = typeof saved.repairRunning === 'boolean'
-            ? saved.repairRunning
-            : status === 'In Progress';
-        let repairSeconds = Number.isFinite(Number(saved.repairSeconds))
-            ? Math.max(0, Math.floor(Number(saved.repairSeconds)))
-            : fallbackSeconds;
-
-        if (repairRunning && saved.startedAt) {
-            repairSeconds = Math.max(repairSeconds, secondsSince(saved.startedAt));
-        }
-
-        return { status, repairSeconds, repairRunning, updatedAt: saved.updatedAt || null };
-    }
-
-    function persistTicketStatus(id, extra = {}) {
-        const ticket = ticketsState[id];
-        if (!ticket) return;
-
-        const statuses = readStoredRepairTicketStatuses();
-        const previous = statuses[id] || {};
-        const oldStatus = previous.status || 'Waiting Accept';
-        const newStatus = ticket.status;
-
-        const next = {
-            ...previous,
-            ...extra,
-            status: ticket.status,
-            repairRunning: ticket.repairRunning,
-            repairSeconds: ticket.repairSeconds,
-            updatedAt: new Date().toISOString()
+        // User profile state
+        let userProfile = {
+            fullName: localStorage.getItem('username') || "QC Manager",
+            employeeId: localStorage.getItem('userId') ? `EMP-${localStorage.getItem('userId')}` : "EMP-4471",
+            role: localStorage.getItem('role') || "QC Manager",
+            shift: "Shift A (06:00 - 18:00)",
+            worksiteBranch: "VFR2.1 Finishing Yard",
+            departments: "Quality Control, QCD, Inspection"
         };
 
-        if (ticket.repairRunning) {
-            next.startedAt = extra.startedAt || startTimeFromSeconds(ticket.repairSeconds);
-        }
-        if (ticket.status === 'Completed') {
-            next.completedAt = extra.completedAt || new Date().toISOString();
-        }
+        const viewMeta = {
+            dashboard: { crumb: "Overview", title: "Dashboard" },
+            tickets: { crumb: "Work Queue", title: "My Repair Tickets" },
+            detail: { crumb: "My Repair Tickets", title: "Repair Ticket Detail" },
+            working: { crumb: "Repair Ticket", title: "Repair Working" },
+            history: { crumb: "Records", title: "Repair History" },
+            notif: { crumb: "Inbox", title: "Notifications" },
+            profile: { crumb: "Account", title: "Profile" }
+        };
 
-        statuses[id] = next;
-        
-        // Also persist under itemCode if available
-        if (ticket.meta && ticket.meta.itemCode) {
-            statuses[ticket.meta.itemCode] = next;
-        }
+        const REPAIR_TICKET_STATUS_KEY = 'qms_repair_ticket_statuses';
+        const REPAIR_TICKET_STATUSES = new Set(['Waiting Accept', 'In Progress', 'Paused', 'Completed', 'Overdue']);
+        const REPAIR_STATUS_ALIASES = {
+            pending: 'Waiting Accept',
+            created: 'Waiting Accept',
+            assigned: 'Waiting Accept',
+            waiting: 'Waiting Accept',
+            'waiting accept': 'Waiting Accept',
+            inprogress: 'In Progress',
+            'in progress': 'In Progress',
+            paused: 'Paused',
+            completed: 'Completed',
+            complete: 'Completed',
+            overdue: 'Overdue'
+        };
 
-        writeStoredRepairTicketStatuses(statuses);
-        
-        // Also update local ticket state
-        ticket.updatedAt = next.updatedAt;
-        if (ticket.status === 'Completed') {
-            ticket.completedAt = next.completedAt;
-        }
-
-        // Add notification if status changed
-        if (oldStatus !== newStatus) {
-            addNotification(
-                `Ticket ${id} Status Changed`,
-                `Ticket status updated from "${oldStatus}" to "${newStatus}" by QC Manager.`
-            );
-            updateSidebarBadges();
-        }
-    }
-
-    /* ================= MOCK/COMPLETED HISTORY DATA ================= */
-    const staticHistory = [
-        { id: "INH-3-8301", itemCode: "015076-2A", part: "01809070-WP", defect: "A-04 (Crack/broken)", completed: "04 Jul 2026", time: "1h 15m", result: "PASS" },
-        { id: "INH-4-8290", itemCode: "012345-AB", part: "91122344-ZZ", defect: "D-014 (Joint Leakage)", completed: "03 Jul 2026", time: "2h 30m", result: "PASS" },
-        { id: "INH-5-8270", itemCode: "066577-BB", part: "33221100-YY", defect: "D-022 (Veneer Scratch)", completed: "02 Jul 2026", time: "1h 45m", result: "PASS" }
-    ];
-
-    /* ================= DATA IMPORT LOAD ================= */
-    async function loadInspectionData() {
-        const candidates = ['/data/input data'];
-        
-        for (const url of candidates) {
+        function readStoredRepairTicketStatuses() {
             try {
-                const response = await fetch(url);
-                if (!response.ok) continue;
-                
-                const data = await response.json();
-                if (Array.isArray(data)) {
-                    inspectionData = data;
-                    initializeTickets();
-                    // Setup initial routing state
-                    go('dashboard');
-                    return;
-                }
+                return JSON.parse(localStorage.getItem(REPAIR_TICKET_STATUS_KEY) || '{}');
             } catch (error) {
-                console.error(`Failed to load inspection data from ${url}:`, error);
+                console.error('Failed to read repair ticket statuses:', error);
+                return {};
             }
         }
-        
-        // Fallback mockup items in case fetch fails
-        inspectionData = [
-            {
-                id: "INH-3-8395",
-                itemCode: "015076-2A",
-                itemName: "Nightstand 28 inch â€” Left Single Metro",
-                wo: "8395",
-                customer: "Fleetwood Fine Furniture",
-                branch: "VFR2.1",
-                qtyOrder: 10,
-                qtyQuarantine: 1,
-                defectOwner: "2ASSY",
-                whereDetected: "Finishing â€” 2QCD",
-                defectCode: "A-04 (Crack / broken)",
-                defectDescription: "A-04 (Crack / broken)",
-                correctiveAction: "Sá»­a hÃ ng - kiá»ƒm láº¡i",
-                priority: "High",
-                deadline: "2026-07-05 17:30",
-                fromDept: "2ASSY",
-                supplement: { needed: false },
-                source: {
-                    inspector: "17372",
-                    inspectorName: "Huá»³nh VÄƒn Ãšt",
-                    inspectorDept: "2QCD",
-                    inspectionStage: "Finishing",
-                    inspectedDate: "2026-07-05T10:55:27",
-                    passQty: 0,
-                    failQty: 1,
-                    defectCategory: "Major"
-                }
-            },
-            {
-                id: "INH-4-8396",
-                itemCode: "012345-AB",
-                itemName: "Dresser 6-Drawer â€” Metro",
-                wo: "8396",
-                customer: "Fleetwood Fine Furniture",
-                branch: "VFR2.1",
-                qtyOrder: 180,
-                qtyQuarantine: 2,
-                defectOwner: "Assembly",
-                whereDetected: "IPQC â€” CAR1-S2",
-                defectCode: "D-014 (Leakage)",
-                defectDescription: "Oil leakage at joint seal",
-                correctiveAction: "Reseal Joint & Clean",
-                priority: "Medium",
-                deadline: "2026-07-05 18:00",
-                fromDept: "Assembly",
-                supplement: {
-                    needed: true,
-                    status: "waiting",
-                    partName: "High Temp Rubber Seal Gasket",
-                    qty: 2,
-                    eta: "Today 16:30"
-                },
-                source: {
-                    inspector: "6701",
-                    inspectorName: "Tráº§n VÄƒn HÃ¹ng",
-                    inspectorDept: "1QCD",
-                    inspectionStage: "IPQC",
-                    inspectedDate: "2026-07-05T09:12:00",
-                    passQty: 0,
-                    failQty: 2,
-                    defectCategory: "Minor"
-                }
-            }
-        ];
-        initializeTickets();
-        go('dashboard');
-    }
 
-    function getDefaultStatus(index) {
-        let status = 'Waiting Accept';
-        let repairSeconds = 0;
-        let repairRunning = false;
-        
-        if (index === 0) {
-            status = 'Waiting Accept';
-        } else if (index === 1) {
-            status = 'In Progress';
-            repairSeconds = 4325; // 01:12:05
-            repairRunning = true;
-        } else if (index === 2) {
-            status = 'Paused';
-            repairSeconds = 1800; // 00:30:00
-        } else if (index === 3) {
-            status = 'Completed';
-            repairSeconds = 3600;
-        } else if (index === 4) {
-            status = 'Overdue';
+        function writeStoredRepairTicketStatuses(statuses) {
+            localStorage.setItem(REPAIR_TICKET_STATUS_KEY, JSON.stringify(statuses));
         }
-        return { status, repairSeconds, repairRunning };
-    }
 
-    function initializeTickets() {
-        const storedStatuses = readStoredRepairTicketStatuses();
+        function readNotifications() {
+            try {
+                return JSON.parse(localStorage.getItem('qms_notifications') || '[]');
+            } catch (e) {
+                return [];
+            }
+        }
 
-        inspectionData.forEach((ticket, index) => {
-            const defaultState = getDefaultStatus(index);
-            const saved = storedStatuses[ticket.id] || storedStatuses[ticket.itemCode];
-            const storedStatus = applyStoredRepairStatus(saved, defaultState.status, defaultState.repairSeconds, defaultState.repairRunning);
+        function addNotification(title, text) {
+            const list = readNotifications();
+            list.unshift({
+                title,
+                text,
+                timestamp: new Date().toISOString()
+            });
+            localStorage.setItem('qms_notifications', JSON.stringify(list));
+        }
 
-            ticketsState[ticket.id] = {
-                meta: ticket,
-                status: storedStatus.status,
-                repairSeconds: storedStatus.repairSeconds,
-                repairRunning: storedStatus.repairRunning,
-                updatedAt: storedStatus.updatedAt,
-                checklist: ['Check defect area', 'Perform corrective action', 'Functional inspection', 'Clean item'],
-                checklistChecked: [true, false, false, false],
-                notes: index === 1 ? "Disassembled casing. Rubber seal looks worn out. Awaiting replacement to finish installation." : "",
-                materials: [
-                    { name: "Replacement Bolt M6", qty: "4 pcs" },
-                    { name: "Cleaning Solution", qty: "50 ml" }
-                ],
-                summary: "",
-                result: ""
+        function formatTimeAgo(timestamp) {
+            if (!timestamp) return 'Just now';
+            try {
+                const diffMs = Date.now() - new Date(timestamp);
+                const diffMins = Math.floor(diffMs / 60000);
+                if (diffMins < 1) return 'Just now';
+                if (diffMins < 60) return `${diffMins}m ago`;
+                const diffHours = Math.floor(diffMins / 60);
+                if (diffHours < 24) return `${diffHours}h ago`;
+                return new Date(timestamp).toLocaleDateString();
+            } catch (e) {
+                return 'Just now';
+            }
+        }
+
+        function clearNotifs() {
+            localStorage.removeItem('qms_notifications');
+            updateSidebarBadges();
+            if (currentView === 'notif') {
+                const container = document.getElementById('content');
+                if (container) container.innerHTML = renderNotif();
+            }
+        }
+
+        function normalizeRepairStatus(status) {
+            const raw = String(status || '').trim();
+            if (!raw) return null;
+            const key = raw.toLowerCase().replace(/[-_]+/g, ' ');
+            return REPAIR_STATUS_ALIASES[key] || (REPAIR_TICKET_STATUSES.has(raw) ? raw : null);
+        }
+
+        function secondsSince(isoDate) {
+            const timestamp = Date.parse(isoDate);
+            if (!Number.isFinite(timestamp)) return 0;
+            return Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
+        }
+
+        function startTimeFromSeconds(seconds) {
+            return new Date(Date.now() - Math.max(0, Number(seconds) || 0) * 1000).toISOString();
+        }
+
+        function applyStoredRepairStatus(saved, fallbackStatus, fallbackSeconds, fallbackRunning) {
+            if (!saved) {
+                return {
+                    status: fallbackStatus,
+                    repairSeconds: fallbackSeconds,
+                    repairRunning: fallbackRunning,
+                    updatedAt: null
+                };
+            }
+
+            const status = normalizeRepairStatus(saved.status) || fallbackStatus;
+            const repairRunning = typeof saved.repairRunning === 'boolean'
+                ? saved.repairRunning
+                : status === 'In Progress';
+            let repairSeconds = Number.isFinite(Number(saved.repairSeconds))
+                ? Math.max(0, Math.floor(Number(saved.repairSeconds)))
+                : fallbackSeconds;
+
+            if (repairRunning && saved.startedAt) {
+                repairSeconds = Math.max(repairSeconds, secondsSince(saved.startedAt));
+            }
+
+            return { status, repairSeconds, repairRunning, updatedAt: saved.updatedAt || null };
+        }
+
+        function persistTicketStatus(id, extra = {}) {
+            const ticket = ticketsState[id];
+            if (!ticket) return;
+
+            const statuses = readStoredRepairTicketStatuses();
+            const previous = statuses[id] || {};
+            const oldStatus = previous.status || 'Waiting Accept';
+            const newStatus = ticket.status;
+
+            const next = {
+                ...previous,
+                ...extra,
+                status: ticket.status,
+                repairRunning: ticket.repairRunning,
+                repairSeconds: ticket.repairSeconds,
+                updatedAt: new Date().toISOString()
             };
-        });
-        
-        // Initial Badge setup
-        updateSidebarBadges();
-    }
 
-    function updateSidebarBadges() {
-        const count = Object.values(ticketsState).filter(t => t.status === 'Waiting Accept' || t.status === 'In Progress' || t.status === 'Paused' || t.status === 'Overdue').length;
-        const navBadge = document.getElementById('navTicketBadge');
-        if (navBadge) navBadge.textContent = count;
+            if (ticket.repairRunning) {
+                next.startedAt = extra.startedAt || startTimeFromSeconds(ticket.repairSeconds);
+            }
+            if (ticket.status === 'Completed') {
+                next.completedAt = extra.completedAt || new Date().toISOString();
+            }
 
-        const notifs = readNotifications();
-        const navNotifBadge = document.getElementById('navNotifBadge');
-        if (navNotifBadge) navNotifBadge.textContent = notifs.length;
-    }
+            statuses[id] = next;
 
-    /* ================= AUTH FLOW REMOVED ================= */
+            // Also persist under itemCode if available
+            if (ticket.meta && ticket.meta.itemCode) {
+                statuses[ticket.meta.itemCode] = next;
+            }
 
-    /* ================= TIMER TICK ================= */
-    let lastTimerTick = Date.now();
-    function startGlobalTimer() {
-        setInterval(() => {
-            const now = Date.now();
-            const elapsedSeconds = Math.floor((now - lastTimerTick) / 1000);
-            if (elapsedSeconds >= 1) {
-                let changed = false;
-                for (const id in ticketsState) {
-                    if (ticketsState[id].repairRunning) {
-                        ticketsState[id].repairSeconds += elapsedSeconds;
-                        changed = true;
+            writeStoredRepairTicketStatuses(statuses);
+
+            // Also update local ticket state
+            ticket.updatedAt = next.updatedAt;
+            if (ticket.status === 'Completed') {
+                ticket.completedAt = next.completedAt;
+            }
+
+            // Add notification if status changed
+            if (oldStatus !== newStatus) {
+                addNotification(
+                    `Ticket ${id} Status Changed`,
+                    `Ticket status updated from "${oldStatus}" to "${newStatus}" by QC Manager.`
+                );
+                updateSidebarBadges();
+            }
+        }
+
+        /* ================= MOCK/COMPLETED HISTORY DATA ================= */
+        const staticHistory = [
+            { id: "INH-3-8301", itemCode: "015076-2A", part: "01809070-WP", defect: "A-04 (Crack/broken)", completed: "04 Jul 2026", time: "1h 15m", result: "PASS" },
+            { id: "INH-4-8290", itemCode: "012345-AB", part: "91122344-ZZ", defect: "D-014 (Joint Leakage)", completed: "03 Jul 2026", time: "2h 30m", result: "PASS" },
+            { id: "INH-5-8270", itemCode: "066577-BB", part: "33221100-YY", defect: "D-022 (Veneer Scratch)", completed: "02 Jul 2026", time: "1h 45m", result: "PASS" }
+        ];
+
+        /* ================= DATA IMPORT LOAD ================= */
+        async function loadInspectionData() {
+            const candidates = ['/data/input data'];
+
+            for (const url of candidates) {
+                try {
+                    const response = await fetch(url);
+                    if (!response.ok) continue;
+
+                    const data = await response.json();
+                    if (Array.isArray(data)) {
+                        inspectionData = data;
+                        initializeTickets();
+                        // Setup initial routing state
+                        go('dashboard');
+                        return;
                     }
-                }
-                lastTimerTick += elapsedSeconds * 1000;
-                
-                if (changed && currentTicketId && currentView === 'working') {
-                    const timerValEl = document.getElementById('timerVal');
-                    if (timerValEl) {
-                        const ticket = ticketsState[currentTicketId];
-                        timerValEl.textContent = formatTime(ticket.repairSeconds);
-                    }
+                } catch (error) {
+                    console.error(`Failed to load inspection data from ${url}:`, error);
                 }
             }
-        }, 500);
-    }
-    startGlobalTimer();
 
-    function formatTime(seconds) {
-        const h = Math.floor(seconds / 3600);
-        const m = Math.floor((seconds % 3600) / 60);
-        const s = seconds % 60;
-        return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-    }
+            // Fallback mockup items in case fetch fails
+            inspectionData = [
+                {
+                    id: "INH-3-8395",
+                    itemCode: "015076-2A",
+                    itemName: "Nightstand 28 inch â€” Left Single Metro",
+                    wo: "8395",
+                    customer: "Fleetwood Fine Furniture",
+                    branch: "VFR2.1",
+                    qtyOrder: 10,
+                    qtyQuarantine: 1,
+                    defectOwner: "2ASSY",
+                    whereDetected: "Finishing â€” 2QCD",
+                    defectCode: "A-04 (Crack / broken)",
+                    defectDescription: "A-04 (Crack / broken)",
+                    correctiveAction: "Sá»­a hÃ ng - kiá»ƒm láº¡i",
+                    priority: "High",
+                    deadline: "2026-07-05 17:30",
+                    fromDept: "2ASSY",
+                    supplement: { needed: false },
+                    source: {
+                        inspector: "17372",
+                        inspectorName: "Huá»³nh VÄƒn Ãšt",
+                        inspectorDept: "2QCD",
+                        inspectionStage: "Finishing",
+                        inspectedDate: "2026-07-05T10:55:27",
+                        passQty: 0,
+                        failQty: 1,
+                        defectCategory: "Major"
+                    }
+                },
+                {
+                    id: "INH-4-8396",
+                    itemCode: "012345-AB",
+                    itemName: "Dresser 6-Drawer â€” Metro",
+                    wo: "8396",
+                    customer: "Fleetwood Fine Furniture",
+                    branch: "VFR2.1",
+                    qtyOrder: 180,
+                    qtyQuarantine: 2,
+                    defectOwner: "Assembly",
+                    whereDetected: "IPQC â€” CAR1-S2",
+                    defectCode: "D-014 (Leakage)",
+                    defectDescription: "Oil leakage at joint seal",
+                    correctiveAction: "Reseal Joint & Clean",
+                    priority: "Medium",
+                    deadline: "2026-07-05 18:00",
+                    fromDept: "Assembly",
+                    supplement: {
+                        needed: true,
+                        status: "waiting",
+                        partName: "High Temp Rubber Seal Gasket",
+                        qty: 2,
+                        eta: "Today 16:30"
+                    },
+                    source: {
+                        inspector: "6701",
+                        inspectorName: "Tráº§n VÄƒn HÃ¹ng",
+                        inspectorDept: "1QCD",
+                        inspectionStage: "IPQC",
+                        inspectedDate: "2026-07-05T09:12:00",
+                        passQty: 0,
+                        failQty: 2,
+                        defectCategory: "Minor"
+                    }
+                }
+            ];
+            initializeTickets();
+            go('dashboard');
+        }
 
-    /* ================= NAVIGATION ROUTER ================= */
-    function go(view, ticketId) {
-        if (ticketId) currentTicketId = ticketId;
-        currentView = view;
+        function getDefaultStatus(index) {
+            let status = 'Waiting Accept';
+            let repairSeconds = 0;
+            let repairRunning = false;
 
-        // Re-sync with local storage to ensure fresh status when navigating
-        try {
+            if (index === 0) {
+                status = 'Waiting Accept';
+            } else if (index === 1) {
+                status = 'In Progress';
+                repairSeconds = 4325; // 01:12:05
+                repairRunning = true;
+            } else if (index === 2) {
+                status = 'Paused';
+                repairSeconds = 1800; // 00:30:00
+            } else if (index === 3) {
+                status = 'Completed';
+                repairSeconds = 3600;
+            } else if (index === 4) {
+                status = 'Overdue';
+            }
+            return { status, repairSeconds, repairRunning };
+        }
+
+        function initializeTickets() {
             const storedStatuses = readStoredRepairTicketStatuses();
+
             inspectionData.forEach((ticket, index) => {
                 const defaultState = getDefaultStatus(index);
                 const saved = storedStatuses[ticket.id] || storedStatuses[ticket.itemCode];
                 const storedStatus = applyStoredRepairStatus(saved, defaultState.status, defaultState.repairSeconds, defaultState.repairRunning);
-                
-                const tState = ticketsState[ticket.id];
-                if (tState) {
-                    tState.status = storedStatus.status;
-                    tState.repairSeconds = storedStatus.repairSeconds;
-                    tState.repairRunning = storedStatus.repairRunning;
-                    tState.updatedAt = storedStatus.updatedAt;
-                }
+
+                ticketsState[ticket.id] = {
+                    meta: ticket,
+                    status: storedStatus.status,
+                    repairSeconds: storedStatus.repairSeconds,
+                    repairRunning: storedStatus.repairRunning,
+                    updatedAt: storedStatus.updatedAt,
+                    checklist: ['Check defect area', 'Perform corrective action', 'Functional inspection', 'Clean item'],
+                    checklistChecked: [true, false, false, false],
+                    notes: index === 1 ? "Disassembled casing. Rubber seal looks worn out. Awaiting replacement to finish installation." : "",
+                    materials: [
+                        { name: "Replacement Bolt M6", qty: "4 pcs" },
+                        { name: "Cleaning Solution", qty: "50 ml" }
+                    ],
+                    summary: "",
+                    result: ""
+                };
             });
-        } catch (err) {
-            console.error('Failed to sync statuses on navigation:', err);
+
+            // Initial Badge setup
+            updateSidebarBadges();
         }
 
-        // Update active sidebar nav
-        document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('active'));
-        const navItem = document.querySelector(`.sb-item[data-view="${view}"]`);
-        if (navItem) navItem.classList.add('active');
+        function updateSidebarBadges() {
+            const count = Object.values(ticketsState).filter(t => t.status === 'Waiting Accept' || t.status === 'In Progress' || t.status === 'Paused' || t.status === 'Overdue').length;
+            const navBadge = document.getElementById('navTicketBadge');
+            if (navBadge) navBadge.textContent = count;
 
-        // Set breadcrumb and header text
-        document.getElementById('tbCrumb').textContent = viewMeta[view].crumb;
-        document.getElementById('tbTitle').textContent = viewMeta[view].title;
+            const notifs = readNotifications();
+            const navNotifBadge = document.getElementById('navNotifBadge');
+            if (navNotifBadge) navNotifBadge.textContent = notifs.length;
+        }
 
-        // Render content HTML template
-        const container = document.getElementById('content');
-        if (view === 'dashboard') container.innerHTML = renderDashboard();
-        else if (view === 'tickets') container.innerHTML = renderTickets();
-        else if (view === 'detail') container.innerHTML = renderDetail(currentTicketId);
-        else if (view === 'working') container.innerHTML = renderWorking(currentTicketId);
-        else if (view === 'history') container.innerHTML = renderHistory();
-        else if (view === 'notif') container.innerHTML = renderNotif();
-        else if (view === 'profile') container.innerHTML = renderProfile();
+        /* ================= AUTH FLOW REMOVED ================= */
 
-        window.scrollTo(0, 0);
-        updateSidebarBadges();
-    }
+        /* ================= TIMER TICK ================= */
+        let lastTimerTick = Date.now();
+        function startGlobalTimer() {
+            setInterval(() => {
+                const now = Date.now();
+                const elapsedSeconds = Math.floor((now - lastTimerTick) / 1000);
+                if (elapsedSeconds >= 1) {
+                    let changed = false;
+                    for (const id in ticketsState) {
+                        if (ticketsState[id].repairRunning) {
+                            ticketsState[id].repairSeconds += elapsedSeconds;
+                            changed = true;
+                        }
+                    }
+                    lastTimerTick += elapsedSeconds * 1000;
 
-    // Class helper mapping
-    function statusClass(s) {
-        return {
-            "Waiting Accept": "st-wait",
-            "In Progress": "st-progress",
-            "Paused": "st-paused",
-            "Completed": "st-completed",
-            "Overdue": "st-overdue"
-        }[s] || "st-wait";
-    }
+                    if (changed && currentTicketId && currentView === 'working') {
+                        const timerValEl = document.getElementById('timerVal');
+                        if (timerValEl) {
+                            const ticket = ticketsState[currentTicketId];
+                            timerValEl.textContent = formatTime(ticket.repairSeconds);
+                        }
+                    }
+                }
+            }, 500);
+        }
+        startGlobalTimer();
 
-    function prClass(p) {
-        return { "High": "p-high", "Medium": "p-medium", "Low": "p-low" }[p] || "p-low";
-    }
+        function formatTime(seconds) {
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = seconds % 60;
+            return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }
 
-    /* ================= VIEW TEMPLATE RENDERS ================= */
+        /* ================= NAVIGATION ROUTER ================= */
+        function go(view, ticketId) {
+            if (ticketId) currentTicketId = ticketId;
+            currentView = view;
 
-    // 1. DASHBOARD OVERVIEW
-    function renderDashboard() {
-        const wait = Object.values(ticketsState).filter(t => t.status === "Waiting Accept").length;
-        const prog = Object.values(ticketsState).filter(t => t.status === "In Progress" || t.status === "Paused").length;
-        const done = Object.values(ticketsState).filter(t => t.status === "Completed").length;
-        const over = Object.values(ticketsState).filter(t => t.status === "Overdue").length;
-        
-        const upcoming = Object.values(ticketsState).find(t => t.status === "Waiting Accept") || Object.values(ticketsState)[0];
-        
-        let upcomingHtml = "";
-        if (upcoming) {
-            const uMeta = upcoming.meta;
-            upcomingHtml = `
+            // Re-sync with local storage to ensure fresh status when navigating
+            try {
+                const storedStatuses = readStoredRepairTicketStatuses();
+                inspectionData.forEach((ticket, index) => {
+                    const defaultState = getDefaultStatus(index);
+                    const saved = storedStatuses[ticket.id] || storedStatuses[ticket.itemCode];
+                    const storedStatus = applyStoredRepairStatus(saved, defaultState.status, defaultState.repairSeconds, defaultState.repairRunning);
+
+                    const tState = ticketsState[ticket.id];
+                    if (tState) {
+                        tState.status = storedStatus.status;
+                        tState.repairSeconds = storedStatus.repairSeconds;
+                        tState.repairRunning = storedStatus.repairRunning;
+                        tState.updatedAt = storedStatus.updatedAt;
+                    }
+                });
+            } catch (err) {
+                console.error('Failed to sync statuses on navigation:', err);
+            }
+
+            // Update active sidebar nav
+            document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('active'));
+            const navItem = document.querySelector(`.sb-item[data-view="${view}"]`);
+            if (navItem) navItem.classList.add('active');
+
+            // Set breadcrumb and header text
+            document.getElementById('tbCrumb').textContent = viewMeta[view].crumb;
+            document.getElementById('tbTitle').textContent = viewMeta[view].title;
+
+            // Render content HTML template
+            const container = document.getElementById('content');
+            if (view === 'dashboard') container.innerHTML = renderDashboard();
+            else if (view === 'tickets') container.innerHTML = renderTickets();
+            else if (view === 'detail') container.innerHTML = renderDetail(currentTicketId);
+            else if (view === 'working') container.innerHTML = renderWorking(currentTicketId);
+            else if (view === 'history') container.innerHTML = renderHistory();
+            else if (view === 'notif') container.innerHTML = renderNotif();
+            else if (view === 'profile') container.innerHTML = renderProfile();
+
+            window.scrollTo(0, 0);
+            updateSidebarBadges();
+        }
+
+        // Class helper mapping
+        function statusClass(s) {
+            return {
+                "Waiting Accept": "st-wait",
+                "In Progress": "st-progress",
+                "Paused": "st-paused",
+                "Completed": "st-completed",
+                "Overdue": "st-overdue"
+            }[s] || "st-wait";
+        }
+
+        function prClass(p) {
+            return { "High": "p-high", "Medium": "p-medium", "Low": "p-low" }[p] || "p-low";
+        }
+
+        /* ================= VIEW TEMPLATE RENDERS ================= */
+
+        // 1. DASHBOARD OVERVIEW
+        function renderDashboard() {
+            const wait = Object.values(ticketsState).filter(t => t.status === "Waiting Accept").length;
+            const prog = Object.values(ticketsState).filter(t => t.status === "In Progress" || t.status === "Paused").length;
+            const done = Object.values(ticketsState).filter(t => t.status === "Completed").length;
+            const over = Object.values(ticketsState).filter(t => t.status === "Overdue").length;
+
+            const upcoming = Object.values(ticketsState).find(t => t.status === "Waiting Accept") || Object.values(ticketsState)[0];
+
+            let upcomingHtml = "";
+            if (upcoming) {
+                const uMeta = upcoming.meta;
+                upcomingHtml = `
                 <div class="wo-tag ${prClass(uMeta.priority)}" onclick="go('detail', '${uMeta.id}')">
                     <div class="wo-head">
                         <div class="wo-ids">
@@ -1856,11 +1937,11 @@
                 </div>
                 <button class="btn-sm btn-steel" style="width:100%; justify-content:center; display:flex;" onclick="go('detail', '${uMeta.id}')">Open Ticket Detail &nbsp;&#8594;</button>
             `;
-        } else {
-            upcomingHtml = `<div style="text-align:center; color:var(--txt-dim); padding: 30px 0;">No upcoming jobs assigned.</div>`;
-        }
+            } else {
+                upcomingHtml = `<div style="text-align:center; color:var(--txt-dim); padding: 30px 0;">No upcoming jobs assigned.</div>`;
+            }
 
-        return `
+            return `
             <div style="margin-bottom:18px; font-size:13.5px; color:var(--txt-dim);">Welcome, <b style="color:#1f2937;">${userProfile.fullName}</b> &mdash; here is your defect repair ticket overview.</div>
             
             <div class="grid-4">
@@ -1902,31 +1983,31 @@
                 </div>
             </div>
         `;
-    }
+        }
 
-    // 2. TICKETS SEARCHABLE LIST
-    function getUniqueStages() {
-        const stages = new Set();
-        inspectionData.forEach(t => {
-            let stage = t.source && t.source.inspectionStage;
-            if (!stage && t.whereDetected) {
-                const parts = t.whereDetected.split('â€”');
-                stage = parts[0] ? parts[0].trim() : '';
-            }
-            if (stage) {
-                stages.add(stage);
-            }
-        });
-        return Array.from(stages).sort();
-    }
+        // 2. TICKETS SEARCHABLE LIST
+        function getUniqueStages() {
+            const stages = new Set();
+            inspectionData.forEach(t => {
+                let stage = t.source && t.source.inspectionStage;
+                if (!stage && t.whereDetected) {
+                    const parts = t.whereDetected.split('â€”');
+                    stage = parts[0] ? parts[0].trim() : '';
+                }
+                if (stage) {
+                    stages.add(stage);
+                }
+            });
+            return Array.from(stages).sort();
+        }
 
-    function renderTickets() {
-        const uniqueStages = getUniqueStages();
-        const stageOptions = uniqueStages.map(st => `
+        function renderTickets() {
+            const uniqueStages = getUniqueStages();
+            const stageOptions = uniqueStages.map(st => `
             <option ${stageFilter === st ? 'selected' : ''} value="${st}">${st}</option>
         `).join('');
 
-        return `
+            return `
             <div class="search-bar">
                 <input id="ticketSearchInput" placeholder="Search WO No, Item Code, Partcode, ID..." value="${searchQuery}" onkeyup="handleSearch(this.value)">
                 <select id="statusFilterSelect" onchange="handleStatusFilter(this.value)">
@@ -1963,51 +2044,51 @@
                 ${renderTicketsListContent()}
             </div>
         `;
-    }
-
-    function renderTicketsListContent() {
-        const filtered = filterTickets();
-        
-        // Sorting logic
-        if (sortOption === "priority") {
-            const prWeight = { "High": 3, "Medium": 2, "Low": 1 };
-            filtered.sort((a, b) => (prWeight[b.priority] || 0) - (prWeight[a.priority] || 0));
-        } else if (sortOption === "deadline") {
-            filtered.sort((a, b) => {
-                if (!a.deadline) return 1;
-                if (!b.deadline) return -1;
-                return a.deadline.localeCompare(b.deadline);
-            });
-        } else if (sortOption === "id") {
-            filtered.sort((a, b) => b.id.localeCompare(a.id));
-        } else if (sortOption === "updated") {
-            filtered.sort((a, b) => {
-                const ua = ticketsState[a.id].updatedAt || '';
-                const ub = ticketsState[b.id].updatedAt || '';
-                if (!ua && !ub) return 0;
-                if (!ua) return 1;
-                if (!ub) return -1;
-                return ub.localeCompare(ua);
-            });
         }
 
-        if (filtered.length === 0) {
-            return `
+        function renderTicketsListContent() {
+            const filtered = filterTickets();
+
+            // Sorting logic
+            if (sortOption === "priority") {
+                const prWeight = { "High": 3, "Medium": 2, "Low": 1 };
+                filtered.sort((a, b) => (prWeight[b.priority] || 0) - (prWeight[a.priority] || 0));
+            } else if (sortOption === "deadline") {
+                filtered.sort((a, b) => {
+                    if (!a.deadline) return 1;
+                    if (!b.deadline) return -1;
+                    return a.deadline.localeCompare(b.deadline);
+                });
+            } else if (sortOption === "id") {
+                filtered.sort((a, b) => b.id.localeCompare(a.id));
+            } else if (sortOption === "updated") {
+                filtered.sort((a, b) => {
+                    const ua = ticketsState[a.id].updatedAt || '';
+                    const ub = ticketsState[b.id].updatedAt || '';
+                    if (!ua && !ub) return 0;
+                    if (!ua) return 1;
+                    if (!ub) return -1;
+                    return ub.localeCompare(ua);
+                });
+            }
+
+            if (filtered.length === 0) {
+                return `
                 <div class="panel" style="text-align:center; padding:40px; color:var(--txt-dim);">
                     <div style="font-size:32px; margin-bottom:12px;">ðŸ”</div>
                     <div style="font-weight:600;">No matching repair tickets found.</div>
                 </div>
             `;
-        }
-        return filtered.map(t => {
-            const state = ticketsState[t.id];
-            let formattedTime = '';
-            if (state.updatedAt) {
-                try {
-                    formattedTime = new Date(state.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-                } catch(e) {}
             }
-            return `
+            return filtered.map(t => {
+                const state = ticketsState[t.id];
+                let formattedTime = '';
+                if (state.updatedAt) {
+                    try {
+                        formattedTime = new Date(state.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                    } catch (e) { }
+                }
+                return `
                 <div class="wo-tag ${prClass(t.priority)}" onclick="go('detail', '${t.id}')">
                     <div class="wo-head">
                         <div class="wo-ids">
@@ -2027,108 +2108,108 @@
                     </div>
                 </div>
             `;
-        }).join('');
-    }
+            }).join('');
+        }
 
-    function filterTickets() {
-        return inspectionData.filter(t => {
-            const state = ticketsState[t.id];
-            if (!state) return false;
-            
-            const matchesSearch = !searchQuery || 
-                t.id.toLowerCase().includes(searchQuery) ||
-                (t.itemCode && t.itemCode.toLowerCase().includes(searchQuery)) ||
-                (t.itemName && t.itemName.toLowerCase().includes(searchQuery)) ||
-                (t.wo && t.wo.toLowerCase().includes(searchQuery));
-            
-            const matchesStatus = statusFilter === "All Status" || state.status === statusFilter;
-            
-            let ticketStage = t.source && t.source.inspectionStage;
-            if (!ticketStage && t.whereDetected) {
-                const parts = t.whereDetected.split('â€”');
-                ticketStage = parts[0] ? parts[0].trim() : '';
-            }
-            const matchesStage = stageFilter === "All Stages" || 
-                (ticketStage && ticketStage.toLowerCase() === stageFilter.toLowerCase());
-            
-            const matchesPriority = priorityFilter === "All Priorities" || 
-                (t.priority && t.priority.toLowerCase() === priorityFilter.toLowerCase());
-            
-            // Time filter check (Changed Today)
-            let matchesTime = true;
-            if (timeFilter === 'today') {
-                matchesTime = false;
-                if (state.updatedAt) {
-                    try {
-                        const date = new Date(state.updatedAt);
-                        const today = new Date();
-                        matchesTime = date.getDate() === today.getDate() &&
-                            date.getMonth() === today.getMonth() &&
-                            date.getFullYear() === today.getFullYear();
-                    } catch(e) {
-                        matchesTime = false;
+        function filterTickets() {
+            return inspectionData.filter(t => {
+                const state = ticketsState[t.id];
+                if (!state) return false;
+
+                const matchesSearch = !searchQuery ||
+                    t.id.toLowerCase().includes(searchQuery) ||
+                    (t.itemCode && t.itemCode.toLowerCase().includes(searchQuery)) ||
+                    (t.itemName && t.itemName.toLowerCase().includes(searchQuery)) ||
+                    (t.wo && t.wo.toLowerCase().includes(searchQuery));
+
+                const matchesStatus = statusFilter === "All Status" || state.status === statusFilter;
+
+                let ticketStage = t.source && t.source.inspectionStage;
+                if (!ticketStage && t.whereDetected) {
+                    const parts = t.whereDetected.split('â€”');
+                    ticketStage = parts[0] ? parts[0].trim() : '';
+                }
+                const matchesStage = stageFilter === "All Stages" ||
+                    (ticketStage && ticketStage.toLowerCase() === stageFilter.toLowerCase());
+
+                const matchesPriority = priorityFilter === "All Priorities" ||
+                    (t.priority && t.priority.toLowerCase() === priorityFilter.toLowerCase());
+
+                // Time filter check (Changed Today)
+                let matchesTime = true;
+                if (timeFilter === 'today') {
+                    matchesTime = false;
+                    if (state.updatedAt) {
+                        try {
+                            const date = new Date(state.updatedAt);
+                            const today = new Date();
+                            matchesTime = date.getDate() === today.getDate() &&
+                                date.getMonth() === today.getMonth() &&
+                                date.getFullYear() === today.getFullYear();
+                        } catch (e) {
+                            matchesTime = false;
+                        }
                     }
                 }
-            }
-            
-            return matchesSearch && matchesStatus && matchesStage && matchesPriority && matchesTime;
-        });
-    }
 
-    function handleSearch(val) {
-        searchQuery = val.toLowerCase().trim();
-        document.getElementById('ticketsListContainer').innerHTML = renderTicketsListContent();
-    }
+                return matchesSearch && matchesStatus && matchesStage && matchesPriority && matchesTime;
+            });
+        }
 
-    function handleStatusFilter(val) {
-        statusFilter = val;
-        document.getElementById('ticketsListContainer').innerHTML = renderTicketsListContent();
-    }
+        function handleSearch(val) {
+            searchQuery = val.toLowerCase().trim();
+            document.getElementById('ticketsListContainer').innerHTML = renderTicketsListContent();
+        }
 
-    function handleStageFilter(val) {
-        stageFilter = val;
-        document.getElementById('ticketsListContainer').innerHTML = renderTicketsListContent();
-    }
+        function handleStatusFilter(val) {
+            statusFilter = val;
+            document.getElementById('ticketsListContainer').innerHTML = renderTicketsListContent();
+        }
 
-    function handlePriorityFilter(val) {
-        priorityFilter = val;
-        document.getElementById('ticketsListContainer').innerHTML = renderTicketsListContent();
-    }
+        function handleStageFilter(val) {
+            stageFilter = val;
+            document.getElementById('ticketsListContainer').innerHTML = renderTicketsListContent();
+        }
 
-    function handleTimeFilter(val) {
-        timeFilter = val;
-        document.getElementById('ticketsListContainer').innerHTML = renderTicketsListContent();
-    }
+        function handlePriorityFilter(val) {
+            priorityFilter = val;
+            document.getElementById('ticketsListContainer').innerHTML = renderTicketsListContent();
+        }
 
-    function handleSort(val) {
-        sortOption = val;
-        document.getElementById('ticketsListContainer').innerHTML = renderTicketsListContent();
-    }
+        function handleTimeFilter(val) {
+            timeFilter = val;
+            document.getElementById('ticketsListContainer').innerHTML = renderTicketsListContent();
+        }
 
-    // 3. TICKET DETAILED PANEL VIEW
-    function renderDetail(id) {
-        const ticket = ticketsState[id] || Object.values(ticketsState)[0];
-        const t = ticket.meta;
+        function handleSort(val) {
+            sortOption = val;
+            document.getElementById('ticketsListContainer').innerHTML = renderTicketsListContent();
+        }
 
-        let actionButtons = "";
-        if (ticket.status === 'Waiting Accept') {
-            actionButtons = `
+        // 3. TICKET DETAILED PANEL VIEW
+        function renderDetail(id) {
+            const ticket = ticketsState[id] || Object.values(ticketsState)[0];
+            const t = ticket.meta;
+
+            let actionButtons = "";
+            if (ticket.status === 'Waiting Accept') {
+                actionButtons = `
                 <button class="btn-sm btn-red" onclick="showToast('Ticket rejected â€” returned to Supervisor')">Reject Ticket</button>
                 <button class="btn-sm btn-steel" onclick="acceptTicket('${t.id}')">Approve &amp; Accept Job</button>
             `;
-        } else if (ticket.status === 'In Progress' || ticket.status === 'Paused' || ticket.status === 'Overdue') {
-            const isRunning = ticket.repairRunning;
-            actionButtons = `
+            } else if (ticket.status === 'In Progress' || ticket.status === 'Paused' || ticket.status === 'Overdue') {
+                const isRunning = ticket.repairRunning;
+                actionButtons = `
                 <button class="btn-sm btn-steel" onclick="go('working', '${t.id}')">Resume Working Screen</button>
                 ${isRunning ? `<button class="btn-sm btn-amber" onclick="stopRepair('${t.id}')">Stop Repair</button>` : ''}
             `;
-        } else {
-            actionButtons = `
+            } else {
+                actionButtons = `
                 <div style="font-size: 13px; font-weight: 700; color: var(--good); background: var(--good-dim); padding: 8px 12px; border-radius: 8px;">âœ“ Ticket Fully Completed</div>
             `;
-        }
+            }
 
-        return `
+            return `
             <div class="back-link" onclick="go('tickets')">&#8592; Back to Work Queue</div>
             
             <div class="detail-head">
@@ -2242,83 +2323,83 @@
                 </div>
             </div>
         `;
-    }
-
-    function acceptTicket(id) {
-        const ticket = ticketsState[id];
-        if (ticket) {
-            ticket.status = "In Progress";
-            ticket.repairRunning = true;
-            persistTicketStatus(id);
-            showToast('Ticket accepted successfully â€” starting timer');
-            go('working', id);
         }
-    }
 
-    function determineLocationByDept(dept) {
-        const d = (dept || '').toUpperCase().trim();
-        if (d.includes('FINISH')) return 'VFR2.1 Finishing Yard Rework Station';
-        if (d.includes('ASSY') || d.includes('ASSEMBLY')) return 'VFR2.1 Assembly Line 2 Bay';
-        if (d.includes('SAND')) return 'Sanding Rework Area';
-        if (d.includes('INCOMING')) return 'Incoming Inspection Bay';
-        if (d.includes('IPQC')) return 'IPQC Rework Cell';
-        return `${dept || 'General Rework'} Workshop Section`;
-    }
-
-    function scanLocation(id) {
-        const ticket = ticketsState[id];
-        if (!ticket) return;
-        const loc = determineLocationByDept(ticket.meta.fromDept);
-        showToast(`Location successfully updated at ${loc}`);
-    }
-
-    function scanStartRepair(id) {
-        const ticket = ticketsState[id];
-        if (!ticket) return;
-        
-        ticket.status = "In Progress";
-        ticket.repairRunning = true;
-        persistTicketStatus(id);
-        updateSidebarBadges();
-        
-        showToast('Repair started. Time tracking is running.');
-        go('working', id);
-    }
-
-    function stopRepair(id) {
-        const ticket = ticketsState[id];
-        if (ticket) {
-            ticket.repairRunning = false;
-            ticket.status = 'Paused';
-            persistTicketStatus(id, {
-                pausedAt: new Date().toISOString()
-            });
-            updateSidebarBadges();
-            showToast('Repair stopped (Paused).');
-            if (currentView === 'detail' && currentTicketId === id) {
-                go('detail', id);
-            } else if (currentView === 'working' && currentTicketId === id) {
+        function acceptTicket(id) {
+            const ticket = ticketsState[id];
+            if (ticket) {
+                ticket.status = "In Progress";
+                ticket.repairRunning = true;
+                persistTicketStatus(id);
+                showToast('Ticket accepted successfully â€” starting timer');
                 go('working', id);
             }
         }
-    }
 
-    // 4. REPAIR WORKING VIEW (TIMER / CHECKLIST / MATERIALS / NOTES)
-    function renderWorking(id) {
-        const ticket = ticketsState[id] || Object.values(ticketsState)[0];
-        const t = ticket.meta;
+        function determineLocationByDept(dept) {
+            const d = (dept || '').toUpperCase().trim();
+            if (d.includes('FINISH')) return 'VFR2.1 Finishing Yard Rework Station';
+            if (d.includes('ASSY') || d.includes('ASSEMBLY')) return 'VFR2.1 Assembly Line 2 Bay';
+            if (d.includes('SAND')) return 'Sanding Rework Area';
+            if (d.includes('INCOMING')) return 'Incoming Inspection Bay';
+            if (d.includes('IPQC')) return 'IPQC Rework Cell';
+            return `${dept || 'General Rework'} Workshop Section`;
+        }
 
-        const checklistHtml = ticket.checklist.map((c, i) => {
-            const checked = ticket.checklistChecked[i];
-            return `
+        function scanLocation(id) {
+            const ticket = ticketsState[id];
+            if (!ticket) return;
+            const loc = determineLocationByDept(ticket.meta.fromDept);
+            showToast(`Location successfully updated at ${loc}`);
+        }
+
+        function scanStartRepair(id) {
+            const ticket = ticketsState[id];
+            if (!ticket) return;
+
+            ticket.status = "In Progress";
+            ticket.repairRunning = true;
+            persistTicketStatus(id);
+            updateSidebarBadges();
+
+            showToast('Repair started. Time tracking is running.');
+            go('working', id);
+        }
+
+        function stopRepair(id) {
+            const ticket = ticketsState[id];
+            if (ticket) {
+                ticket.repairRunning = false;
+                ticket.status = 'Paused';
+                persistTicketStatus(id, {
+                    pausedAt: new Date().toISOString()
+                });
+                updateSidebarBadges();
+                showToast('Repair stopped (Paused).');
+                if (currentView === 'detail' && currentTicketId === id) {
+                    go('detail', id);
+                } else if (currentView === 'working' && currentTicketId === id) {
+                    go('working', id);
+                }
+            }
+        }
+
+        // 4. REPAIR WORKING VIEW (TIMER / CHECKLIST / MATERIALS / NOTES)
+        function renderWorking(id) {
+            const ticket = ticketsState[id] || Object.values(ticketsState)[0];
+            const t = ticket.meta;
+
+            const checklistHtml = ticket.checklist.map((c, i) => {
+                const checked = ticket.checklistChecked[i];
+                return `
                 <div class="checklist-item ${checked ? 'done' : ''}">
                     <input type="checkbox" ${checked ? 'checked' : ''} onchange="toggleChecklistItem('${id}', ${i}, this.checked)">
                     <label style="cursor:pointer; flex:1;"><span>${c}</span></label>
                 </div>
             `;
-        }).join('');
+            }).join('');
 
-        const materialsHtml = ticket.materials.map((m, i) => `
+            const materialsHtml = ticket.materials.map((m, i) => `
             <div class="mat-row" id="matRow-${id}-${i}">
                 <input value="${m.name}" placeholder="Material Name" onchange="updateMaterialName('${id}', ${i}, this.value)">
                 <input value="${m.qty}" style="max-width:90px;" placeholder="Qty" onchange="updateMaterialQty('${id}', ${i}, this.value)">
@@ -2326,7 +2407,7 @@
             </div>
         `).join('');
 
-        return `
+            return `
             <div class="back-link" onclick="go('detail', '${t.id}')">&#8592; Back to Detail view</div>
             
             <div style="display:flex; gap:18px; font-size:13px; color:var(--txt-dim); margin-bottom:14px; font-weight:600;">
@@ -2341,10 +2422,10 @@
                     <div class="tlbl" id="timerLabel">${ticket.repairRunning ? 'Repair Timer â€” Running' : 'Repair Timer â€” Stopped/Paused'}</div>
                 </div>
                 <div style="display:flex; gap:8px;">
-                    ${ticket.repairRunning ? 
-                        `<button class="btn-sm btn-amber" onclick="openModal('modalPause')">&#10074;&#10074; Stop Repair</button>` : 
-                        `<button class="btn-sm btn-steel" onclick="toggleTimer('${t.id}', true)">â–¶ Start Timer / Resume</button>`
-                    }
+                    ${ticket.repairRunning ?
+                    `<button class="btn-sm btn-amber" onclick="openModal('modalPause')">&#10074;&#10074; Stop Repair</button>` :
+                    `<button class="btn-sm btn-steel" onclick="toggleTimer('${t.id}', true)">â–¶ Start Timer / Resume</button>`
+                }
                     <button class="btn-sm btn-green" onclick="openCompleteModal('${t.id}')">&#10003; Complete Repair</button>
                 </div>
             </div>
@@ -2390,80 +2471,80 @@
                 </div>
             </div>
         `;
-    }
-
-    function toggleTimer(id, start) {
-        const ticket = ticketsState[id];
-        if (ticket) {
-            ticket.repairRunning = start;
-            ticket.status = start ? 'In Progress' : 'Paused';
-            persistTicketStatus(id);
-            go('working', id);
         }
-    }
 
-    function toggleChecklistItem(id, idx, isChecked) {
-        const ticket = ticketsState[id];
-        if (ticket) {
-            ticket.checklistChecked[idx] = isChecked;
-            const items = document.querySelectorAll('#checklistContainer .checklist-item');
-            if (items[idx]) {
-                if (isChecked) items[idx].classList.add('done');
-                else items[idx].classList.remove('done');
+        function toggleTimer(id, start) {
+            const ticket = ticketsState[id];
+            if (ticket) {
+                ticket.repairRunning = start;
+                ticket.status = start ? 'In Progress' : 'Paused';
+                persistTicketStatus(id);
+                go('working', id);
             }
         }
-    }
 
-    function updateWorkingNotes(id, text) {
-        const ticket = ticketsState[id];
-        if (ticket) {
-            ticket.notes = text;
-        }
-    }
-
-    // Material controls
-    function addMaterial(id) {
-        const ticket = ticketsState[id];
-        if (ticket) {
-            ticket.materials.push({ name: "", qty: "" });
-            go('working', id);
-        }
-    }
-
-    function removeMaterial(id, idx) {
-        const ticket = ticketsState[id];
-        if (ticket) {
-            ticket.materials.splice(idx, 1);
-            go('working', id);
-        }
-    }
-
-    function updateMaterialName(id, idx, val) {
-        const ticket = ticketsState[id];
-        if (ticket && ticket.materials[idx]) {
-            ticket.materials[idx].name = val;
-        }
-    }
-
-    function updateMaterialQty(id, idx, val) {
-        const ticket = ticketsState[id];
-        if (ticket && ticket.materials[idx]) {
-            ticket.materials[idx].qty = val;
-        }
-    }
-
-    // 5. REPAIR COMPLETED HISTORY VIEW
-    function renderHistory() {
-        const completedTickets = Object.values(ticketsState).filter(t => t.status === "Completed");
-        
-        const historyRows = completedTickets.map(h => {
-            let completedDate = '05 Jul 2026';
-            if (h.completedAt) {
-                try {
-                    completedDate = new Date(h.completedAt).toLocaleDateString();
-                } catch(e) {}
+        function toggleChecklistItem(id, idx, isChecked) {
+            const ticket = ticketsState[id];
+            if (ticket) {
+                ticket.checklistChecked[idx] = isChecked;
+                const items = document.querySelectorAll('#checklistContainer .checklist-item');
+                if (items[idx]) {
+                    if (isChecked) items[idx].classList.add('done');
+                    else items[idx].classList.remove('done');
+                }
             }
-            return `
+        }
+
+        function updateWorkingNotes(id, text) {
+            const ticket = ticketsState[id];
+            if (ticket) {
+                ticket.notes = text;
+            }
+        }
+
+        // Material controls
+        function addMaterial(id) {
+            const ticket = ticketsState[id];
+            if (ticket) {
+                ticket.materials.push({ name: "", qty: "" });
+                go('working', id);
+            }
+        }
+
+        function removeMaterial(id, idx) {
+            const ticket = ticketsState[id];
+            if (ticket) {
+                ticket.materials.splice(idx, 1);
+                go('working', id);
+            }
+        }
+
+        function updateMaterialName(id, idx, val) {
+            const ticket = ticketsState[id];
+            if (ticket && ticket.materials[idx]) {
+                ticket.materials[idx].name = val;
+            }
+        }
+
+        function updateMaterialQty(id, idx, val) {
+            const ticket = ticketsState[id];
+            if (ticket && ticket.materials[idx]) {
+                ticket.materials[idx].qty = val;
+            }
+        }
+
+        // 5. REPAIR COMPLETED HISTORY VIEW
+        function renderHistory() {
+            const completedTickets = Object.values(ticketsState).filter(t => t.status === "Completed");
+
+            const historyRows = completedTickets.map(h => {
+                let completedDate = '05 Jul 2026';
+                if (h.completedAt) {
+                    try {
+                        completedDate = new Date(h.completedAt).toLocaleDateString();
+                    } catch (e) { }
+                }
+                return `
                 <tr>
                     <td class="mono">${h.meta.id}</td>
                     <td class="mono">${h.meta.itemCode}</td>
@@ -2474,9 +2555,9 @@
                     <td><span class="pass-tag">PASS</span></td>
                 </tr>
             `;
-        }).join('');
+            }).join('');
 
-        const staticHistoryRows = staticHistory.map(h => `
+            const staticHistoryRows = staticHistory.map(h => `
             <tr>
                 <td class="mono">${h.id}</td>
                 <td class="mono">${h.itemCode}</td>
@@ -2488,7 +2569,7 @@
             </tr>
         `).join('');
 
-        return `
+            return `
             <div class="grid-4">
                 <div class="kpi green"><div class="num">${completedTickets.length + staticHistory.length}</div><div class="lbl">Total Completed</div></div>
                 <div class="kpi"><div class="num">1.4h</div><div class="lbl">Avg Repair Duration</div></div>
@@ -2521,33 +2602,33 @@
                 </div>
             </div>
         `;
-    }
+        }
 
-    // 6. NOTIFICATIONS VIEW
-    function renderNotif() {
-        const notifs = readNotifications();
-        
-        let dynamicNotifsHtml = "";
-        if (notifs.length > 0) {
-            dynamicNotifsHtml = notifs.map((n, i) => {
-                const timeAgo = formatTimeAgo(n.timestamp);
-                return `
+        // 6. NOTIFICATIONS VIEW
+        function renderNotif() {
+            const notifs = readNotifications();
+
+            let dynamicNotifsHtml = "";
+            if (notifs.length > 0) {
+                dynamicNotifsHtml = notifs.map((n, i) => {
+                    const timeAgo = formatTimeAgo(n.timestamp);
+                    return `
                     <div style="${i > 0 ? 'border-top:1px solid var(--panel-line-soft); padding-top:14px;' : ''}">
                         <div style="font-weight:600; font-size:14px; color:#1f2937;">${n.title}</div>
                         <div style="font-size:12.5px; color:var(--txt-dim); margin-top:2px;">${n.text}</div>
                         <div style="font-size:11px; color:#9ca3af; margin-top:4px;">${timeAgo}</div>
                     </div>
                 `;
-            }).join('');
-        } else {
-            dynamicNotifsHtml = `
+                }).join('');
+            } else {
+                dynamicNotifsHtml = `
                 <div style="text-align:center; padding: 20px 0; color: var(--txt-dim); font-size: 13px;">
                     No new status notifications.
                 </div>
             `;
-        }
+            }
 
-        return `
+            return `
             <div class="panel">
                 <div class="panel-head" style="display:flex; justify-content:space-between; align-items:center;">
                     <h3>Notifications Inbox</h3>
@@ -2577,23 +2658,23 @@
                 </div>
             </div>
         `;
-    }
+        }
 
-    // 7. PROFILE ACCOUNT VIEW
-    function renderProfile() {
-        const branches = [
-            "VFR2.1 Finishing Yard",
-            "VFR2.1 Assembly Yard",
-            "VFR1.0 Main Factory",
-            "VFR3.0 Packaging Site",
-            "ITW Office Site"
-        ];
-        
-        const branchOptions = branches.map(b => `
+        // 7. PROFILE ACCOUNT VIEW
+        function renderProfile() {
+            const branches = [
+                "VFR2.1 Finishing Yard",
+                "VFR2.1 Assembly Yard",
+                "VFR1.0 Main Factory",
+                "VFR3.0 Packaging Site",
+                "ITW Office Site"
+            ];
+
+            const branchOptions = branches.map(b => `
             <option value="${b}" ${userProfile.worksiteBranch === b ? 'selected' : ''}>${b}</option>
         `).join('');
 
-        return `
+            return `
             <div class="panel">
                 <div class="panel-head"><h3>${userProfile.role} Profile</h3></div>
                 <div class="panel-body">
@@ -2613,113 +2694,113 @@
                 </div>
             </div>
         `;
-    }
-
-    function updateProfileBranch(val) {
-        userProfile.worksiteBranch = val;
-        showToast(`Worksite Branch updated to: ${val}`);
-    }
-
-    /* ================= MODAL CONTROLS ================= */
-    function openModal(id) {
-        document.getElementById(id).classList.add('open');
-    }
-
-    function openCompleteModal(id) {
-        const ticket = ticketsState[id];
-        if (ticket) {
-            const hours = Math.floor(ticket.repairSeconds / 3600);
-            const minutes = Math.floor((ticket.repairSeconds % 3600) / 60);
-            
-            document.getElementById('completeHours').value = hours;
-            document.getElementById('completeMinutes').value = minutes;
         }
-        openModal('modalComplete');
-    }
 
-    function closeModal(id) {
-        document.getElementById(id).classList.remove('open');
-    }
-
-    function confirmPause() {
-        closeModal('modalPause');
-        const ticket = ticketsState[currentTicketId];
-        if (ticket) {
-            const reason = document.querySelector('input[name="pr"]:checked').value;
-            ticket.repairRunning = false;
-            ticket.status = 'Paused';
-            persistTicketStatus(currentTicketId, {
-                pauseReason: reason,
-                pausedAt: new Date().toISOString()
-            });
-            showToast(`Repair paused: ${reason}`);
-            go('working', currentTicketId);
+        function updateProfileBranch(val) {
+            userProfile.worksiteBranch = val;
+            showToast(`Worksite Branch updated to: ${val}`);
         }
-    }
 
-    function confirmComplete() {
-        closeModal('modalComplete');
-        const ticket = ticketsState[currentTicketId];
-        if (ticket) {
-            const summary = document.getElementById('completeSummary').value;
-            const resultVal = document.querySelector('input[name="rr"]:checked').value;
-            const hours = parseInt(document.getElementById('completeHours').value) || 0;
-            const mins = parseInt(document.getElementById('completeMinutes').value) || 0;
-            
-            ticket.repairRunning = false;
-            ticket.status = 'Completed';
-            ticket.summary = summary;
-            ticket.result = resultVal;
-            ticket.repairSeconds = (hours * 3600) + (mins * 60);
-            persistTicketStatus(currentTicketId, {
-                summary,
-                result: resultVal,
-                completedAt: new Date().toISOString()
-            });
-
-            showToast('Ticket completed.');
-            go('tickets');
+        /* ================= MODAL CONTROLS ================= */
+        function openModal(id) {
+            document.getElementById(id).classList.add('open');
         }
-    }
 
-    function showToast(msg) {
-        document.getElementById('toastMsg').textContent = msg;
-        const toast = document.getElementById('toast');
-        toast.style.display = 'flex';
-        clearTimeout(window._toastTimer);
-        window._toastTimer = setTimeout(() => {
-            toast.style.display = 'none';
-        }, 3000);
-    }
+        function openCompleteModal(id) {
+            const ticket = ticketsState[id];
+            if (ticket) {
+                const hours = Math.floor(ticket.repairSeconds / 3600);
+                const minutes = Math.floor((ticket.repairSeconds % 3600) / 60);
 
-    // Modal overlay background click close
-    document.querySelectorAll('.modal-overlay').forEach(overlay => {
-        overlay.addEventListener('click', e => {
-            if (e.target === overlay) {
-                closeModal(overlay.id);
+                document.getElementById('completeHours').value = hours;
+                document.getElementById('completeMinutes').value = minutes;
             }
-        });
-    });
+            openModal('modalComplete');
+        }
 
-    /* ================= PRINT QUARANTINE FORM ================= */
-    function openQuarantine(id) {
-        const ticket = ticketsState[id];
-        if (!ticket) return;
-        
-        const t = ticket.meta;
-        const inspectorName = t.source ? t.source.inspectorName : 'N/A';
-        const inspectorDept = t.source ? t.source.inspectorDept : 'N/A';
-        const inspectedDate = t.source ? t.source.inspectedDate.substring(0, 10) : 'N/A';
-        
-        // Mock image slots for printable view
-        const photoSlots = Array.from({ length: 5 }).map(() => `
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('open');
+        }
+
+        function confirmPause() {
+            closeModal('modalPause');
+            const ticket = ticketsState[currentTicketId];
+            if (ticket) {
+                const reason = document.querySelector('input[name="pr"]:checked').value;
+                ticket.repairRunning = false;
+                ticket.status = 'Paused';
+                persistTicketStatus(currentTicketId, {
+                    pauseReason: reason,
+                    pausedAt: new Date().toISOString()
+                });
+                showToast(`Repair paused: ${reason}`);
+                go('working', currentTicketId);
+            }
+        }
+
+        function confirmComplete() {
+            closeModal('modalComplete');
+            const ticket = ticketsState[currentTicketId];
+            if (ticket) {
+                const summary = document.getElementById('completeSummary').value;
+                const resultVal = document.querySelector('input[name="rr"]:checked').value;
+                const hours = parseInt(document.getElementById('completeHours').value) || 0;
+                const mins = parseInt(document.getElementById('completeMinutes').value) || 0;
+
+                ticket.repairRunning = false;
+                ticket.status = 'Completed';
+                ticket.summary = summary;
+                ticket.result = resultVal;
+                ticket.repairSeconds = (hours * 3600) + (mins * 60);
+                persistTicketStatus(currentTicketId, {
+                    summary,
+                    result: resultVal,
+                    completedAt: new Date().toISOString()
+                });
+
+                showToast('Ticket completed.');
+                go('tickets');
+            }
+        }
+
+        function showToast(msg) {
+            document.getElementById('toastMsg').textContent = msg;
+            const toast = document.getElementById('toast');
+            toast.style.display = 'flex';
+            clearTimeout(window._toastTimer);
+            window._toastTimer = setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
+        }
+
+        // Modal overlay background click close
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', e => {
+                if (e.target === overlay) {
+                    closeModal(overlay.id);
+                }
+            });
+        });
+
+        /* ================= PRINT QUARANTINE FORM ================= */
+        function openQuarantine(id) {
+            const ticket = ticketsState[id];
+            if (!ticket) return;
+
+            const t = ticket.meta;
+            const inspectorName = t.source ? t.source.inspectorName : 'N/A';
+            const inspectorDept = t.source ? t.source.inspectorDept : 'N/A';
+            const inspectedDate = t.source ? t.source.inspectedDate.substring(0, 10) : 'N/A';
+
+            // Mock image slots for printable view
+            const photoSlots = Array.from({ length: 5 }).map(() => `
             <div class="qr-photo">
                 QC Inspection Image Reference<br>
                 [Defect Location Detail]
             </div>
         `).join('');
 
-        document.getElementById('qrDocBody').innerHTML = `
+            document.getElementById('qrDocBody').innerHTML = `
             <div class="qr-topline">
                 <div class="qr-h1">QUARANTINE REPORT</div>
                 <div class="qr-meta-box">
@@ -2752,211 +2833,211 @@
                 <div class="qr-cell"><div class="en">Disposition Assignee Signature</div><div class="vn">NgÆ°á»i chá»‹u trÃ¡ch nhiá»‡m sá»­a</div><div class="val"><b>${userProfile.fullName}</b> (${userProfile.role})</div></div>
             </div>
         `;
-        
-        openModal('modalQuarantine');
-    }
 
-    /* ================= INITIAL LOAD AT WAKEUP ================= */
-    // Load logged-in user information dynamically from localStorage
-    const savedUsername = localStorage.getItem('username');
-    const savedRole = localStorage.getItem('role');
-    const savedUserId = localStorage.getItem('userId');
-
-    if (savedUsername) {
-        userProfile.fullName = savedUsername;
-    }
-    if (savedRole) {
-        // This page is for QC Manager only — redirect others to their correct page
-        if (savedRole === 'Production Worker') {
-            window.location.href = '/production-worker.html';
-        } else if (savedRole === 'Production Manager') {
-            window.location.href = '/production-manager.html';
-        } else if (savedRole !== 'QC Manager') {
-            window.location.href = '/index.html';
+            openModal('modalQuarantine');
         }
-        userProfile.role = savedRole;
-        document.title = `QC Manager — Defect Control | Quality Management System`;
-    }
-    if (savedUserId) {
-        userProfile.employeeId = `EMP-${savedUserId}`;
-    }
 
-    // Function to update user UI components
-    function updateLoggedUserUI() {
+        /* ================= INITIAL LOAD AT WAKEUP ================= */
+        // Load logged-in user information dynamically from localStorage
+        const savedUsername = localStorage.getItem('username');
+        const savedRole = localStorage.getItem('role');
+        const savedUserId = localStorage.getItem('userId');
+
         if (savedUsername) {
-            document.querySelectorAll('.sb-user .nm').forEach(el => el.textContent = savedUsername);
-            const initials = savedUsername.split(' ')
-                .map(n => n[0])
-                .filter(Boolean)
-                .join('')
-                .substring(0, 2)
-                .toUpperCase();
-            if (initials) {
-                document.querySelectorAll('.sb-user .av').forEach(el => el.textContent = initials);
-            }
+            userProfile.fullName = savedUsername;
         }
         if (savedRole) {
-            document.querySelectorAll('.sb-user .rl').forEach(el => el.textContent = savedRole);
+            // This page is for QC Manager only — redirect others to their correct page
+            if (savedRole === 'Production Worker') {
+                window.location.href = '/production-worker.html';
+            } else if (savedRole === 'Production Manager') {
+                window.location.href = '/production-manager.html';
+            } else if (savedRole !== 'QC Manager') {
+                window.location.href = '/index.html';
+            }
+            userProfile.role = savedRole;
+            document.title = `QC Manager — Defect Control | Quality Management System`;
         }
-    }
+        if (savedUserId) {
+            userProfile.employeeId = `EMP-${savedUserId}`;
+        }
 
-    // Run UI update immediately if DOM is ready, and also on DOMContentLoaded
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', updateLoggedUserUI);
-    } else {
-        updateLoggedUserUI();
-    }
-
-    function logout() {
-        localStorage.removeItem('token');
-        localStorage.removeItem('userId');
-        localStorage.removeItem('username');
-        localStorage.removeItem('role');
-        window.location.href = '/index.html';
-    }
-
-    // Listen to storage changes to update ticket status in real-time
-    window.addEventListener('storage', (e) => {
-        if (e.key === REPAIR_TICKET_STATUS_KEY) {
-            try {
-                const storedStatuses = readStoredRepairTicketStatuses();
-                let hasChanges = false;
-                inspectionData.forEach((ticket, index) => {
-                    const defaultState = getDefaultStatus(index);
-                    const saved = storedStatuses[ticket.id] || storedStatuses[ticket.itemCode];
-                    const storedStatus = applyStoredRepairStatus(saved, defaultState.status, defaultState.repairSeconds, defaultState.repairRunning);
-                    
-                    const tState = ticketsState[ticket.id];
-                    if (tState) {
-                        const oldStatus = tState.status;
-                        const newStatus = storedStatus.status;
-                        
-                        tState.status = storedStatus.status;
-                        tState.repairSeconds = storedStatus.repairSeconds;
-                        tState.repairRunning = storedStatus.repairRunning;
-                        tState.updatedAt = storedStatus.updatedAt;
-                        if (saved && saved.completedAt) {
-                            tState.completedAt = saved.completedAt;
-                        }
-
-                        if (oldStatus !== newStatus) {
-                            hasChanges = true;
-                            addNotification(
-                                `Ticket ${ticket.id} Status Changed`,
-                                `Ticket status updated from "${oldStatus}" to "${newStatus}" by Production Worker.`
-                            );
-                        }
-                    }
-                });
-                
-                updateSidebarBadges();
-                
-                // If the user is currently viewing the updated list/detail/working, refresh it
-                if (currentView === 'tickets') {
-                    const listContainer = document.getElementById('ticketsListContainer');
-                    if (listContainer) listContainer.innerHTML = renderTicketsListContent();
-                } else if (currentView === 'detail' && currentTicketId) {
-                    go('detail', currentTicketId);
-                } else if (currentView === 'working' && currentTicketId) {
-                    go('working', currentTicketId);
-                } else if (currentView === 'notif') {
-                    const container = document.getElementById('content');
-                    if (container) container.innerHTML = renderNotif();
+        // Function to update user UI components
+        function updateLoggedUserUI() {
+            if (savedUsername) {
+                document.querySelectorAll('.sb-user .nm').forEach(el => el.textContent = savedUsername);
+                const initials = savedUsername.split(' ')
+                    .map(n => n[0])
+                    .filter(Boolean)
+                    .join('')
+                    .substring(0, 2)
+                    .toUpperCase();
+                if (initials) {
+                    document.querySelectorAll('.sb-user .av').forEach(el => el.textContent = initials);
                 }
-            } catch (err) {
-                console.error('Failed to sync statuses on storage event:', err);
+            }
+            if (savedRole) {
+                document.querySelectorAll('.sb-user .rl').forEach(el => el.textContent = savedRole);
             }
         }
-    });
 
-    /* ================= ERP SUPPLEMENT REQUEST MODAL LOGIC ================= */
-    let currentSupTicketId = null;
-    let requestMaterialsList = [];
-
-    function openSupplementForm(ticketId) {
-        currentSupTicketId = ticketId;
-        const ticket = inspectionData.find(t => t.id === ticketId);
-        if (!ticket) return;
-
-        // Prefill master info
-        const generatedCode = `SRC-${new Date().getFullYear()}${String(new Date().getMonth()+1).padStart(2,'0')}-${String(Math.floor(1000 + Math.random()*9000))}`;
-        document.getElementById('sup-code').value = generatedCode;
-        document.getElementById('sup-requester').value = `${localStorage.getItem('userId') || '20949'} - ${localStorage.getItem('username') || 'Ngô Phạm Yến Linh'}`;
-        
-        // Format today's date as DD/MM/YYYY
-        const today = new Date();
-        const formattedDate = `${String(today.getDate()).padStart(2,'0')}/${String(today.getMonth()+1).padStart(2,'0')}/${today.getFullYear()}`;
-        document.getElementById('sup-date').value = formattedDate;
-
-        // Prefill WO and Item options
-        const woSelect = document.getElementById('sup-material-wo');
-        const itemSelect = document.getElementById('sup-material-item');
-
-        woSelect.innerHTML = `<option value="${ticket.wo || ''}">${ticket.wo || 'N/A'}</option>`;
-        itemSelect.innerHTML = `<option value="${ticket.itemCode || ''}">${ticket.itemCode || 'N/A'}</option>`;
-
-        // Reset inputs
-        document.getElementById('sup-reason').value = "";
-        document.getElementById('sup-related-dept').value = "";
-        document.getElementById('sup-remark').value = "";
-        document.getElementById('sup-confirm-chk').checked = false;
-
-        // Reset materials list
-        requestMaterialsList = [];
-        renderSupplementMaterialsTable();
-
-        document.getElementById('supplementRequestModal').style.display = 'flex';
-    }
-
-    function closeSupplementForm() {
-        document.getElementById('supplementRequestModal').style.display = 'none';
-        currentSupTicketId = null;
-        requestMaterialsList = [];
-    }
-
-    window.clearMaterialForm = function() {
-        document.getElementById('sup-material-qty').value = 1;
-        document.getElementById('sup-material-code').selectedIndex = 0;
-    }
-
-    window.addMaterialToRequest = function() {
-        const wo = document.getElementById('sup-material-wo').value;
-        const itemCode = document.getElementById('sup-material-item').value;
-        const materialSelect = document.getElementById('sup-material-code');
-        const materialCode = materialSelect.value;
-        const materialName = materialSelect.options[materialSelect.selectedIndex].text.split('(')[1]?.replace(')', '') || 'Wood Component';
-        const qty = Number(document.getElementById('sup-material-qty').value) || 1;
-
-        if (!qty || qty < 1) {
-            alert('Please enter a valid quantity.');
-            return;
+        // Run UI update immediately if DOM is ready, and also on DOMContentLoaded
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', updateLoggedUserUI);
+        } else {
+            updateLoggedUserUI();
         }
 
-        const newMat = {
-            code: materialCode,
-            name: materialName,
-            dimension: '18 x 400 x 600',
-            unit: 'pcs',
-            qty: qty,
-            wo: wo,
-            itemCode: itemCode,
-            revision: 'A',
-            carcassCode: 'CAR-021838-A',
-            itemQty: 1,
-            bomQtyPerItem: 1,
-            totalBomQty: qty,
-            remark: 'Defect replacement requested',
-            budget: 'Yes'
-        };
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('userId');
+            localStorage.removeItem('username');
+            localStorage.removeItem('role');
+            window.location.href = '/index.html';
+        }
 
-        requestMaterialsList.push(newMat);
-        renderSupplementMaterialsTable();
-        window.clearMaterialForm();
-    }
+        // Listen to storage changes to update ticket status in real-time
+        window.addEventListener('storage', (e) => {
+            if (e.key === REPAIR_TICKET_STATUS_KEY) {
+                try {
+                    const storedStatuses = readStoredRepairTicketStatuses();
+                    let hasChanges = false;
+                    inspectionData.forEach((ticket, index) => {
+                        const defaultState = getDefaultStatus(index);
+                        const saved = storedStatuses[ticket.id] || storedStatuses[ticket.itemCode];
+                        const storedStatus = applyStoredRepairStatus(saved, defaultState.status, defaultState.repairSeconds, defaultState.repairRunning);
 
-    function renderSupplementMaterialsTable() {
-        const tbody = document.getElementById('sup-materials-tbody');
-        tbody.innerHTML = requestMaterialsList.map((m, index) => `
+                        const tState = ticketsState[ticket.id];
+                        if (tState) {
+                            const oldStatus = tState.status;
+                            const newStatus = storedStatus.status;
+
+                            tState.status = storedStatus.status;
+                            tState.repairSeconds = storedStatus.repairSeconds;
+                            tState.repairRunning = storedStatus.repairRunning;
+                            tState.updatedAt = storedStatus.updatedAt;
+                            if (saved && saved.completedAt) {
+                                tState.completedAt = saved.completedAt;
+                            }
+
+                            if (oldStatus !== newStatus) {
+                                hasChanges = true;
+                                addNotification(
+                                    `Ticket ${ticket.id} Status Changed`,
+                                    `Ticket status updated from "${oldStatus}" to "${newStatus}" by Production Worker.`
+                                );
+                            }
+                        }
+                    });
+
+                    updateSidebarBadges();
+
+                    // If the user is currently viewing the updated list/detail/working, refresh it
+                    if (currentView === 'tickets') {
+                        const listContainer = document.getElementById('ticketsListContainer');
+                        if (listContainer) listContainer.innerHTML = renderTicketsListContent();
+                    } else if (currentView === 'detail' && currentTicketId) {
+                        go('detail', currentTicketId);
+                    } else if (currentView === 'working' && currentTicketId) {
+                        go('working', currentTicketId);
+                    } else if (currentView === 'notif') {
+                        const container = document.getElementById('content');
+                        if (container) container.innerHTML = renderNotif();
+                    }
+                } catch (err) {
+                    console.error('Failed to sync statuses on storage event:', err);
+                }
+            }
+        });
+
+        /* ================= ERP SUPPLEMENT REQUEST MODAL LOGIC ================= */
+        let currentSupTicketId = null;
+        let requestMaterialsList = [];
+
+        function openSupplementForm(ticketId) {
+            currentSupTicketId = ticketId;
+            const ticket = inspectionData.find(t => t.id === ticketId);
+            if (!ticket) return;
+
+            // Prefill master info
+            const generatedCode = `SRC-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(Math.floor(1000 + Math.random() * 9000))}`;
+            document.getElementById('sup-code').value = generatedCode;
+            document.getElementById('sup-requester').value = `${localStorage.getItem('userId') || '20949'} - ${localStorage.getItem('username') || 'Ngô Phạm Yến Linh'}`;
+
+            // Format today's date as DD/MM/YYYY
+            const today = new Date();
+            const formattedDate = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
+            document.getElementById('sup-date').value = formattedDate;
+
+            // Prefill WO and Item options
+            const woSelect = document.getElementById('sup-material-wo');
+            const itemSelect = document.getElementById('sup-material-item');
+
+            woSelect.innerHTML = `<option value="${ticket.wo || ''}">${ticket.wo || 'N/A'}</option>`;
+            itemSelect.innerHTML = `<option value="${ticket.itemCode || ''}">${ticket.itemCode || 'N/A'}</option>`;
+
+            // Reset inputs
+            document.getElementById('sup-reason').value = "";
+            document.getElementById('sup-related-dept').value = "";
+            document.getElementById('sup-remark').value = "";
+            document.getElementById('sup-confirm-chk').checked = false;
+
+            // Reset materials list
+            requestMaterialsList = [];
+            renderSupplementMaterialsTable();
+
+            document.getElementById('supplementRequestModal').style.display = 'flex';
+        }
+
+        function closeSupplementForm() {
+            document.getElementById('supplementRequestModal').style.display = 'none';
+            currentSupTicketId = null;
+            requestMaterialsList = [];
+        }
+
+        window.clearMaterialForm = function () {
+            document.getElementById('sup-material-qty').value = 1;
+            document.getElementById('sup-material-code').selectedIndex = 0;
+        }
+
+        window.addMaterialToRequest = function () {
+            const wo = document.getElementById('sup-material-wo').value;
+            const itemCode = document.getElementById('sup-material-item').value;
+            const materialSelect = document.getElementById('sup-material-code');
+            const materialCode = materialSelect.value;
+            const materialName = materialSelect.options[materialSelect.selectedIndex].text.split('(')[1]?.replace(')', '') || 'Wood Component';
+            const qty = Number(document.getElementById('sup-material-qty').value) || 1;
+
+            if (!qty || qty < 1) {
+                alert('Please enter a valid quantity.');
+                return;
+            }
+
+            const newMat = {
+                code: materialCode,
+                name: materialName,
+                dimension: '18 x 400 x 600',
+                unit: 'pcs',
+                qty: qty,
+                wo: wo,
+                itemCode: itemCode,
+                revision: 'A',
+                carcassCode: 'CAR-021838-A',
+                itemQty: 1,
+                bomQtyPerItem: 1,
+                totalBomQty: qty,
+                remark: 'Defect replacement requested',
+                budget: 'Yes'
+            };
+
+            requestMaterialsList.push(newMat);
+            renderSupplementMaterialsTable();
+            window.clearMaterialForm();
+        }
+
+        function renderSupplementMaterialsTable() {
+            const tbody = document.getElementById('sup-materials-tbody');
+            tbody.innerHTML = requestMaterialsList.map((m, index) => `
             <tr>
                 <td>${m.code}</td>
                 <td>${m.name}</td>
@@ -2975,573 +3056,580 @@
             </tr>
         `).join('');
 
-        document.getElementById('sup-footer-count').textContent = `Count: ${requestMaterialsList.length}`;
-    }
-
-    window.saveSupplementRequest = function() {
-        if (!currentSupTicketId) return;
-
-        const reason = document.getElementById('sup-reason').value;
-        if (!reason) {
-            alert('Reason To Request is required.');
-            return;
+            document.getElementById('sup-footer-count').textContent = `Count: ${requestMaterialsList.length}`;
         }
 
-        if (requestMaterialsList.length === 0) {
-            alert('Please add at least one material to the request.');
-            return;
-        }
+        window.saveSupplementRequest = function () {
+            if (!currentSupTicketId) return;
 
-        const confirmChecked = document.getElementById('sup-confirm-chk').checked;
-        if (!confirmChecked) {
-            alert('Please check "Confirm" checkbox before saving.');
-            return;
-        }
-
-        // Persist the supplement info in the localStorage status bridge
-        const statuses = readStoredRepairTicketStatuses();
-        const saved = statuses[currentSupTicketId] || {};
-
-        statuses[currentSupTicketId] = {
-            ...saved,
-            status: saved.status || 'Waiting Accept',
-            updatedAt: new Date().toISOString(),
-            supplement: {
-                needed: true,
-                status: 'waiting',
-                partName: requestMaterialsList.map(m => m.name).join(', '),
-                qty: requestMaterialsList.reduce((acc, m) => acc + m.qty, 0),
-                eta: "Pending Approval",
-                details: requestMaterialsList
+            const reason = document.getElementById('sup-reason').value;
+            if (!reason) {
+                alert('Reason To Request is required.');
+                return;
             }
-        };
 
-        writeStoredRepairTicketStatuses(statuses);
+            if (requestMaterialsList.length === 0) {
+                alert('Please add at least one material to the request.');
+                return;
+            }
 
-        // Also add dynamic update notification
-        addNotification(
-            `Supplement Request Created`,
-            `Supplement request ${document.getElementById('sup-code').value} created for Ticket ${currentSupTicketId}.`
-        );
+            const confirmChecked = document.getElementById('sup-confirm-chk').checked;
+            if (!confirmChecked) {
+                alert('Please check "Confirm" checkbox before saving.');
+                return;
+            }
 
-        alert('💾 Supplement Request saved successfully!');
-        closeSupplementForm();
+            // Persist the supplement info in the localStorage status bridge
+            const statuses = readStoredRepairTicketStatuses();
+            const saved = statuses[currentSupTicketId] || {};
 
-        // Refresh views
-        const listContainer = document.getElementById('ticketsListContainer');
-        if (listContainer) listContainer.innerHTML = renderTicketsListContent();
-    }
+            statuses[currentSupTicketId] = {
+                ...saved,
+                status: saved.status || 'Waiting Accept',
+                updatedAt: new Date().toISOString(),
+                supplement: {
+                    needed: true,
+                    status: 'waiting',
+                    partName: requestMaterialsList.map(m => m.name).join(', '),
+                    qty: requestMaterialsList.reduce((acc, m) => acc + m.qty, 0),
+                    eta: "Pending Approval",
+                    details: requestMaterialsList
+                }
+            };
 
-    window.closeSupplementForm = closeSupplementForm;
+            writeStoredRepairTicketStatuses(statuses);
 
-    loadInspectionData();
-</script>
+            // Also add dynamic update notification
+            addNotification(
+                `Supplement Request Created`,
+                `Supplement request ${document.getElementById('sup-code').value} created for Ticket ${currentSupTicketId}.`
+            );
 
-<!-- CSS STYLE INJECTION -->
-<style>
-/* ERP SUPPLEMENT REQUEST MODAL STYLE */
-.sup-modal {
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    z-index: 9999;
-    background: rgba(0, 0, 0, 0.4);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
+            alert('💾 Supplement Request saved successfully!');
+            closeSupplementForm();
 
-.sup-modal-content {
-    width: 95%;
-    max-width: 1200px;
-    height: 90vh;
-    background: #f7f9fa;
-    border-radius: 8px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    border: 1px solid #c8c8c8;
-}
+            // Refresh views
+            const listContainer = document.getElementById('ticketsListContainer');
+            if (listContainer) listContainer.innerHTML = renderTicketsListContent();
+        }
 
-/* ERP Tab Bar */
-.sup-tab-bar {
-    display: flex;
-    background: #e0e0e0;
-    border-bottom: 1px solid #c8c8c8;
-    padding-top: 4px;
-}
+        window.closeSupplementForm = closeSupplementForm;
 
-.sup-tab {
-    padding: 6px 16px;
-    font-size: 12px;
-    font-weight: 500;
-    color: #4b5563;
-    background: #d4d4d4;
-    border: 1px solid #c8c8c8;
-    border-bottom: none;
-    border-radius: 4px 4px 0 0;
-    margin-left: 4px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
+        loadInspectionData();
+    </script>
 
-.sup-tab.active {
-    background: #f7f9fa;
-    color: #113228;
-    font-weight: bold;
-    border-top: 2px solid var(--amber, #1b4d3e);
-}
+    <!-- CSS STYLE INJECTION -->
+    <style>
+        /* ERP SUPPLEMENT REQUEST MODAL STYLE */
+        .sup-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 9999;
+            background: rgba(0, 0, 0, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
 
-.sup-tab-close {
-    color: #ef4444;
-    font-weight: bold;
-}
+        .sup-modal-content {
+            width: 95%;
+            max-width: 1200px;
+            height: 90vh;
+            background: #f7f9fa;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid #c8c8c8;
+        }
 
-/* Modal Body Scroll */
-.sup-modal-body {
-    flex: 1;
-    overflow-y: auto;
-    padding: 16px;
-    font-size: 12px;
-}
+        /* ERP Tab Bar */
+        .sup-tab-bar {
+            display: flex;
+            background: #e0e0e0;
+            border-bottom: 1px solid #c8c8c8;
+            padding-top: 4px;
+        }
 
-/* Section Cards */
-.sup-section-card {
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    padding: 12px 16px;
-    margin-bottom: 16px;
-    background: #ffffff;
-}
+        .sup-tab {
+            padding: 6px 16px;
+            font-size: 12px;
+            font-weight: 500;
+            color: #4b5563;
+            background: #d4d4d4;
+            border: 1px solid #c8c8c8;
+            border-bottom: none;
+            border-radius: 4px 4px 0 0;
+            margin-left: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
 
-.sup-section-legend {
-    font-weight: bold;
-    color: #113228;
-    padding: 0 8px;
-    font-size: 13px;
-}
+        .sup-tab.active {
+            background: #f7f9fa;
+            color: #113228;
+            font-weight: bold;
+            border-top: 2px solid var(--amber, #1b4d3e);
+        }
 
-/* Form layout grid */
-.sup-form-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 20px;
-}
+        .sup-tab-close {
+            color: #ef4444;
+            font-weight: bold;
+        }
 
-.sup-form-group {
-    margin-bottom: 8px;
-}
+        /* Modal Body Scroll */
+        .sup-modal-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            font-size: 12px;
+        }
 
-.sup-form-group label {
-    display: block;
-    font-size: 11px;
-    font-weight: bold;
-    color: #374151;
-    margin-bottom: 4px;
-}
+        /* Section Cards */
+        .sup-section-card {
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            background: #ffffff;
+        }
 
-.sup-form-group input,
-.sup-form-group select {
-    width: 100%;
-    padding: 6px 8px;
-    border: 1px solid #c8c8c8;
-    border-radius: 4px;
-    font-size: 12px;
-    background-color: #fafafa;
-}
+        .sup-section-legend {
+            font-weight: bold;
+            color: #113228;
+            padding: 0 8px;
+            font-size: 13px;
+        }
 
-.sup-form-group input[readonly] {
-    background-color: #f3f4f6;
-    color: #6b7280;
-}
+        /* Form layout grid */
+        .sup-form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+        }
 
-.required-star {
-    color: #ef4444;
-    font-weight: bold;
-}
+        .sup-form-group {
+            margin-bottom: 8px;
+        }
 
-.sup-status-new {
-    display: inline-block;
-    color: #ef4444;
-    font-weight: bold;
-    font-size: 14px;
-    margin-top: 4px;
-}
+        .sup-form-group label {
+            display: block;
+            font-size: 11px;
+            font-weight: bold;
+            color: #374151;
+            margin-bottom: 4px;
+        }
 
-/* Attach file section */
-.sup-attach-section {
-    padding: 8px 12px;
-    background: #ffffff;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    margin-bottom: 16px;
-    font-size: 12px;
-}
+        .sup-form-group input,
+        .sup-form-group select {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid #c8c8c8;
+            border-radius: 4px;
+            font-size: 12px;
+            background-color: #fafafa;
+        }
 
-/* Add Material Section Row */
-.sup-add-material-row {
-    display: flex;
-    align-items: flex-end;
-    gap: 16px;
-}
+        .sup-form-group input[readonly] {
+            background-color: #f3f4f6;
+            color: #6b7280;
+        }
 
-.flex-1 { flex: 1; }
+        .required-star {
+            color: #ef4444;
+            font-weight: bold;
+        }
 
-.sup-action-buttons {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 8px;
-}
+        .sup-status-new {
+            display: inline-block;
+            color: #ef4444;
+            font-weight: bold;
+            font-size: 14px;
+            margin-top: 4px;
+        }
 
-.sup-btn {
-    padding: 6px 16px;
-    font-size: 12px;
-    font-weight: bold;
-    border-radius: 4px;
-    border: 1px solid #999;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-}
+        /* Attach file section */
+        .sup-attach-section {
+            padding: 8px 12px;
+            background: #ffffff;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            font-size: 12px;
+        }
 
-.btn-clear {
-    background: #e5e7eb;
-    color: #374151;
-}
+        /* Add Material Section Row */
+        .sup-add-material-row {
+            display: flex;
+            align-items: flex-end;
+            gap: 16px;
+        }
 
-.btn-add {
-    background: var(--amber, #1b4d3e);
-    color: #ffffff;
-    border-color: var(--amber, #1b4d3e);
-}
+        .flex-1 {
+            flex: 1;
+        }
 
-.btn-save {
-    background: var(--amber, #1b4d3e);
-    color: #ffffff;
-    border-color: var(--amber, #1b4d3e);
-}
+        .sup-action-buttons {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
 
-.btn-close {
-    background: #f3f4f6;
-    color: #374151;
-}
+        .sup-btn {
+            padding: 6px 16px;
+            font-size: 12px;
+            font-weight: bold;
+            border-radius: 4px;
+            border: 1px solid #999;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
 
-.btn-export {
-    background: #e2f0d9;
-    color: #385723;
-    border-color: #a9d18e;
-}
+        .btn-clear {
+            background: #e5e7eb;
+            color: #374151;
+        }
 
-/* Materials Table */
-.sup-table-section {
-    background: #ffffff;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    padding: 12px;
-}
+        .btn-add {
+            background: var(--amber, #1b4d3e);
+            color: #ffffff;
+            border-color: var(--amber, #1b4d3e);
+        }
 
-.sup-table-wrapper {
-    overflow-x: auto;
-    max-height: 200px;
-}
+        .btn-save {
+            background: var(--amber, #1b4d3e);
+            color: #ffffff;
+            border-color: var(--amber, #1b4d3e);
+        }
 
-.sup-materials-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 11px;
-}
+        .btn-close {
+            background: #f3f4f6;
+            color: #374151;
+        }
 
-.sup-materials-table th {
-    background: #f3f4f6;
-    border: 1px solid #d1d5db;
-    padding: 6px 8px;
-    font-weight: bold;
-    color: #374151;
-    text-align: left;
-    white-space: nowrap;
-}
+        .btn-export {
+            background: #e2f0d9;
+            color: #385723;
+            border-color: #a9d18e;
+        }
 
-.sup-materials-table td {
-    border: 1px solid #d1d5db;
-    padding: 6px 8px;
-    white-space: nowrap;
-}
+        /* Materials Table */
+        .sup-table-section {
+            background: #ffffff;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            padding: 12px;
+        }
 
-.sup-materials-table tbody tr:hover {
-    background: #f9fafb;
-}
+        .sup-table-wrapper {
+            overflow-x: auto;
+            max-height: 200px;
+        }
 
-/* Footer Section styling */
-.sup-modal-footer {
-    background: #e0e0e0;
-    border-top: 1px solid #c8c8c8;
-    padding: 8px 16px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-size: 11px;
-}
+        .sup-materials-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+        }
 
-.sup-footer-sn {
-    font-weight: 500;
-    color: #4b5563;
-}
+        .sup-materials-table th {
+            background: #f3f4f6;
+            border: 1px solid #d1d5db;
+            padding: 6px 8px;
+            font-weight: bold;
+            color: #374151;
+            text-align: left;
+            white-space: nowrap;
+        }
 
-.sup-footer-count {
-    font-weight: bold;
-    color: #113228;
-}
+        .sup-materials-table td {
+            border: 1px solid #d1d5db;
+            padding: 6px 8px;
+            white-space: nowrap;
+        }
 
-.sup-footer-actions {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-}
+        .sup-materials-table tbody tr:hover {
+            background: #f9fafb;
+        }
 
-.sup-footer-actions label {
-    font-weight: bold;
-    color: #113228;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-}
+        /* Footer Section styling */
+        .sup-modal-footer {
+            background: #e0e0e0;
+            border-top: 1px solid #c8c8c8;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 11px;
+        }
 
-.wo-tag {
-    position: relative;
-    padding-bottom: 44px !important; /* Make room for the button */
-}
+        .sup-footer-sn {
+            font-weight: 500;
+            color: #4b5563;
+        }
 
-.sup-create-btn-wrapper {
-    position: absolute;
-    bottom: 8px;
-    right: 8px;
-}
+        .sup-footer-count {
+            font-weight: bold;
+            color: #113228;
+        }
 
-.btn-create-supplement {
-    padding: 4px 10px;
-    font-size: 11px;
-    font-weight: bold;
-    color: white;
-    background-color: var(--amber, #1b4d3e);
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-}
-.btn-create-supplement:hover {
-    background-color: #2d6a4f;
-}
-</style>
+        .sup-footer-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
 
-<!-- CREATE SUPPLEMENT REQUEST MODAL HTML -->
-<div id="supplementRequestModal" class="sup-modal" style="display: none;">
-    <div class="sup-modal-content">
-        <!-- ERP Tab Bar Header -->
-        <div class="sup-tab-bar">
-            <div class="sup-tab">HOME PAGE <span class="sup-tab-close">×</span></div>
-            <div class="sup-tab">Supplement Request List <span class="sup-tab-close">×</span></div>
-            <div class="sup-tab active">New Supplement Request <span class="sup-tab-close">×</span></div>
-        </div>
+        .sup-footer-actions label {
+            font-weight: bold;
+            color: #113228;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
 
-        <div class="sup-modal-body">
-            <!-- Section 1: Master Information -->
-            <fieldset class="sup-section-card">
-                <legend class="sup-section-legend">Master information</legend>
-                <div class="sup-form-grid">
-                    <!-- Column 1 -->
-                    <div>
-                        <div class="sup-form-group">
-                            <label>Request Supplement Code</label>
-                            <input type="text" id="sup-code" readonly value="SRC-202607-0026">
+        .wo-tag {
+            position: relative;
+            padding-bottom: 44px !important;
+            /* Make room for the button */
+        }
+
+        .sup-create-btn-wrapper {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+        }
+
+        .btn-create-supplement {
+            padding: 4px 10px;
+            font-size: 11px;
+            font-weight: bold;
+            color: white;
+            background-color: var(--amber, #1b4d3e);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-create-supplement:hover {
+            background-color: #2d6a4f;
+        }
+    </style>
+
+    <!-- CREATE SUPPLEMENT REQUEST MODAL HTML -->
+    <div id="supplementRequestModal" class="sup-modal" style="display: none;">
+        <div class="sup-modal-content">
+            <!-- ERP Tab Bar Header -->
+            <div class="sup-tab-bar">
+                <div class="sup-tab">HOME PAGE <span class="sup-tab-close">×</span></div>
+                <div class="sup-tab">Supplement Request List <span class="sup-tab-close">×</span></div>
+                <div class="sup-tab active">New Supplement Request <span class="sup-tab-close">×</span></div>
+            </div>
+
+            <div class="sup-modal-body">
+                <!-- Section 1: Master Information -->
+                <fieldset class="sup-section-card">
+                    <legend class="sup-section-legend">Master information</legend>
+                    <div class="sup-form-grid">
+                        <!-- Column 1 -->
+                        <div>
+                            <div class="sup-form-group">
+                                <label>Request Supplement Code</label>
+                                <input type="text" id="sup-code" readonly value="SRC-202607-0026">
+                            </div>
+                            <div class="sup-form-group">
+                                <label>Reason To Request <span class="required-star">(*)</span></label>
+                                <select id="sup-reason" required>
+                                    <option value="" disabled selected>-- Select Reason --</option>
+                                    <option value="Defect Material">Defect Material</option>
+                                    <option value="Tool Broken">Tool Broken</option>
+                                    <option value="Machine Malfunction">Machine Malfunction</option>
+                                    <option value="Process Error">Process Error</option>
+                                    <option value="Design Variance">Design Variance</option>
+                                </select>
+                            </div>
+                            <div class="sup-form-group">
+                                <label>Requester</label>
+                                <input type="text" id="sup-requester" readonly value="20949 - Ngô Phạm Yến Linh">
+                            </div>
+                            <div class="sup-form-group">
+                                <label>HOD Approved By</label>
+                                <input type="text" id="sup-hod-approver" readonly value="">
+                            </div>
+                            <div class="sup-form-group">
+                                <label>Related HOD Approved By</label>
+                                <input type="text" id="sup-rel-hod-approver" readonly value="">
+                            </div>
+                            <div class="sup-form-group">
+                                <label>BOD Approved By</label>
+                                <input type="text" id="sup-bod-approver" readonly value="">
+                            </div>
                         </div>
-                        <div class="sup-form-group">
-                            <label>Reason To Request <span class="required-star">(*)</span></label>
-                            <select id="sup-reason" required>
-                                <option value="" disabled selected>-- Select Reason --</option>
-                                <option value="Defect Material">Defect Material</option>
-                                <option value="Tool Broken">Tool Broken</option>
-                                <option value="Machine Malfunction">Machine Malfunction</option>
-                                <option value="Process Error">Process Error</option>
-                                <option value="Design Variance">Design Variance</option>
+
+                        <!-- Column 2 -->
+                        <div>
+                            <div class="sup-form-group">
+                                <label>Dept Request</label>
+                                <input type="text" id="sup-dept" value="NON_EMP" readonly>
+                            </div>
+                            <div class="sup-form-group" style="visibility: hidden;">
+                                <label>Spacer</label>
+                                <input type="text">
+                            </div>
+                            <div class="sup-form-group">
+                                <label>Requested Date</label>
+                                <input type="text" id="sup-date" readonly value="07/07/2026">
+                            </div>
+                            <div class="sup-form-group">
+                                <label>HOD Approved Date</label>
+                                <input type="text" readonly value="">
+                            </div>
+                            <div class="sup-form-group">
+                                <label>HOD Related Approved Date</label>
+                                <input type="text" readonly value="">
+                            </div>
+                            <div class="sup-form-group">
+                                <label>BOD Approved Date</label>
+                                <input type="text" readonly value="">
+                            </div>
+                        </div>
+
+                        <!-- Column 3 -->
+                        <div>
+                            <div class="sup-form-group">
+                                <label>Status</label>
+                                <span class="sup-status-new">New</span>
+                            </div>
+                            <div class="sup-form-group">
+                                <label>Related Department</label>
+                                <select id="sup-related-dept">
+                                    <option value="" selected>-- Select Related Department --</option>
+                                    <option value="Quality Control">Quality Control</option>
+                                    <option value="Production">Production</option>
+                                    <option value="Warehouse">Warehouse</option>
+                                    <option value="Purchasing">Purchasing</option>
+                                    <option value="Maintenance">Maintenance</option>
+                                </select>
+                            </div>
+                            <div class="sup-form-group">
+                                <label>Requester Remark</label>
+                                <input type="text" id="sup-remark" placeholder="Enter remark...">
+                            </div>
+                            <div class="sup-form-group">
+                                <label>HOD Remark</label>
+                                <input type="text" readonly value="">
+                            </div>
+                            <div class="sup-form-group">
+                                <label>HOD Related Remark</label>
+                                <input type="text" readonly value="">
+                            </div>
+                            <div class="sup-form-group">
+                                <label>BOD Remark</label>
+                                <input type="text" readonly value="">
+                            </div>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <!-- Section 2: Attach File -->
+                <div class="sup-attach-section">
+                    <span class="arrow">▼</span> Attach File: <strong>NO</strong>
+                </div>
+
+                <!-- Section 3: Add Material -->
+                <fieldset class="sup-section-card">
+                    <legend class="sup-section-legend">Add material</legend>
+                    <div class="sup-add-material-row">
+                        <div class="sup-form-group flex-1">
+                            <label>WO <span class="required-star">(*)</span></label>
+                            <select id="sup-material-wo">
+                                <!-- Dynamically loaded -->
+                            </select>
+                        </div>
+                        <div class="sup-form-group flex-1">
+                            <label>Item Code <span class="required-star">(*)</span></label>
+                            <select id="sup-material-item">
+                                <!-- Dynamically loaded -->
+                            </select>
+                        </div>
+                        <div class="sup-form-group flex-1">
+                            <label>Material Code <span class="required-star">(*)</span> ➕</label>
+                            <select id="sup-material-code">
+                                <option value="MAT-01829265-WP">MAT-01829265-WP (Replacement Board 18mm)</option>
+                                <option value="MAT-01835419-WP">MAT-01835419-WP (Veneer Layup Board)</option>
+                                <option value="MAT-33221100-YY">MAT-33221100-YY (High Temp Rubber Gasket)</option>
+                                <option value="MAT-GEN-BOLT-M6">MAT-GEN-BOLT-M6 (Replacement Bolt M6)</option>
+                                <option value="MAT-GEN-GLUE-WP">MAT-GEN-GLUE-WP (Standard Wood Glue)</option>
                             </select>
                         </div>
                         <div class="sup-form-group">
-                            <label>Requester</label>
-                            <input type="text" id="sup-requester" readonly value="20949 - Ngô Phạm Yến Linh">
+                            <label>Supplement Qty <span class="required-star">(*)</span></label>
+                            <input type="number" id="sup-material-qty" min="1" value="1" style="width: 100px;">
                         </div>
-                        <div class="sup-form-group">
-                            <label>HOD Approved By</label>
-                            <input type="text" id="sup-hod-approver" readonly value="">
-                        </div>
-                        <div class="sup-form-group">
-                            <label>Related HOD Approved By</label>
-                            <input type="text" id="sup-rel-hod-approver" readonly value="">
-                        </div>
-                        <div class="sup-form-group">
-                            <label>BOD Approved By</label>
-                            <input type="text" id="sup-bod-approver" readonly value="">
+                        <div class="sup-action-buttons">
+                            <button class="sup-btn btn-clear" onclick="window.clearMaterialForm()">🧹 Clear</button>
+                            <button class="sup-btn btn-add" onclick="window.addMaterialToRequest()">💾 Add</button>
                         </div>
                     </div>
+                </fieldset>
 
-                    <!-- Column 2 -->
-                    <div>
-                        <div class="sup-form-group">
-                            <label>Dept Request</label>
-                            <input type="text" id="sup-dept" value="NON_EMP" readonly>
-                        </div>
-                        <div class="sup-form-group" style="visibility: hidden;">
-                            <label>Spacer</label>
-                            <input type="text">
-                        </div>
-                        <div class="sup-form-group">
-                            <label>Requested Date</label>
-                            <input type="text" id="sup-date" readonly value="07/07/2026">
-                        </div>
-                        <div class="sup-form-group">
-                            <label>HOD Approved Date</label>
-                            <input type="text" readonly value="">
-                        </div>
-                        <div class="sup-form-group">
-                            <label>HOD Related Approved Date</label>
-                            <input type="text" readonly value="">
-                        </div>
-                        <div class="sup-form-group">
-                            <label>BOD Approved Date</label>
-                            <input type="text" readonly value="">
-                        </div>
+                <!-- Section 4: List of Materials Table -->
+                <div class="sup-table-section">
+                    <div style="font-weight: bold; margin-bottom: 8px; font-size: 13px; color: #113228;">List of
+                        materials <input type="checkbox" id="sup-select-all"> Select All</div>
+                    <div class="sup-table-wrapper">
+                        <table class="sup-materials-table">
+                            <thead>
+                                <tr>
+                                    <th>Material Code</th>
+                                    <th>Material Name</th>
+                                    <th>Material Dimension(W-L-T)</th>
+                                    <th>Unit</th>
+                                    <th>Supplement Qty</th>
+                                    <th>WO</th>
+                                    <th>Item Code</th>
+                                    <th>Revision</th>
+                                    <th>Carcass Code</th>
+                                    <th>ItemQty</th>
+                                    <th>BOM Qty Per Item</th>
+                                    <th>Total BOM Qty</th>
+                                    <th>Requester Remark</th>
+                                    <th>Budget</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sup-materials-tbody">
+                                <!-- Dynamically loaded rows -->
+                            </tbody>
+                        </table>
                     </div>
-
-                    <!-- Column 3 -->
-                    <div>
-                        <div class="sup-form-group">
-                            <label>Status</label>
-                            <span class="sup-status-new">New</span>
-                        </div>
-                        <div class="sup-form-group">
-                            <label>Related Department</label>
-                            <select id="sup-related-dept">
-                                <option value="" selected>-- Select Related Department --</option>
-                                <option value="Quality Control">Quality Control</option>
-                                <option value="Production">Production</option>
-                                <option value="Warehouse">Warehouse</option>
-                                <option value="Purchasing">Purchasing</option>
-                                <option value="Maintenance">Maintenance</option>
-                            </select>
-                        </div>
-                        <div class="sup-form-group">
-                            <label>Requester Remark</label>
-                            <input type="text" id="sup-remark" placeholder="Enter remark...">
-                        </div>
-                        <div class="sup-form-group">
-                            <label>HOD Remark</label>
-                            <input type="text" readonly value="">
-                        </div>
-                        <div class="sup-form-group">
-                            <label>HOD Related Remark</label>
-                            <input type="text" readonly value="">
-                        </div>
-                        <div class="sup-form-group">
-                            <label>BOD Remark</label>
-                            <input type="text" readonly value="">
-                        </div>
-                    </div>
-                </div>
-            </fieldset>
-
-            <!-- Section 2: Attach File -->
-            <div class="sup-attach-section">
-                <span class="arrow">▼</span> Attach File: <strong>NO</strong>
-            </div>
-
-            <!-- Section 3: Add Material -->
-            <fieldset class="sup-section-card">
-                <legend class="sup-section-legend">Add material</legend>
-                <div class="sup-add-material-row">
-                    <div class="sup-form-group flex-1">
-                        <label>WO <span class="required-star">(*)</span></label>
-                        <select id="sup-material-wo">
-                            <!-- Dynamically loaded -->
-                        </select>
-                    </div>
-                    <div class="sup-form-group flex-1">
-                        <label>Item Code <span class="required-star">(*)</span></label>
-                        <select id="sup-material-item">
-                            <!-- Dynamically loaded -->
-                        </select>
-                    </div>
-                    <div class="sup-form-group flex-1">
-                        <label>Material Code <span class="required-star">(*)</span> ➕</label>
-                        <select id="sup-material-code">
-                            <option value="MAT-01829265-WP">MAT-01829265-WP (Replacement Board 18mm)</option>
-                            <option value="MAT-01835419-WP">MAT-01835419-WP (Veneer Layup Board)</option>
-                            <option value="MAT-33221100-YY">MAT-33221100-YY (High Temp Rubber Gasket)</option>
-                            <option value="MAT-GEN-BOLT-M6">MAT-GEN-BOLT-M6 (Replacement Bolt M6)</option>
-                            <option value="MAT-GEN-GLUE-WP">MAT-GEN-GLUE-WP (Standard Wood Glue)</option>
-                        </select>
-                    </div>
-                    <div class="sup-form-group">
-                        <label>Supplement Qty <span class="required-star">(*)</span></label>
-                        <input type="number" id="sup-material-qty" min="1" value="1" style="width: 100px;">
-                    </div>
-                    <div class="sup-action-buttons">
-                        <button class="sup-btn btn-clear" onclick="window.clearMaterialForm()">🧹 Clear</button>
-                        <button class="sup-btn btn-add" onclick="window.addMaterialToRequest()">💾 Add</button>
-                    </div>
-                </div>
-            </fieldset>
-
-            <!-- Section 4: List of Materials Table -->
-            <div class="sup-table-section">
-                <div style="font-weight: bold; margin-bottom: 8px; font-size: 13px; color: #113228;">List of materials <input type="checkbox" id="sup-select-all"> Select All</div>
-                <div class="sup-table-wrapper">
-                    <table class="sup-materials-table">
-                        <thead>
-                            <tr>
-                                <th>Material Code</th>
-                                <th>Material Name</th>
-                                <th>Material Dimension(W-L-T)</th>
-                                <th>Unit</th>
-                                <th>Supplement Qty</th>
-                                <th>WO</th>
-                                <th>Item Code</th>
-                                <th>Revision</th>
-                                <th>Carcass Code</th>
-                                <th>ItemQty</th>
-                                <th>BOM Qty Per Item</th>
-                                <th>Total BOM Qty</th>
-                                <th>Requester Remark</th>
-                                <th>Budget</th>
-                            </tr>
-                        </thead>
-                        <tbody id="sup-materials-tbody">
-                            <!-- Dynamically loaded rows -->
-                        </tbody>
-                    </table>
                 </div>
             </div>
-        </div>
 
-        <!-- Footer Section -->
-        <div class="sup-modal-footer">
-            <span class="sup-footer-sn">SN: GNR_10_001</span>
-            <span class="sup-footer-count" id="sup-footer-count">Count: 0</span>
-            <div class="sup-footer-actions">
-                <label><input type="checkbox" id="sup-confirm-chk"> Confirm</label>
-                <button class="sup-btn btn-save" onclick="window.saveSupplementRequest()">💾 Save</button>
-                <button class="sup-btn btn-export">📄 Export</button>
-                <button class="sup-btn btn-close" onclick="window.closeSupplementForm()">🚪 Close</button>
+            <!-- Footer Section -->
+            <div class="sup-modal-footer">
+                <span class="sup-footer-sn">SN: GNR_10_001</span>
+                <span class="sup-footer-count" id="sup-footer-count">Count: 0</span>
+                <div class="sup-footer-actions">
+                    <label><input type="checkbox" id="sup-confirm-chk"> Confirm</label>
+                    <button class="sup-btn btn-save" onclick="window.saveSupplementRequest()">💾 Save</button>
+                    <button class="sup-btn btn-export">📄 Export</button>
+                    <button class="sup-btn btn-close" onclick="window.closeSupplementForm()">🚪 Close</button>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
     loadInspectionData();
-</script>
+    </script>
 </body>
+
 </html>
-
-

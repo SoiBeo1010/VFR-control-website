@@ -286,12 +286,7 @@
     "crew": "1 worker",
     "branchRoute": "yes",
     "supplement": {
-      "needed": true,
-      "status": "arrived",
-      "partName": "Plywood 9x1220x2440mm, bleached poplar BB Grade, TSCA VI (MR)",
-      "qty": 0.1,
-      "eta": "Storage Bin",
-      "requestCode": "SRC-202606-0071"
+      "needed": false
     },
     "source": {
       "inspector": "6683",
@@ -306,10 +301,7 @@
       "checkPassDate": "2026-06-29 15:27:30.180000",
       "checkPassMinutes": "45",
       "checkPassHours": "0.75"
-    },
-    "repair_status": "IN_REPAIR",
-    "repair_status_updated_at": "2026-07-08T01:57:36.375817",
-    "supplement_request_code": "SRC-202606-0071"
+    }
   },
   {
     "id": "INH-643-8317",
@@ -332,12 +324,7 @@
     "crew": "1 worker",
     "branchRoute": "yes",
     "supplement": {
-      "needed": true,
-      "status": "arrived",
-      "partName": "Plywood 9x1220x2440mm, bleached poplar BB Grade, TSCA VI (MR)",
-      "qty": 0.1,
-      "eta": "Storage Bin",
-      "requestCode": "SRC-202606-0071"
+      "needed": false
     },
     "source": {
       "inspector": "6683",
@@ -352,10 +339,7 @@
       "checkPassDate": "2026-06-29 15:27:30.203000",
       "checkPassMinutes": "45",
       "checkPassHours": "0.75"
-    },
-    "repair_status": "IN_REPAIR",
-    "repair_status_updated_at": "2026-07-08T01:57:36.377687",
-    "supplement_request_code": "SRC-202606-0071"
+    }
   },
   {
     "id": "INH-644-8317",
@@ -378,12 +362,7 @@
     "crew": "1 worker",
     "branchRoute": "yes",
     "supplement": {
-      "needed": true,
-      "status": "arrived",
-      "partName": "Plywood 9x1220x2440mm, bleached poplar BB Grade, TSCA VI (MR)",
-      "qty": 0.1,
-      "eta": "Storage Bin",
-      "requestCode": "SRC-202606-0071"
+      "needed": false
     },
     "source": {
       "inspector": "6683",
@@ -398,10 +377,7 @@
       "checkPassDate": "2026-06-29 15:27:30.197000",
       "checkPassMinutes": "45",
       "checkPassHours": "0.75"
-    },
-    "repair_status": "IN_REPAIR",
-    "repair_status_updated_at": "2026-07-08T01:57:36.377687",
-    "supplement_request_code": "SRC-202606-0071"
+    }
   },
   {
     "id": "INH-645-8317",
@@ -424,12 +400,7 @@
     "crew": "1 worker",
     "branchRoute": "yes",
     "supplement": {
-      "needed": true,
-      "status": "arrived",
-      "partName": "Plywood 9x1220x2440mm, bleached poplar BB Grade, TSCA VI (MR)",
-      "qty": 0.1,
-      "eta": "Storage Bin",
-      "requestCode": "SRC-202606-0071"
+      "needed": false
     },
     "source": {
       "inspector": "6683",
@@ -444,10 +415,7 @@
       "checkPassDate": "2026-06-29 15:27:30.233000",
       "checkPassMinutes": "45",
       "checkPassHours": "0.75"
-    },
-    "repair_status": "IN_REPAIR",
-    "repair_status_updated_at": "2026-07-08T01:57:36.379697",
-    "supplement_request_code": "SRC-202606-0071"
+    }
   },
   {
     "id": "INH-646-8317",
@@ -470,12 +438,7 @@
     "crew": "1 worker",
     "branchRoute": "yes",
     "supplement": {
-      "needed": true,
-      "status": "arrived",
-      "partName": "Plywood 9x1220x2440mm, bleached poplar BB Grade, TSCA VI (MR)",
-      "qty": 0.1,
-      "eta": "Storage Bin",
-      "requestCode": "SRC-202606-0071"
+      "needed": false
     },
     "source": {
       "inspector": "6683",
@@ -490,10 +453,7 @@
       "checkPassDate": "2026-06-29 15:27:30.227000",
       "checkPassMinutes": "45",
       "checkPassHours": "0.75"
-    },
-    "repair_status": "IN_REPAIR",
-    "repair_status_updated_at": "2026-07-08T01:57:36.381865",
-    "supplement_request_code": "SRC-202606-0071"
+    }
   },
   {
     "id": "INH-1323-93458",
@@ -744,12 +704,7 @@
     "crew": "1 worker",
     "branchRoute": "yes",
     "supplement": {
-      "needed": true,
-      "status": "waiting",
-      "partName": "Plywood 12x1220x2440mm, bleached poplar BB Grade, TSCA VI (MR)",
-      "qty": 1.4546,
-      "eta": "Pending",
-      "requestCode": "SRC-202607-0010"
+      "needed": false
     },
     "source": {
       "inspector": "6683",
@@ -764,10 +719,7 @@
       "checkPassDate": "2026-06-27 11:28:12.827000",
       "checkPassMinutes": "1115",
       "checkPassHours": "18.58"
-    },
-    "repair_status": "WAITING_MATERIAL",
-    "repair_status_updated_at": "2026-07-08T01:57:36.381865",
-    "supplement_request_code": "SRC-202607-0010"
+    }
   },
   {
     "id": "INH-1508-8315",
@@ -790,12 +742,7 @@
     "crew": "1 worker",
     "branchRoute": "yes",
     "supplement": {
-      "needed": true,
-      "status": "waiting",
-      "partName": "Plywood 12x1220x2440mm, bleached poplar BB Grade, TSCA VI (MR)",
-      "qty": 1.4546,
-      "eta": "Pending",
-      "requestCode": "SRC-202607-0010"
+      "needed": false
     },
     "source": {
       "inspector": "6683",
@@ -810,10 +757,7 @@
       "checkPassDate": "2026-06-27 11:28:12.790000",
       "checkPassMinutes": "1115",
       "checkPassHours": "18.58"
-    },
-    "repair_status": "WAITING_MATERIAL",
-    "repair_status_updated_at": "2026-07-08T01:57:36.383828",
-    "supplement_request_code": "SRC-202607-0010"
+    }
   },
   {
     "id": "INH-1509-8315",
@@ -836,12 +780,7 @@
     "crew": "1 worker",
     "branchRoute": "yes",
     "supplement": {
-      "needed": true,
-      "status": "waiting",
-      "partName": "Plywood 12x1220x2440mm, bleached poplar BB Grade, TSCA VI (MR)",
-      "qty": 1.4546,
-      "eta": "Pending",
-      "requestCode": "SRC-202607-0010"
+      "needed": false
     },
     "source": {
       "inspector": "6683",
@@ -856,10 +795,7 @@
       "checkPassDate": "2026-06-27 11:28:12.803000",
       "checkPassMinutes": "1115",
       "checkPassHours": "18.58"
-    },
-    "repair_status": "WAITING_MATERIAL",
-    "repair_status_updated_at": "2026-07-08T01:57:36.383828",
-    "supplement_request_code": "SRC-202607-0010"
+    }
   },
   {
     "id": "INH-1510-8315",
@@ -882,12 +818,7 @@
     "crew": "1 worker",
     "branchRoute": "yes",
     "supplement": {
-      "needed": true,
-      "status": "waiting",
-      "partName": "Plywood 12x1220x2440mm, bleached poplar BB Grade, TSCA VI (MR)",
-      "qty": 1.4546,
-      "eta": "Pending",
-      "requestCode": "SRC-202607-0010"
+      "needed": false
     },
     "source": {
       "inspector": "6683",
@@ -902,10 +833,7 @@
       "checkPassDate": "2026-06-27 11:28:12.817000",
       "checkPassMinutes": "1115",
       "checkPassHours": "18.58"
-    },
-    "repair_status": "WAITING_MATERIAL",
-    "repair_status_updated_at": "2026-07-08T01:57:36.383828",
-    "supplement_request_code": "SRC-202607-0010"
+    }
   },
   {
     "id": "INH-1680-61100",
@@ -1232,12 +1160,7 @@
     "crew": "1 worker",
     "branchRoute": "yes",
     "supplement": {
-      "needed": true,
-      "status": "waiting",
-      "partName": "Alder60 - Alder60",
-      "qty": 0.15365,
-      "eta": "Pending",
-      "requestCode": "SRC-202607-0017"
+      "needed": false
     },
     "source": {
       "inspector": "6683",
@@ -1252,10 +1175,7 @@
       "checkPassDate": "2026-06-26 18:46:41.667000",
       "checkPassMinutes": "1538",
       "checkPassHours": "25.63"
-    },
-    "repair_status": "WAITING_MATERIAL",
-    "repair_status_updated_at": "2026-07-08T01:57:36.383828",
-    "supplement_request_code": "SRC-202607-0017"
+    }
   },
   {
     "id": "INH-2031-8482",
@@ -1278,12 +1198,7 @@
     "crew": "1 worker",
     "branchRoute": "yes",
     "supplement": {
-      "needed": true,
-      "status": "waiting",
-      "partName": "Alder60 - Alder60",
-      "qty": 0.15365,
-      "eta": "Pending",
-      "requestCode": "SRC-202607-0017"
+      "needed": false
     },
     "source": {
       "inspector": "6683",
@@ -1298,10 +1213,7 @@
       "checkPassDate": "2026-06-26 18:46:41.663000",
       "checkPassMinutes": "1538",
       "checkPassHours": "25.63"
-    },
-    "repair_status": "WAITING_MATERIAL",
-    "repair_status_updated_at": "2026-07-08T01:57:36.387872",
-    "supplement_request_code": "SRC-202607-0017"
+    }
   },
   {
     "id": "INH-2032-8482",
@@ -1324,12 +1236,7 @@
     "crew": "1 worker",
     "branchRoute": "yes",
     "supplement": {
-      "needed": true,
-      "status": "waiting",
-      "partName": "Alder60 - Alder60",
-      "qty": 0.15365,
-      "eta": "Pending",
-      "requestCode": "SRC-202607-0017"
+      "needed": false
     },
     "source": {
       "inspector": "6683",
@@ -1344,10 +1251,7 @@
       "checkPassDate": "2026-06-26 18:46:41.663000",
       "checkPassMinutes": "1538",
       "checkPassHours": "25.63"
-    },
-    "repair_status": "WAITING_MATERIAL",
-    "repair_status_updated_at": "2026-07-08T01:57:36.387872",
-    "supplement_request_code": "SRC-202607-0017"
+    }
   },
   {
     "id": "INH-2033-8482",
@@ -1370,12 +1274,7 @@
     "crew": "1 worker",
     "branchRoute": "yes",
     "supplement": {
-      "needed": true,
-      "status": "waiting",
-      "partName": "Alder60 - Alder60",
-      "qty": 0.15365,
-      "eta": "Pending",
-      "requestCode": "SRC-202607-0017"
+      "needed": false
     },
     "source": {
       "inspector": "6683",
@@ -1390,10 +1289,7 @@
       "checkPassDate": "2026-06-26 18:46:41.663000",
       "checkPassMinutes": "1538",
       "checkPassHours": "25.63"
-    },
-    "repair_status": "WAITING_MATERIAL",
-    "repair_status_updated_at": "2026-07-08T01:57:36.387872",
-    "supplement_request_code": "SRC-202607-0017"
+    }
   },
   {
     "id": "INH-2034-8482",
@@ -1416,12 +1312,7 @@
     "crew": "1 worker",
     "branchRoute": "yes",
     "supplement": {
-      "needed": true,
-      "status": "waiting",
-      "partName": "Alder60 - Alder60",
-      "qty": 0.15365,
-      "eta": "Pending",
-      "requestCode": "SRC-202607-0017"
+      "needed": false
     },
     "source": {
       "inspector": "6683",
@@ -1436,10 +1327,7 @@
       "checkPassDate": "2026-06-26 18:46:41.663000",
       "checkPassMinutes": "1538",
       "checkPassHours": "25.63"
-    },
-    "repair_status": "WAITING_MATERIAL",
-    "repair_status_updated_at": "2026-07-08T01:57:36.387872",
-    "supplement_request_code": "SRC-202607-0017"
+    }
   },
   {
     "id": "INH-2035-8482",
@@ -1462,12 +1350,7 @@
     "crew": "1 worker",
     "branchRoute": "yes",
     "supplement": {
-      "needed": true,
-      "status": "waiting",
-      "partName": "Alder60 - Alder60",
-      "qty": 0.15365,
-      "eta": "Pending",
-      "requestCode": "SRC-202607-0017"
+      "needed": false
     },
     "source": {
       "inspector": "6683",
@@ -1482,10 +1365,7 @@
       "checkPassDate": "2026-06-26 18:46:41.667000",
       "checkPassMinutes": "1538",
       "checkPassHours": "25.63"
-    },
-    "repair_status": "WAITING_MATERIAL",
-    "repair_status_updated_at": "2026-07-08T01:57:36.387872",
-    "supplement_request_code": "SRC-202607-0017"
+    }
   },
   {
     "id": "INH-2823-8201",
@@ -3750,12 +3630,7 @@
     "crew": "1 worker",
     "branchRoute": "yes",
     "supplement": {
-      "needed": true,
-      "status": "waiting",
-      "partName": "Plywood 12x1220x2440mm, bleached poplar BB Grade, TSCA VI (MR)",
-      "qty": 1.4546,
-      "eta": "Pending",
-      "requestCode": "SRC-202607-0010"
+      "needed": false
     },
     "source": {
       "inspector": "17372",
@@ -3770,10 +3645,7 @@
       "checkPassDate": "2026-06-24 09:49:01.760000",
       "checkPassMinutes": "21351",
       "checkPassHours": "355.85"
-    },
-    "repair_status": "WAITING_MATERIAL",
-    "repair_status_updated_at": "2026-07-08T01:57:36.393426",
-    "supplement_request_code": "SRC-202607-0010"
+    }
   },
   {
     "id": "INH-10552-8315",
@@ -3796,12 +3668,7 @@
     "crew": "1 worker",
     "branchRoute": "yes",
     "supplement": {
-      "needed": true,
-      "status": "waiting",
-      "partName": "Plywood 12x1220x2440mm, bleached poplar BB Grade, TSCA VI (MR)",
-      "qty": 1.4546,
-      "eta": "Pending",
-      "requestCode": "SRC-202607-0010"
+      "needed": false
     },
     "source": {
       "inspector": "17372",
@@ -3816,10 +3683,7 @@
       "checkPassDate": "2026-06-24 09:49:01.763000",
       "checkPassMinutes": "21351",
       "checkPassHours": "355.85"
-    },
-    "repair_status": "WAITING_MATERIAL",
-    "repair_status_updated_at": "2026-07-08T01:57:36.393970",
-    "supplement_request_code": "SRC-202607-0010"
+    }
   },
   {
     "id": "INH-10553-8315",
@@ -3842,12 +3706,7 @@
     "crew": "1 worker",
     "branchRoute": "yes",
     "supplement": {
-      "needed": true,
-      "status": "waiting",
-      "partName": "Plywood 12x1220x2440mm, bleached poplar BB Grade, TSCA VI (MR)",
-      "qty": 1.4546,
-      "eta": "Pending",
-      "requestCode": "SRC-202607-0010"
+      "needed": false
     },
     "source": {
       "inspector": "17372",
@@ -3862,10 +3721,7 @@
       "checkPassDate": "2026-06-24 09:49:01.763000",
       "checkPassMinutes": "21351",
       "checkPassHours": "355.85"
-    },
-    "repair_status": "WAITING_MATERIAL",
-    "repair_status_updated_at": "2026-07-08T01:57:36.395931",
-    "supplement_request_code": "SRC-202607-0010"
+    }
   },
   {
     "id": "INH-10554-8315",
@@ -3888,12 +3744,7 @@
     "crew": "1 worker",
     "branchRoute": "yes",
     "supplement": {
-      "needed": true,
-      "status": "waiting",
-      "partName": "Plywood 12x1220x2440mm, bleached poplar BB Grade, TSCA VI (MR)",
-      "qty": 1.4546,
-      "eta": "Pending",
-      "requestCode": "SRC-202607-0010"
+      "needed": false
     },
     "source": {
       "inspector": "17372",
@@ -3908,10 +3759,7 @@
       "checkPassDate": "2026-06-24 09:49:01.760000",
       "checkPassMinutes": "21351",
       "checkPassHours": "355.85"
-    },
-    "repair_status": "WAITING_MATERIAL",
-    "repair_status_updated_at": "2026-07-08T01:57:36.395931",
-    "supplement_request_code": "SRC-202607-0010"
+    }
   },
   {
     "id": "INH-10555-8315",
@@ -3934,12 +3782,7 @@
     "crew": "1 worker",
     "branchRoute": "yes",
     "supplement": {
-      "needed": true,
-      "status": "waiting",
-      "partName": "Plywood 12x1220x2440mm, bleached poplar BB Grade, TSCA VI (MR)",
-      "qty": 1.4546,
-      "eta": "Pending",
-      "requestCode": "SRC-202607-0010"
+      "needed": false
     },
     "source": {
       "inspector": "17372",
@@ -3954,10 +3797,7 @@
       "checkPassDate": "2026-06-24 09:49:01.760000",
       "checkPassMinutes": "21351",
       "checkPassHours": "355.85"
-    },
-    "repair_status": "WAITING_MATERIAL",
-    "repair_status_updated_at": "2026-07-08T01:57:36.395931",
-    "supplement_request_code": "SRC-202607-0010"
+    }
   },
   {
     "id": "INH-10556-8315",
@@ -3980,12 +3820,7 @@
     "crew": "1 worker",
     "branchRoute": "yes",
     "supplement": {
-      "needed": true,
-      "status": "waiting",
-      "partName": "Plywood 12x1220x2440mm, bleached poplar BB Grade, TSCA VI (MR)",
-      "qty": 1.4546,
-      "eta": "Pending",
-      "requestCode": "SRC-202607-0010"
+      "needed": false
     },
     "source": {
       "inspector": "17372",
@@ -4000,10 +3835,7 @@
       "checkPassDate": "2026-06-24 09:49:01.763000",
       "checkPassMinutes": "21351",
       "checkPassHours": "355.85"
-    },
-    "repair_status": "WAITING_MATERIAL",
-    "repair_status_updated_at": "2026-07-08T01:57:36.395931",
-    "supplement_request_code": "SRC-202607-0010"
+    }
   },
   {
     "id": "INH-10561-52524",
@@ -14719,135 +14551,6 @@
       "checkPassDate": "2026-04-19 14:16:00.760000",
       "checkPassMinutes": "26096",
       "checkPassHours": "434.93"
-    }
-  },
-  {
-    "id": "INH-2-8482",
-    "branch_itw": "VFR2.1",
-    "branch_fgw": "VFR2.1",
-    "wo_no": "8482",
-    "item_code": "013862-AC",
-    "partcode": "01835419-WP",
-    "carcass_code": "CAR-021838-A",
-    "wo_quantity": 14,
-    "inspector": "17372",
-    "inspector_name": "Lê Thị Xuân",
-    "inspector_dept": "2QCD",
-    "inspection_stage": "Finishing",
-    "inspected_date": "2026-06-25T17:08:59",
-    "inspected_time": "2026-06-25T17:08:59",
-    "inspected_qty": 1,
-    "pass_qty": 0,
-    "fail_qty": 1,
-    "quarantine": 1,
-    "defect_code": "V-08 (Veneer lay-up not correct with specs)",
-    "defect_category": "Major",
-    "defect_owner": "2COM1",
-    "inspector_recommend": "Sửa hàng - kiểm lại",
-    "repair_department": "2COM1",
-    "remark": "Supplement ticket vừa được Production Manager tạo, chưa được duyệt đủ (còn chờ BOD) => thẻ repair bên QC Manager hiển thị 'Đang chờ NVL'.",
-    "check_pass_date": null,
-    "check_pass_minutes": "",
-    "check_pass_hours": "",
-    "status": "Fail",
-    "repair_status": "WAITING_MATERIAL",
-    "repair_status_updated_at": "2026-07-08T04:55:40.817813",
-    "supplement_request_code": "SRC-202607-0017",
-    "start_repair": null,
-    "end_repair": null,
-    "supplement": {
-      "needed": true,
-      "status": "waiting",
-      "partName": "Alder60 - Alder60",
-      "qty": 0.15365,
-      "eta": "Pending",
-      "requestCode": "SRC-202607-0017"
-    }
-  },
-  {
-    "id": "INH-3-8315",
-    "branch_itw": "VFR2.1",
-    "branch_fgw": "VFR2.1",
-    "wo_no": "8315",
-    "item_code": "021758-AD",
-    "partcode": "01810521-MAT",
-    "carcass_code": "CAR-021833-B",
-    "wo_quantity": 23,
-    "inspector": "17372",
-    "inspector_name": "Lê Thị Xuân",
-    "inspector_dept": "2QCD",
-    "inspection_stage": "Final",
-    "inspected_date": "2026-06-26T16:53:54",
-    "inspected_time": "2026-06-26T16:53:54",
-    "inspected_qty": 1,
-    "pass_qty": 0,
-    "fail_qty": 1,
-    "quarantine": 1,
-    "defect_code": "T-22 (Color not match approved panel)",
-    "defect_category": "Major",
-    "defect_owner": "COM2",
-    "inspector_recommend": "Sửa hàng - kiểm lại",
-    "repair_department": "COM2",
-    "remark": "Supplement ticket đã được HOD và Related HOD duyệt, còn thiếu chữ ký BOD => vẫn ở trạng thái 'Đang chờ NVL', chưa được sửa vì thiếu vật tư.",
-    "check_pass_date": null,
-    "check_pass_minutes": "",
-    "check_pass_hours": "",
-    "status": "Fail",
-    "repair_status": "WAITING_MATERIAL",
-    "repair_status_updated_at": "2026-07-08T04:55:40.817813",
-    "supplement_request_code": "SRC-202607-0010",
-    "start_repair": null,
-    "end_repair": null,
-    "supplement": {
-      "needed": true,
-      "status": "waiting",
-      "partName": "Plywood 12x1220x2440mm, bleached poplar BB Grade, TSCA VI (MR)",
-      "qty": 1.4546,
-      "eta": "Pending",
-      "requestCode": "SRC-202607-0010"
-    }
-  },
-  {
-    "id": "INH-4-8317",
-    "branch_itw": "VFR2.1",
-    "branch_fgw": "VFR2.1",
-    "wo_no": "8317",
-    "item_code": "022003-AD",
-    "partcode": "01767185-WP",
-    "carcass_code": "CAR-021994-A",
-    "wo_quantity": 13,
-    "inspector": "17372",
-    "inspector_name": "Lê Thị Xuân",
-    "inspector_dept": "2QCD",
-    "inspection_stage": "Final",
-    "inspected_date": "2026-06-29T14:42:37",
-    "inspected_time": "2026-06-29T14:42:37",
-    "inspected_qty": 1,
-    "pass_qty": 0,
-    "fail_qty": 1,
-    "quarantine": 1,
-    "defect_code": "G-01 (Scratch/ chip off)",
-    "defect_category": "Major",
-    "defect_owner": "SUBCON",
-    "inspector_recommend": "Sửa hàng - kiểm lại",
-    "repair_department": "SUBCON",
-    "remark": "Supplement ticket đã được HOD, Related HOD và BOD duyệt đủ (Approved) => thẻ repair bên QC Manager tự động chuyển sang 'Đã có hàng - Bắt đầu sửa'.",
-    "check_pass_date": null,
-    "check_pass_minutes": "",
-    "check_pass_hours": "",
-    "status": "Fail",
-    "repair_status": "IN_REPAIR",
-    "repair_status_updated_at": "2026-07-08T04:55:40.821376",
-    "supplement_request_code": "SRC-202606-0071",
-    "start_repair": null,
-    "end_repair": null,
-    "supplement": {
-      "needed": true,
-      "status": "arrived",
-      "partName": "Plywood 9x1220x2440mm, bleached poplar BB Grade, TSCA VI (MR)",
-      "qty": 0.1,
-      "eta": "Storage Bin",
-      "requestCode": "SRC-202606-0071"
     }
   }
 ]
