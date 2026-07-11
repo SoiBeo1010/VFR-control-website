@@ -22,7 +22,7 @@ A fully functional Quality Management System (QMS) has been successfully built w
 - **public/qc-manager.html** - QC Manager dashboard  
 - **public/production-manager.html** - Production Manager dashboard
 - **public/production-worker.html** - Production Worker dashboard
-- **public/higher-department.html** - Higher Department dashboard
+- **public/warehouse.html** - Warehouse dashboard
 - **public/styles.css** - Professional, responsive CSS styling (595 lines)
 
 ### Documentation
@@ -80,7 +80,7 @@ A fully functional Quality Management System (QMS) has been successfully built w
 | **QC Manager** | View quarantine reports, assign problem owners, manage workflow |
 | **Production Manager** | Create repair plans, receive notifications, manage resources |
 | **Production Worker** | Execute repairs, document root causes, mark completion |
-| **Higher Department** | Review and approve completed repairs, manage costs |
+| **Warehouse** | Review and approve completed repairs, manage costs |
 
 ### Security Features
 - JWT token-based authentication
@@ -116,9 +116,9 @@ A fully functional Quality Management System (QMS) has been successfully built w
 - `GET /api/production-worker/repair-plans` - Get assigned plans
 - `POST /api/production-worker/repair-completion` - Complete repair
 
-### Higher Department (2)
-- `GET /api/higher-department/repairs-for-approval` - Get pending approvals
-- `POST /api/higher-department/approve-repair` - Approve/reject
+### Warehouse (2)
+- `GET /api/warehouse/repairs-for-approval` - Get pending approvals
+- `POST /api/warehouse/approve-repair` - Approve/reject
 
 ### General (1)
 - `GET /api/health` - Health check
@@ -243,7 +243,7 @@ Higher Dept:    higher_dept_1 / password123
 - ✅ Calculate actual repair costs
 - ✅ Mark repair as complete
 
-### 5. Higher Department Flow
+### 5. Warehouse Flow
 - ✅ View repairs pending approval
 - ✅ Review root cause and prevention
 - ✅ Approve or reject repairs
@@ -340,7 +340,7 @@ curl http://localhost:8000/api/health
 - ✅ public/qc-manager.html (QC Manager dashboard)
 - ✅ public/production-manager.html (Production Manager dashboard)
 - ✅ public/production-worker.html (Production Worker dashboard)
-- ✅ public/higher-department.html (Higher Department dashboard)
+- ✅ public/warehouse.html (Warehouse dashboard)
 - ✅ public/styles.css (CSS styling)
 - ✅ README.md (Full documentation)
 - ✅ QUICKSTART.md (Quick start guide)
@@ -359,11 +359,11 @@ curl http://localhost:8000/api/health
 3. QC Manager assigns owner and department
 4. Production Manager creates repair plan
 5. Production Worker executes and documents
-6. Higher Department reviews and approves
+6. Warehouse reviews and approves
 
 ### Example 2: Cost Tracking
 - Repair cost is recorded when worker completes repair
-- Higher Department dashboard shows total costs
+- Warehouse dashboard shows total costs
 - Cost data is available for reporting and analysis
 
 ### Example 3: Role-Based Dashboard

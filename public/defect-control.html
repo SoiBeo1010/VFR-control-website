@@ -1458,7 +1458,7 @@
     }
 
     const REPAIR_TICKET_STATUS_KEY = 'qms_repair_ticket_statuses';
-    const REPAIR_TICKET_STATUSES = new Set(['Waiting Accept', 'In Progress', 'Paused', 'Completed', 'Overdue']);
+    const REPAIR_TICKET_STATUSES = new Set(['Waiting Accept', 'In Progress', 'Paused', 'Completed', 'Overdue', 'Waiting for supplement approve']);
     const REPAIR_STATUS_ALIASES = {
         pending: 'Waiting Accept',
         created: 'Waiting Accept',
@@ -1470,7 +1470,8 @@
         paused: 'Paused',
         completed: 'Completed',
         complete: 'Completed',
-        overdue: 'Overdue'
+        overdue: 'Overdue',
+        'waiting for supplement approve': 'Waiting for supplement approve'
     };
 
     function readStoredRepairTicketStatuses() {
@@ -1557,7 +1558,8 @@
                 scanDate: null,
                 isLegacyQuarantined: null,
                 masterSku: null,
-                reportId: null
+                reportId: null,
+                supplement: null
             };
         }
 
@@ -1583,7 +1585,8 @@
             scanDate: saved.scanDate || null,
             isLegacyQuarantined: saved.isLegacyQuarantined !== undefined ? saved.isLegacyQuarantined : null,
             masterSku: saved.masterSku || null,
-            reportId: saved.reportId || null
+            reportId: saved.reportId || null,
+            supplement: saved.supplement || null
         };
     }
 
@@ -1823,6 +1826,11 @@
                 result: ""
             };
 
+            if (storedStatus.supplement) {
+                ticket.supplement = storedStatus.supplement;
+                ticketsState[ticket.id].supplement = storedStatus.supplement;
+            }
+
             // Auto-sync back to stored status if not saved or needs migration
             if (needsPersist || !saved || saved.reportId === undefined || saved.masterSku === undefined) {
                 persistTicketStatus(ticket.id);
@@ -1906,6 +1914,10 @@
                     tState.isLegacyQuarantined = storedStatus.isLegacyQuarantined !== null ? storedStatus.isLegacyQuarantined : tState.isLegacyQuarantined;
                     tState.masterSku = storedStatus.masterSku || tState.masterSku;
                     tState.reportId = storedStatus.reportId || tState.reportId;
+                    if (storedStatus.supplement) {
+                        ticket.supplement = storedStatus.supplement;
+                        tState.supplement = storedStatus.supplement;
+                    }
                 }
             });
         } catch (err) {
@@ -1942,7 +1954,8 @@
             "In Progress": "st-progress",
             "Paused": "st-paused",
             "Completed": "st-completed",
-            "Overdue": "st-overdue"
+            "Overdue": "st-overdue",
+            "Waiting for supplement approve": "st-progress"
         }[s] || "st-wait";
     }
 
@@ -2063,6 +2076,7 @@
                     <option ${statusFilter === 'Paused' ? 'selected' : ''}>Paused</option>
                     <option ${statusFilter === 'Completed' ? 'selected' : ''}>Completed</option>
                     <option ${statusFilter === 'Overdue' ? 'selected' : ''}>Overdue</option>
+                    <option ${statusFilter === 'Waiting for supplement approve' ? 'selected' : ''}>Waiting for supplement approve</option>
                 </select>
                 <select id="stageFilterSelect" onchange="handleStageFilter(this.value)">
                     <option ${stageFilter === 'All Stages' ? 'selected' : ''}>All Stages</option>
@@ -3223,7 +3237,7 @@
 
         statuses[currentSupTicketId] = {
             ...saved,
-            status: saved.status || 'Waiting Accept',
+            status: 'Waiting for supplement approve',
             updatedAt: new Date().toISOString(),
             supplement: {
                 needed: true,
@@ -3234,6 +3248,14 @@
                 details: requestMaterialsList
             }
         };
+
+        // Also update in-memory state so UI updates immediately
+        if (ticketsState[currentSupTicketId]) {
+            ticketsState[currentSupTicketId].status = 'Waiting for supplement approve';
+            ticketsState[currentSupTicketId].updatedAt = new Date().toISOString();
+            ticketsState[currentSupTicketId].supplement = statuses[currentSupTicketId].supplement;
+            ticketsState[currentSupTicketId].meta.supplement = statuses[currentSupTicketId].supplement;
+        }
 
         writeStoredRepairTicketStatuses(statuses);
 
@@ -3249,6 +3271,72 @@
         // Refresh views
         const listContainer = document.getElementById('ticketsListContainer');
         if (listContainer) listContainer.innerHTML = renderTicketsListContent();
+        if (currentView === 'detail' && currentTicketId === currentSupTicketId) {
+            go('detail', currentSupTicketId);
+        }
+        updateSidebarBadges();
+    }
+
+    window.autoPopulateSupplementItems = function() {
+        if (!currentSupTicketId) return;
+        const ticket = inspectionData.find(t => t.id === currentSupTicketId);
+        if (!ticket) return;
+
+        const wo = ticket.wo || '';
+        const itemCode = ticket.itemCode || '';
+        
+        let itemsToOrder = [];
+        if (ticket.defectCode && (ticket.defectCode.includes('Leakage') || ticket.defectCode.includes('Seal') || ticket.defectCode.includes('D-014'))) {
+            itemsToOrder = [
+                {
+                    code: 'MAT-33221100-YY',
+                    name: 'High Temp Rubber Gasket',
+                    qty: 2,
+                    remark: 'Seal leakage replacement'
+                },
+                {
+                    code: 'MAT-GEN-BOLT-M6',
+                    name: 'Replacement Bolt M6',
+                    qty: 4,
+                    remark: 'Bolts for joint'
+                }
+            ];
+        } else {
+            itemsToOrder = [
+                {
+                    code: 'MAT-01829265-WP',
+                    name: 'Replacement Board 18mm',
+                    qty: 2,
+                    remark: 'Defect replacement board'
+                },
+                {
+                    code: 'MAT-GEN-GLUE-WP',
+                    name: 'Standard Wood Glue',
+                    qty: 1,
+                    remark: 'Glue for assembly'
+                }
+            ];
+        }
+
+        requestMaterialsList = itemsToOrder.map(item => ({
+            code: item.code,
+            name: item.name,
+            dimension: '18 x 400 x 600',
+            unit: 'pcs',
+            qty: item.qty,
+            wo: wo,
+            itemCode: itemCode,
+            revision: 'A',
+            carcassCode: 'CAR-021838-A',
+            itemQty: 1,
+            bomQtyPerItem: 1,
+            totalBomQty: item.qty,
+            remark: item.remark,
+            budget: 'Yes'
+        }));
+
+        renderSupplementMaterialsTable();
+        showToast('Automatically populated supplement items to order!');
     }
 
     window.closeSupplementForm = closeSupplementForm;
@@ -3560,10 +3648,13 @@
 <div id="supplementRequestModal" class="sup-modal" style="display: none;">
     <div class="sup-modal-content">
         <!-- ERP Tab Bar Header -->
-        <div class="sup-tab-bar">
-            <div class="sup-tab">HOME PAGE <span class="sup-tab-close">×</span></div>
-            <div class="sup-tab">Supplement Request List <span class="sup-tab-close">×</span></div>
-            <div class="sup-tab active">New Supplement Request <span class="sup-tab-close">×</span></div>
+        <div class="sup-tab-bar" style="justify-content: space-between; align-items: center; padding-right: 12px;">
+            <div style="display: flex;">
+                <div class="sup-tab">HOME PAGE <span class="sup-tab-close">×</span></div>
+                <div class="sup-tab">Supplement Request List <span class="sup-tab-close">×</span></div>
+                <div class="sup-tab active">New Supplement Request <span class="sup-tab-close">×</span></div>
+            </div>
+            <button id="btn-top-right-add" class="sup-btn btn-add" onclick="window.autoPopulateSupplementItems()" style="padding: 4px 12px; font-size: 12px; font-weight: bold; background: var(--amber); color: white; border: none; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 4px;">➕ Add</button>
         </div>
 
         <div class="sup-modal-body">

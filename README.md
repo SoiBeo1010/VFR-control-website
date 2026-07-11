@@ -10,7 +10,7 @@ The QMS system follows a complete workflow from inspection through approval:
 2. **QC Manager** → Reviews quarantine reports and assigns owners
 3. **Production Manager** → Creates repair plans
 4. **Production Worker** → Completes repairs and records root causes
-5. **Higher Department** → Approves or rejects completed repairs
+5. **Warehouse** → Approves or rejects completed repairs
 
 ## Features
 
@@ -19,7 +19,7 @@ The QMS system follows a complete workflow from inspection through approval:
 - **QC Manager**: Manage quarantine reports, assign problem owners and repair departments
 - **Production Manager**: Create and manage repair plans, assign to production workers
 - **Production Worker**: Execute repairs, document root causes and preventive actions
-- **Higher Department**: Review and approve completed repairs
+- **Warehouse**: Review and approve completed repairs
 
 ### Core Functionality
 - Product inspection and defect documentation
@@ -105,7 +105,7 @@ Use these credentials to login and test each role:
 | QC Manager | qc_manager_1 | password123 |
 | Production Manager | prod_manager_1 | password123 |
 | Production Worker | prod_worker_1 | password123 |
-| Higher Department | higher_dept_1 | password123 |
+| Warehouse | warehouse_1 | password123 |
 
 **Important**: Change these passwords in production!
 
@@ -120,7 +120,7 @@ qms-system/
 │   ├── qc-manager.html         # QC Manager dashboard
 │   ├── production-manager.html  # Production Manager dashboard
 │   ├── production-worker.html   # Production Worker dashboard
-│   ├── higher-department.html   # Higher Department dashboard
+│   ├── warehouse.html          # Warehouse dashboard
 │   └── styles.css              # Global CSS styles
 ├── .env.example                # Environment variables template
 ├── requirements.txt            # Python dependencies
@@ -153,9 +153,9 @@ qms-system/
 - `GET /api/production-worker/repair-plans` - Get assigned repair plans
 - `POST /api/production-worker/repair-completion` - Mark repair as complete
 
-### Higher Department Endpoints
-- `GET /api/higher-department/repairs-for-approval` - Get repairs pending approval
-- `POST /api/higher-department/approve-repair` - Approve or reject repair
+### Warehouse Endpoints
+- `GET /api/warehouse/repairs-for-approval` - Get repairs pending approval
+- `POST /api/warehouse/approve-repair` - Approve or reject repair
 
 ## Database Schema
 
@@ -210,7 +210,7 @@ Monitors repair costs and resource allocation
    - Proposes preventive action: "Calibrate paint booth equipment"
    - Records actual cost: $150
 
-5. **Higher Department** reviews
+5. **Warehouse** reviews
    - Reviews root cause and preventive actions
    - Approves the repair
    - Repair process completes
