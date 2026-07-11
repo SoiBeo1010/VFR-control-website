@@ -1320,9 +1320,6 @@
                 <div class="sb-item" data-view="history" onclick="go('history')">
                     <span class="ic">&#128337;</span> Repair History
                 </div>
-                <div class="sb-item" data-view="cost" onclick="go('cost')">
-                    <span class="ic">&#128181;</span> Cost Management
-                </div>
                 <div class="sb-item" data-view="notif" onclick="go('notif')">
                     <span class="ic">&#128276;</span> Notifications
                     <span class="bd" id="navNotifBadge">0</span>
@@ -1477,7 +1474,6 @@
             detail: { crumb: "My Repair Tickets", title: "Repair Ticket Detail" },
             working: { crumb: "Repair Ticket", title: "Repair Working" },
             history: { crumb: "Records", title: "Repair History" },
-            cost: { crumb: "Costs", title: "Cost Management" },
             notif: { crumb: "Inbox", title: "Notifications" },
             profile: { crumb: "Account", title: "Profile" }
         };
@@ -1987,7 +1983,6 @@
             else if (view === 'detail') container.innerHTML = renderDetail(currentTicketId);
             else if (view === 'working') container.innerHTML = renderWorking(currentTicketId);
             else if (view === 'history') container.innerHTML = renderHistory();
-            else if (view === 'cost') container.innerHTML = renderCostManagement();
             else if (view === 'notif') container.innerHTML = renderNotif();
             else if (view === 'profile') container.innerHTML = renderProfile();
 
@@ -2642,199 +2637,52 @@
             }
         }
 
-        function getMaterialUnitCost(materialName) {
-            if (!materialName) return 0;
-            const nameLower = materialName.toLowerCase().trim();
-            if (nameLower.includes('alder60')) {
-                return 15.00;
-            } else if (nameLower.includes('plywood 9x') || nameLower.includes('plywood 9mm')) {
-                return 22.50;
-            } else if (nameLower.includes('plywood 12x') || nameLower.includes('plywood 12mm')) {
-                return 28.00;
-            } else if (nameLower.includes('replacement board')) {
-                return 12.00;
-            } else if (nameLower.includes('veneer layup')) {
-                return 18.50;
-            } else if (nameLower.includes('gasket') || nameLower.includes('rubber gasket')) {
-                return 6.20;
-            } else if (nameLower.includes('bolt') || nameLower.includes('bolt m6')) {
-                return 1.50;
-            } else if (nameLower.includes('glue') || nameLower.includes('wood glue')) {
-                return 4.75;
-            }
-            return 10.00;
-        }
-
-        // Helper to format ISO DateTime string to user-friendly YYYY-MM-DD HH:mm:ss format
-        function formatDateTime(isoString) {
-            if (!isoString) return 'N/A';
-            try {
-                const d = new Date(isoString);
-                if (isNaN(d.getTime())) return isoString;
-                const year = d.getFullYear();
-                const month = String(d.getMonth() + 1).padStart(2, '0');
-                const day = String(d.getDate()).padStart(2, '0');
-                const hours = String(d.getHours()).padStart(2, '0');
-                const minutes = String(d.getMinutes()).padStart(2, '0');
-                const seconds = String(d.getSeconds()).padStart(2, '0');
-                return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-            } catch (e) {
-                return isoString;
-            }
-        }
-
-        // Helper to calculate End Repair - Start Repair and format as a duration
-        function calculateActualDuration(startedAt, completedAt) {
-            if (!startedAt || !completedAt) return 'N/A';
-            try {
-                const start = new Date(startedAt);
-                const end = new Date(completedAt);
-                const diffMs = end - start;
-                if (isNaN(diffMs) || diffMs < 0) return 'N/A';
-
-                const diffSecs = Math.floor(diffMs / 1000);
-                const h = Math.floor(diffSecs / 3600);
-                const m = Math.floor((diffSecs % 3600) / 60);
-                const s = diffSecs % 60;
-
-                let parts = [];
-                if (h > 0) parts.push(`${h}h`);
-                if (m > 0 || h > 0) parts.push(`${m}m`);
-                parts.push(`${s}s`);
-                return parts.join(' ');
-            } catch (e) {
-                return 'N/A';
-            }
-        }
-
-        // Helper to get detailed Material Cost and Labor Cost for a ticket
-        function getTicketCosts(h) {
-            // Material cost calculation
-            let materialCost = 0;
-            let materialNames = 'N/A';
-            let materialQty = 0;
-            if (h.supplement && h.supplement.needed) {
-                if (Array.isArray(h.supplement.details) && h.supplement.details.length > 0) {
-                    materialCost = h.supplement.details.reduce((sum, m) => sum + (Number(m.qty) || 0) * getMaterialUnitCost(m.name), 0);
-                    materialNames = h.supplement.details.map(m => m.name).join(', ');
-                    materialQty = h.supplement.details.reduce((sum, m) => sum + (Number(m.qty) || 0), 0);
-                } else {
-                    const name = h.supplement.partName || 'Material Supplement';
-                    const qty = Number(h.supplement.qty) || 0;
-                    materialCost = qty * getMaterialUnitCost(name);
-                    materialNames = name;
-                    materialQty = qty;
-                }
-            }
-
-            // Labor cost calculation ($25.00/hour rate based on actual duration)
-            let durationSeconds = 4500; // default 1h 15m
-            if (h.repairSeconds) {
-                durationSeconds = h.repairSeconds;
-            } else if (h.startedAt && h.completedAt) {
-                durationSeconds = Math.floor((new Date(h.completedAt) - new Date(h.startedAt)) / 1000);
-            }
-            const laborCost = (durationSeconds / 3600) * 25.00;
-
-            return {
-                materialCost,
-                materialNames,
-                materialQty,
-                laborCost,
-                totalCost: materialCost + laborCost,
-                durationSeconds
-            };
-        }
-
         // 5. REPAIR COMPLETED HISTORY VIEW
         function renderHistory() {
             const completedTickets = Object.values(ticketsState).filter(t => t.status === "Completed");
 
-            const allRows = [];
-
-            function addRowsForTicket(h, isStatic = false) {
-                let duration = '01:15:00';
-                if (isStatic) {
-                    if (h.startedAt && h.completedAt) {
-                        const diff = Math.floor((new Date(h.completedAt) - new Date(h.startedAt)) / 1000);
-                        duration = formatTime(diff);
-                    }
-                } else {
-                    duration = calculateActualDuration(h.startedAt, h.completedAt);
+            const historyRows = completedTickets.map(h => {
+                let completedDate = '05 Jul 2026';
+                if (h.completedAt) {
+                    try {
+                        completedDate = new Date(h.completedAt).toLocaleDateString();
+                    } catch (e) { }
                 }
-
-                // Robust fallback logic for property mismatches (camelCase vs snake_case)
-                const reportId = h.reportId || h.masterSku || 'N/A';
-                const itemCode = isStatic ? h.itemCode : (h.itemCode || h.meta.itemCode || h.meta.item_code || 'N/A');
-                const partName = isStatic ? h.part : (h.part || h.meta.itemName || h.meta.part || h.meta.partcode || 'N/A');
-                const defectCode = isStatic ? h.defect : (h.defect || h.meta.defectCode || h.meta.defect_code || h.meta.defect || 'N/A');
-                const scanDate = h.scanDate || (h.meta && h.meta.source ? h.meta.source.inspectedDate : '') || '';
-                const startedAt = h.startedAt || '';
-                const completedAt = h.completedAt || '';
-
-                const scanDateStr = scanDate ? formatDateTime(scanDate) : 'N/A';
-                const startedAtStr = startedAt ? formatDateTime(startedAt) : 'N/A';
-                const completedAtStr = completedAt ? formatDateTime(completedAt) : 'N/A';
-
-                const supp = h.supplement;
-                if (supp && supp.needed) {
-                    if (Array.isArray(supp.details) && supp.details.length > 0) {
-                        supp.details.forEach(detail => {
-                            const name = detail.name || 'Material Supplement';
-                            const unitCost = getMaterialUnitCost(name);
-                            const qty = Number(detail.qty) || 0;
-                            allRows.push({
-                                reportId, itemCode, partName, defectCode, scanDateStr, startedAtStr, completedAtStr, duration,
-                                materialName: name,
-                                unitCost: unitCost,
-                                quantity: qty,
-                                materialCost: qty * unitCost
-                            });
-                        });
-                    } else {
-                        const name = supp.partName || 'Material Supplement';
-                        const unitCost = getMaterialUnitCost(name);
-                        const qty = Number(supp.qty) || 0;
-                        allRows.push({
-                            reportId, itemCode, partName, defectCode, scanDateStr, startedAtStr, completedAtStr, duration,
-                            materialName: name,
-                            unitCost: unitCost,
-                            quantity: qty,
-                            materialCost: qty * unitCost
-                        });
-                    }
-                } else {
-                    allRows.push({
-                        reportId, itemCode, partName, defectCode, scanDateStr, startedAtStr, completedAtStr, duration,
-                        materialName: 'N/A',
-                        unitCost: 0,
-                        quantity: 0,
-                        materialCost: 0
-                    });
-                }
-            }
-
-            // Process dynamic completed tickets
-            completedTickets.forEach(h => addRowsForTicket(h, false));
-            // Process static history
-            staticHistory.forEach(h => addRowsForTicket(h, true));
-
-            const tableRowsHtml = allRows.map(r => `
+                return `
                 <tr>
-                    <td class="mono" style="font-weight: 600; color: var(--amber);">${r.reportId}</td>
-                    <td class="mono">${r.itemCode}</td>
-                    <td>${r.partName}</td>
-                    <td>${r.defectCode}</td>
-                    <td class="mono">${r.scanDateStr}</td>
-                    <td class="mono">${r.startedAtStr}</td>
-                    <td class="mono">${r.completedAtStr}</td>
-                    <td class="mono">${r.duration}</td>
-                    <td>${r.materialName}</td>
-                    <td>$${r.unitCost.toFixed(2)}</td>
-                    <td>${r.quantity}</td>
-                    <td><strong>$${r.materialCost.toFixed(2)}</strong></td>
+                    <td class="mono" style="font-weight: 600; color: var(--amber);">${h.reportId || h.masterSku || 'N/A'}</td>
+                    <td class="mono">${h.meta.itemCode}</td>
+                    <td>${h.meta.itemName || 'N/A'}</td>
+                    <td>${h.meta.defectCode || 'N/A'}</td>
+                    <td>${completedDate}</td>
+                    <td>${formatTime(h.repairSeconds)}</td>
                 </tr>
-            `).join('');
+            `;
+            }).join('');
+
+            const staticHistoryRows = staticHistory.map(h => {
+                let completedDate = '05 Jul 2026';
+                if (h.completedAt) {
+                    try {
+                        completedDate = new Date(h.completedAt).toLocaleDateString();
+                    } catch(e) {}
+                }
+                let duration = '01:15:00';
+                if (h.startedAt && h.completedAt) {
+                    const diff = Math.floor((new Date(h.completedAt) - new Date(h.startedAt)) / 1000);
+                    duration = formatTime(diff);
+                }
+                return `
+                <tr>
+                    <td class="mono" style="font-weight: 600; color: var(--amber);">${h.masterSku || 'N/A'}</td>
+                    <td class="mono">${h.itemCode}</td>
+                    <td>${h.part}</td>
+                    <td>${h.defect}</td>
+                    <td>${completedDate}</td>
+                    <td>${duration}</td>
+                </tr>
+            `;
+            }).join('');
 
             return `
             <div class="grid-4">
@@ -2861,117 +2709,18 @@
                                 <th>Item Code</th>
                                 <th>Description / Part</th>
                                 <th>Defect Case</th>
-                                <th>Scan Date</th>
-                                <th>Start Repair</th>
-                                <th>End Repair</th>
+                                <th>Completed Date</th>
                                 <th>Actual Duration</th>
-                                <th>Material Name</th>
-                                <th>Unit Cost ($)</th>
-                                <th>Quantity</th>
-                                <th>Material Cost</th>
                             </tr>
                         </thead>
                         <tbody>
-                            ${tableRowsHtml}
+                            ${historyRows}
+                            ${staticHistoryRows}
                         </tbody>
                     </table>
                 </div>
             </div>
         `;
-        }
-
-        // New function/module to render Cost Management
-        function renderCostManagement() {
-            const completedTickets = Object.values(ticketsState).filter(t => t.status === "Completed");
-
-            const allTickets = [
-                ...completedTickets.map(t => ({
-                    id: t.meta.id,
-                    reportId: t.reportId || t.masterSku || 'N/A',
-                    itemCode: t.itemCode || t.meta.itemCode || t.meta.item_code || 'N/A',
-                    part: t.part || t.meta.itemName || t.meta.part || t.meta.partcode || 'N/A',
-                    supplement: t.supplement,
-                    repairSeconds: t.repairSeconds,
-                    startedAt: t.startedAt,
-                    completedAt: t.completedAt
-                })),
-                ...staticHistory.map(h => ({
-                    id: h.id,
-                    reportId: h.masterSku || 'N/A',
-                    itemCode: h.itemCode,
-                    part: h.part,
-                    supplement: h.supplement,
-                    repairSeconds: 0,
-                    startedAt: h.startedAt,
-                    completedAt: h.completedAt
-                }))
-            ];
-
-            let totalMaterialCost = 0;
-            let totalLaborCost = 0;
-            let totalCopq = 0;
-
-            const rowsHtml = allTickets.map(h => {
-                const costs = getTicketCosts(h);
-                totalMaterialCost += costs.materialCost;
-                totalLaborCost += costs.laborCost;
-                totalCopq += costs.totalCost;
-
-                return `
-                    <tr>
-                        <td class="mono" style="font-weight: 600; color: var(--amber);">${h.reportId}</td>
-                        <td class="mono">${h.itemCode}</td>
-                        <td>${h.part}</td>
-                        <td>$${costs.materialCost.toFixed(2)}</td>
-                        <td>$${costs.laborCost.toFixed(2)}</td>
-                        <td><strong>$${costs.totalCost.toFixed(2)}</strong></td>
-                    </tr>
-                `;
-            }).join('');
-
-            return `
-                <div class="grid-4">
-                    <div class="kpi green">
-                        <div class="num">${allTickets.length}</div>
-                        <div class="lbl">Completed Repairs</div>
-                    </div>
-                    <div class="kpi">
-                        <div class="num">$${totalMaterialCost.toFixed(2)}</div>
-                        <div class="lbl">Total Material Cost</div>
-                    </div>
-                    <div class="kpi">
-                        <div class="num">$${totalLaborCost.toFixed(2)}</div>
-                        <div class="lbl">Total Labor Cost</div>
-                    </div>
-                    <div class="kpi red">
-                        <div class="num">$${totalCopq.toFixed(2)}</div>
-                        <div class="lbl">Total Quality Loss (COPQ)</div>
-                    </div>
-                </div>
-
-                <div class="panel" style="margin-top: 24px;">
-                    <div class="panel-head">
-                        <h3>Completed Repairs Cost Ledger</h3>
-                    </div>
-                    <div class="panel-body" style="padding:0; overflow-x:auto;">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Ticket ID</th>
-                                    <th>Item Code</th>
-                                    <th>Description / Part</th>
-                                    <th>Material Cost</th>
-                                    <th>Labor Cost</th>
-                                    <th>Total Cost (COPQ)</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${rowsHtml}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            `;
         }
 
         // 6. NOTIFICATIONS VIEW
@@ -3313,12 +3062,6 @@
                     } else if (currentView === 'notif') {
                         const container = document.getElementById('content');
                         if (container) container.innerHTML = renderNotif();
-                    } else if (currentView === 'history') {
-                        const container = document.getElementById('content');
-                        if (container) container.innerHTML = renderHistory();
-                    } else if (currentView === 'cost') {
-                        const container = document.getElementById('content');
-                        if (container) container.innerHTML = renderCostManagement();
                     }
                 } catch (err) {
                     console.error('Failed to sync statuses on storage event:', err);
@@ -3501,14 +3244,14 @@
             updateSidebarBadges();
         }
 
-        window.autoPopulateSupplementItems = function () {
+        window.autoPopulateSupplementItems = function() {
             if (!currentSupTicketId) return;
             const ticket = inspectionData.find(t => t.id === currentSupTicketId);
             if (!ticket) return;
 
             const wo = ticket.wo || '';
             const itemCode = ticket.itemCode || '';
-
+            
             let itemsToOrder = [];
             if (ticket.defectCode && (ticket.defectCode.includes('Leakage') || ticket.defectCode.includes('Seal') || ticket.defectCode.includes('D-014'))) {
                 itemsToOrder = [
@@ -3885,9 +3628,7 @@
                     <div class="sup-tab">Supplement Request List <span class="sup-tab-close">×</span></div>
                     <div class="sup-tab active">New Supplement Request <span class="sup-tab-close">×</span></div>
                 </div>
-                <button id="btn-top-right-add" class="sup-btn btn-add" onclick="window.autoPopulateSupplementItems()"
-                    style="padding: 4px 12px; font-size: 12px; font-weight: bold; background: var(--amber); color: white; border: none; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 4px;">➕
-                    Add</button>
+                <button id="btn-top-right-add" class="sup-btn btn-add" onclick="window.autoPopulateSupplementItems()" style="padding: 4px 12px; font-size: 12px; font-weight: bold; background: var(--amber); color: white; border: none; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 4px;">➕ Add</button>
             </div>
 
             <div class="sup-modal-body">
