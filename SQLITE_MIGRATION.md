@@ -77,7 +77,7 @@ QC Worker:          qc_worker_1 / password123
 QC Manager:         qc_manager_1 / password123
 Production Manager: prod_manager_1 / password123
 Production Worker:  prod_worker_1 / password123
-Warehouse:          warehouse_1 / password123
+Higher Department:  higher_dept_1 / password123
 ```
 
 ---

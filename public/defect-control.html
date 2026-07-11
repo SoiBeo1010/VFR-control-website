@@ -607,8 +607,8 @@
         }
 
         .st-wait { background: #fee2e2; color: var(--red); }
-        .st-progress { background: #fef9c3; color: #ca8a04; }
-        .st-paused { background: #ffedd5; color: #ea580c; }
+        .st-progress { background: var(--amber-dim); color: var(--amber); }
+        .st-paused { background: #fef3c7; color: #d97706; }
         .st-completed { background: var(--good-dim); color: var(--good); }
         .st-overdue { background: #fef2f2; border: 1px solid var(--red); color: var(--red); }
 
@@ -1408,10 +1408,6 @@
     let stageFilter = "All Stages";
     let priorityFilter = "All Priorities";
     let sortOption = "default";
-    let historyFromDate = "";
-    let historyToDate = "";
-    let historyQuickFilter = "all";
-
 
     // User profile state
     let userProfile = {
@@ -1435,30 +1431,14 @@
 
     /* ================= MOCK/COMPLETED HISTORY DATA ================= */
     const staticHistory = [
-        { id: "INH-3-8301", itemCode: "015076-2A", part: "01809070-WP", defect: "A-04 (Crack/broken)", scanDate: "2026-07-04T08:30:00.000Z", startedAt: "2026-07-04T09:15:00.000Z", completedAt: "2026-07-04T10:30:00.000Z", result: "PASS" },
-        { id: "INH-4-8290", itemCode: "012345-AB", part: "91122344-ZZ", defect: "D-014 (Joint Leakage)", scanDate: "2026-07-03T10:00:00.000Z", startedAt: "2026-07-03T11:30:00.000Z", completedAt: "2026-07-03T14:00:00.000Z", result: "PASS" },
-        { id: "INH-5-8270", itemCode: "066577-BB", part: "33221100-YY", defect: "D-022 (Veneer Scratch)", scanDate: "2026-07-02T12:15:00.000Z", startedAt: "2026-07-02T13:00:00.000Z", completedAt: "2026-07-02T14:45:00.000Z", result: "PASS" }
+        { id: "INH-3-8301", itemCode: "015076-2A", part: "01809070-WP", defect: "A-04 (Crack/broken)", completed: "04 Jul 2026", time: "1h 15m", result: "PASS" },
+        { id: "INH-4-8290", itemCode: "012345-AB", part: "91122344-ZZ", defect: "D-014 (Joint Leakage)", completed: "03 Jul 2026", time: "2h 30m", result: "PASS" },
+        { id: "INH-5-8270", itemCode: "066577-BB", part: "33221100-YY", defect: "D-022 (Veneer Scratch)", completed: "02 Jul 2026", time: "1h 45m", result: "PASS" }
     ];
 
     /* ================= REPAIR TICKET STATUS BRIDGE (shared with Production Worker) ================= */
-    // Short QR ID Generator for decoupled Report IDs
-    function generateUUID() {
-        return 'QR-' + Math.floor(100000 + Math.random() * 900000);
-    }
-
-    // Master SKU Generator to unify duplicate items under unified codes
-    const masterSkuMap = {};
-    let skuCounter = 10001;
-    function getMasterSku(itemName) {
-        if (!itemName) return "MSKU-99999";
-        if (!masterSkuMap[itemName]) {
-            masterSkuMap[itemName] = `MSKU-${skuCounter++}`;
-        }
-        return masterSkuMap[itemName];
-    }
-
     const REPAIR_TICKET_STATUS_KEY = 'qms_repair_ticket_statuses';
-    const REPAIR_TICKET_STATUSES = new Set(['Waiting Accept', 'In Progress', 'Paused', 'Completed', 'Overdue', 'Waiting for supplement approve']);
+    const REPAIR_TICKET_STATUSES = new Set(['Waiting Accept', 'In Progress', 'Paused', 'Completed', 'Overdue']);
     const REPAIR_STATUS_ALIASES = {
         pending: 'Waiting Accept',
         created: 'Waiting Accept',
@@ -1470,8 +1450,7 @@
         paused: 'Paused',
         completed: 'Completed',
         complete: 'Completed',
-        overdue: 'Overdue',
-        'waiting for supplement approve': 'Waiting for supplement approve'
+        overdue: 'Overdue'
     };
 
     function readStoredRepairTicketStatuses() {
@@ -1552,14 +1531,7 @@
                 status: fallbackStatus,
                 repairSeconds: fallbackSeconds,
                 repairRunning: fallbackRunning,
-                updatedAt: null,
-                startedAt: null,
-                completedAt: null,
-                scanDate: null,
-                isLegacyQuarantined: null,
-                masterSku: null,
-                reportId: null,
-                supplement: null
+                updatedAt: null
             };
         }
 
@@ -1575,19 +1547,7 @@
             repairSeconds = Math.max(repairSeconds, secondsSince(saved.startedAt));
         }
 
-        return { 
-            status, 
-            repairSeconds, 
-            repairRunning, 
-            updatedAt: saved.updatedAt || null,
-            startedAt: saved.startedAt || null,
-            completedAt: saved.completedAt || null,
-            scanDate: saved.scanDate || null,
-            isLegacyQuarantined: saved.isLegacyQuarantined !== undefined ? saved.isLegacyQuarantined : null,
-            masterSku: saved.masterSku || null,
-            reportId: saved.reportId || null,
-            supplement: saved.supplement || null
-        };
+        return { status, repairSeconds, repairRunning, updatedAt: saved.updatedAt || null };
     }
 
     function persistTicketStatus(id, extra = {}) {
@@ -1608,24 +1568,11 @@
             updatedAt: new Date().toISOString()
         };
 
-        // Hydrate scan date if not present
-        next.scanDate = previous.scanDate || extra.scanDate || ticket.scanDate || (ticket.meta && ticket.meta.source ? ticket.meta.source.inspectedDate : null) || new Date().toISOString();
-
-        // Hydrate new decoupling/quarantine fields
-        next.isLegacyQuarantined = typeof ticket.isLegacyQuarantined === 'boolean' ? ticket.isLegacyQuarantined : (typeof previous.isLegacyQuarantined === 'boolean' ? previous.isLegacyQuarantined : (typeof extra.isLegacyQuarantined === 'boolean' ? extra.isLegacyQuarantined : false));
-        next.masterSku = ticket.masterSku || previous.masterSku || extra.masterSku || null;
-        next.reportId = ticket.reportId || previous.reportId || extra.reportId || null;
-
         if (ticket.repairRunning) {
-            next.startedAt = previous.startedAt || extra.startedAt || ticket.startedAt || startTimeFromSeconds(ticket.repairSeconds);
+            next.startedAt = extra.startedAt || startTimeFromSeconds(ticket.repairSeconds);
         }
         if (ticket.status === 'Completed') {
-            next.completedAt = previous.completedAt || extra.completedAt || ticket.completedAt || new Date().toISOString();
-            // Fallback: if startedAt is missing, compute it from completedAt and repairSeconds
-            if (!next.startedAt) {
-                const compTime = new Date(next.completedAt).getTime();
-                next.startedAt = new Date(compTime - (ticket.repairSeconds * 1000)).toISOString();
-            }
+            next.completedAt = extra.completedAt || new Date().toISOString();
         }
 
         statuses[id] = next;
@@ -1639,12 +1586,9 @@
 
         // Also update local ticket state
         ticket.updatedAt = next.updatedAt;
-        ticket.scanDate = next.scanDate;
-        ticket.startedAt = next.startedAt;
-        ticket.completedAt = next.completedAt;
-        ticket.isLegacyQuarantined = next.isLegacyQuarantined;
-        ticket.masterSku = next.masterSku;
-        ticket.reportId = next.reportId;
+        if (ticket.status === 'Completed') {
+            ticket.completedAt = next.completedAt;
+        }
 
         // Add notification if status changed
         if (oldStatus !== newStatus) {
@@ -1775,46 +1719,16 @@
     function initializeTickets() {
         const storedStatuses = readStoredRepairTicketStatuses();
 
-        // Track duplicate legacy itemCodes to flag them under Quarantine Code strategy
-        const seenItemCodes = new Set();
-
         inspectionData.forEach((ticket, index) => {
             const defaultState = getDefaultStatus(index);
             const saved = storedStatuses[ticket.id] || storedStatuses[ticket.itemCode];
             const storedStatus = applyStoredRepairStatus(saved, defaultState.status, defaultState.repairSeconds, defaultState.repairRunning);
-
-            // Analyze legacy duplicates to filter out
-            const isLegacy = ticket.id.startsWith("INH-");
-            let isLegacyQuarantined = false;
-            if (isLegacy) {
-                if (seenItemCodes.has(ticket.itemCode)) {
-                    isLegacyQuarantined = true;
-                } else {
-                    seenItemCodes.add(ticket.itemCode);
-                }
-            }
-            
-            if (storedStatus.isLegacyQuarantined !== null) {
-                isLegacyQuarantined = storedStatus.isLegacyQuarantined;
-            }
-
-            // Hydrate Unified SKU and Unique Report ID
-            const masterSku = storedStatus.masterSku || getMasterSku(ticket.itemName);
-            const reportId = masterSku;
-            const needsPersist = (storedStatus.reportId !== masterSku);
 
             ticketsState[ticket.id] = {
                 meta: ticket,
                 status: storedStatus.status,
                 repairSeconds: storedStatus.repairSeconds,
                 repairRunning: storedStatus.repairRunning,
-                updatedAt: storedStatus.updatedAt,
-                startedAt: storedStatus.startedAt,
-                completedAt: storedStatus.completedAt,
-                scanDate: storedStatus.scanDate || storedStatus.updatedAt || (ticket.source ? ticket.source.inspectedDate : null) || new Date().toISOString(),
-                isLegacyQuarantined: isLegacyQuarantined,
-                masterSku: masterSku,
-                reportId: reportId,
                 checklist: ['Check defect area', 'Perform corrective action', 'Functional inspection', 'Clean item'],
                 checklistChecked: [true, false, false, false],
                 notes: index === 1 ? "Disassembled casing. Rubber seal looks worn out. Awaiting replacement to finish installation." : "",
@@ -1825,16 +1739,6 @@
                 summary: "",
                 result: ""
             };
-
-            if (storedStatus.supplement) {
-                ticket.supplement = storedStatus.supplement;
-                ticketsState[ticket.id].supplement = storedStatus.supplement;
-            }
-
-            // Auto-sync back to stored status if not saved or needs migration
-            if (needsPersist || !saved || saved.reportId === undefined || saved.masterSku === undefined) {
-                persistTicketStatus(ticket.id);
-            }
         });
         
         // Initial Badge setup
@@ -1842,7 +1746,7 @@
     }
 
     function updateSidebarBadges() {
-        const count = Object.values(ticketsState).filter(t => !t.isLegacyQuarantined && (t.status === 'Waiting Accept' || t.status === 'In Progress' || t.status === 'Paused' || t.status === 'Overdue')).length;
+        const count = Object.values(ticketsState).filter(t => t.status === 'Waiting Accept' || t.status === 'In Progress' || t.status === 'Paused' || t.status === 'Overdue').length;
         const navBadge = document.getElementById('navTicketBadge');
         if (navBadge) navBadge.textContent = count;
         
@@ -1908,16 +1812,6 @@
                     tState.repairSeconds = storedStatus.repairSeconds;
                     tState.repairRunning = storedStatus.repairRunning;
                     tState.updatedAt = storedStatus.updatedAt;
-                    tState.startedAt = storedStatus.startedAt;
-                    tState.completedAt = storedStatus.completedAt;
-                    tState.scanDate = storedStatus.scanDate;
-                    tState.isLegacyQuarantined = storedStatus.isLegacyQuarantined !== null ? storedStatus.isLegacyQuarantined : tState.isLegacyQuarantined;
-                    tState.masterSku = storedStatus.masterSku || tState.masterSku;
-                    tState.reportId = storedStatus.reportId || tState.reportId;
-                    if (storedStatus.supplement) {
-                        ticket.supplement = storedStatus.supplement;
-                        tState.supplement = storedStatus.supplement;
-                    }
                 }
             });
         } catch (err) {
@@ -1954,8 +1848,7 @@
             "In Progress": "st-progress",
             "Paused": "st-paused",
             "Completed": "st-completed",
-            "Overdue": "st-overdue",
-            "Waiting for supplement approve": "st-progress"
+            "Overdue": "st-overdue"
         }[s] || "st-wait";
     }
 
@@ -1967,12 +1860,12 @@
 
     // 1. DASHBOARD OVERVIEW
     function renderDashboard() {
-        const wait = Object.values(ticketsState).filter(t => !t.isLegacyQuarantined && t.status === "Waiting Accept").length;
-        const prog = Object.values(ticketsState).filter(t => !t.isLegacyQuarantined && (t.status === "In Progress" || t.status === "Paused")).length;
-        const done = Object.values(ticketsState).filter(t => !t.isLegacyQuarantined && t.status === "Completed").length;
-        const over = Object.values(ticketsState).filter(t => !t.isLegacyQuarantined && t.status === "Overdue").length;
+        const wait = Object.values(ticketsState).filter(t => t.status === "Waiting Accept").length;
+        const prog = Object.values(ticketsState).filter(t => t.status === "In Progress" || t.status === "Paused").length;
+        const done = Object.values(ticketsState).filter(t => t.status === "Completed").length;
+        const over = Object.values(ticketsState).filter(t => t.status === "Overdue").length;
         
-        const upcoming = Object.values(ticketsState).find(t => !t.isLegacyQuarantined && t.status === "Waiting Accept") || Object.values(ticketsState).find(t => !t.isLegacyQuarantined);
+        const upcoming = Object.values(ticketsState).find(t => t.status === "Waiting Accept") || Object.values(ticketsState)[0];
         
         let upcomingHtml = "";
         if (upcoming) {
@@ -2076,7 +1969,6 @@
                     <option ${statusFilter === 'Paused' ? 'selected' : ''}>Paused</option>
                     <option ${statusFilter === 'Completed' ? 'selected' : ''}>Completed</option>
                     <option ${statusFilter === 'Overdue' ? 'selected' : ''}>Overdue</option>
-                    <option ${statusFilter === 'Waiting for supplement approve' ? 'selected' : ''}>Waiting for supplement approve</option>
                 </select>
                 <select id="stageFilterSelect" onchange="handleStageFilter(this.value)">
                     <option ${stageFilter === 'All Stages' ? 'selected' : ''}>All Stages</option>
@@ -2133,7 +2025,7 @@
                     <div class="wo-head">
                         <div class="wo-ids">
                             <div class="wo-id"><div class="k">WO No.</div><div class="v">${t.wo}</div></div>
-                            <div class="wo-id"><div class="k">Ticket ID</div><div class="v" style="color:var(--amber); font-weight:700;">${state.reportId || state.masterSku || 'N/A'}</div></div>
+                            <div class="wo-id"><div class="k">Ticket ID</div><div class="v">${t.id}</div></div>
                             <div class="wo-id"><div class="k">Item Code</div><div class="v">${t.itemCode}</div></div>
                             <div class="wo-id"><div class="k">Stage</div><div class="v" style="font-family:'Inter';">${t.source ? t.source.inspectionStage : 'Final'}</div></div>
                         </div>
@@ -2174,9 +2066,7 @@
             const matchesPriority = priorityFilter === "All Priorities" || 
                 (t.priority && t.priority.toLowerCase() === priorityFilter.toLowerCase());
             
-            const matchesQuarantine = !state.isLegacyQuarantined;
-            
-            return matchesSearch && matchesStatus && matchesStage && matchesPriority && matchesQuarantine;
+            return matchesSearch && matchesStatus && matchesStage && matchesPriority;
         });
     }
 
@@ -2232,9 +2122,11 @@
             <div class="back-link" onclick="go('tickets')">&#8592; Back to Work Queue</div>
             
             <div class="detail-head">
-                <div class="idline">Ticket: ${ticket.reportId || ticket.masterSku || 'N/A'} <span class="status-chip ${statusClass(ticket.status)}">${ticket.status}</span></div>
+                <div class="idline">Ticket ${t.id} <span class="status-chip ${statusClass(ticket.status)}">${ticket.status}</span></div>
                 <div style="display:flex; gap:10px; align-items:center; flex-wrap: wrap;">
                     <button class="btn-sm btn-ghost" onclick="openQuarantine('${t.id}')">&#128196; View Quarantine Report</button>
+                    <button class="btn-sm btn-ghost" style="border-color: var(--amber); color: var(--amber);" onclick="scanLocation('${t.id}')">&#128248; Update location (scan)</button>
+                    ${(ticket.status !== 'In Progress' && ticket.status !== 'Completed') ? `<button class="btn-sm btn-ghost" style="border-color: var(--amber); color: var(--amber);" onclick="scanStartRepair('${t.id}')">&#9658; Start repair (scan)</button>` : ''}
                     <button class="btn-sm btn-ghost" style="border-color: var(--amber); color: var(--amber); font-weight: bold;" onclick="openSupplementForm('${t.id}')">+ Create Supplement Request</button>
                     ${actionButtons}
                 </div>
@@ -2246,7 +2138,6 @@
                         <div class="panel-body">
                             <div class="sect-title">Product Information</div>
                             <div class="field-grid">
-                                <div style="grid-column:1/3;"><div class="fk">Quarantine Report ID</div><div class="fv mono" style="color:var(--amber); font-weight:700; font-size:14px;">${ticket.reportId || ticket.masterSku || 'N/A'}</div></div>
                                 <div><div class="fk">Branch</div><div class="fv mono">${t.branch || 'VFR2.1'}</div></div>
                                 <div><div class="fk">Work Order No.</div><div class="fv mono">${t.wo}</div></div>
                                 <div><div class="fk">Item Code</div><div class="fv mono">${t.itemCode}</div></div>
@@ -2425,7 +2316,7 @@
             
             <div style="display:flex; gap:18px; font-size:13px; color:var(--txt-dim); margin-bottom:14px; font-weight:600;">
                 <span>WO: <b class="mono" style="color:#1f2937;">${t.wo}</b></span>
-                <span>Ticket ID: <b class="mono" style="color:var(--amber);">${ticket.reportId || ticket.masterSku || 'N/A'}</b></span>
+                <span>Ticket ID: <b class="mono" style="color:#1f2937;">${t.id}</b></span>
                 <span>Item: <b class="mono" style="color:#1f2937;">${t.itemCode}</b></span>
             </div>
 
@@ -2544,233 +2435,40 @@
         }
     }
 
-    // Helper to format ISO DateTime string to user-friendly YYYY-MM-DD HH:mm:ss format
-    function formatDateTime(isoString) {
-        if (!isoString) return 'N/A';
-        try {
-            const d = new Date(isoString);
-            if (isNaN(d.getTime())) return isoString;
-            const year = d.getFullYear();
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const day = String(d.getDate()).padStart(2, '0');
-            const hours = String(d.getHours()).padStart(2, '0');
-            const minutes = String(d.getMinutes()).padStart(2, '0');
-            const seconds = String(d.getSeconds()).padStart(2, '0');
-            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-        } catch(e) {
-            return isoString;
-        }
-    }
-
-    // Helper to calculate End Repair - Start Repair and format as a duration
-    function calculateActualDuration(startedAt, completedAt) {
-        if (!startedAt || !completedAt) return 'N/A';
-        try {
-            const start = new Date(startedAt);
-            const end = new Date(completedAt);
-            const diffMs = end - start;
-            if (isNaN(diffMs) || diffMs < 0) return 'N/A';
-            
-            const diffSecs = Math.floor(diffMs / 1000);
-            const h = Math.floor(diffSecs / 3600);
-            const m = Math.floor((diffSecs % 3600) / 60);
-            const s = diffSecs % 60;
-            
-            let parts = [];
-            if (h > 0) parts.push(`${h}h`);
-            if (m > 0 || h > 0) parts.push(`${m}m`);
-            parts.push(`${s}s`);
-            return parts.join(' ');
-        } catch(e) {
-            return 'N/A';
-        }
-    }
-
-    // Filtering logic for the Repair History logs
-    function filterHistoryRecords() {
-        const completedTickets = Object.values(ticketsState).filter(t => t.status === "Completed");
-        
-        const allHistory = [
-            ...completedTickets.map(t => ({
-                id: t.meta.id,
-                reportId: t.reportId || t.masterSku || 'N/A',
-                itemCode: t.meta.itemCode,
-                part: t.meta.itemName || 'N/A',
-                defect: t.meta.defectCode || 'N/A',
-                scanDate: t.scanDate || (t.meta.source ? t.meta.source.inspectedDate : ''),
-                startedAt: t.startedAt || '',
-                completedAt: t.completedAt || '',
-                result: t.result === "Successful" ? "PASS" : "REWORK"
-            })),
-            ...staticHistory.map(h => ({
-                id: h.id,
-                reportId: h.masterSku || 'N/A',
-                itemCode: h.itemCode,
-                part: h.part,
-                defect: h.defect,
-                scanDate: h.scanDate,
-                startedAt: h.startedAt,
-                completedAt: h.completedAt,
-                result: h.result
-            }))
-        ];
-
-        return allHistory.filter(item => {
-            const recordDate = new Date(item.completedAt || item.scanDate || item.startedAt);
-            if (isNaN(recordDate.getTime())) return true;
-            
-            // Custom Date Range filter
-            if (historyFromDate) {
-                const fromLimit = new Date(historyFromDate + "T00:00:00");
-                if (recordDate < fromLimit) return false;
-            }
-            if (historyToDate) {
-                const toLimit = new Date(historyToDate + "T23:59:59");
-                if (recordDate > toLimit) return false;
-            }
-            
-            // Quick Filter options
-            if (historyQuickFilter === "latest_today") {
-                const today = new Date();
-                const isSameDay = recordDate.getDate() === today.getDate() &&
-                    recordDate.getMonth() === today.getMonth() &&
-                    recordDate.getFullYear() === today.getFullYear();
-                if (!isSameDay) return false;
-            } else if (historyQuickFilter === "latest_7days") {
-                const limit = new Date();
-                limit.setDate(limit.getDate() - 7);
-                if (recordDate < limit) return false;
-            } else if (historyQuickFilter === "latest_30days") {
-                const limit = new Date();
-                limit.setDate(limit.getDate() - 30);
-                if (recordDate < limit) return false;
-            } else if (historyQuickFilter === "previous_7days") {
-                const limit = new Date();
-                limit.setDate(limit.getDate() - 7);
-                if (recordDate >= limit) return false;
-            } else if (historyQuickFilter === "previous_30days") {
-                const limit = new Date();
-                limit.setDate(limit.getDate() - 30);
-                if (recordDate >= limit) return false;
-            }
-            
-            return true;
-        });
-    }
-
-    // Generate table content dynamically
-    function renderHistoryRowsContent() {
-        const filtered = filterHistoryRecords();
-        if (filtered.length === 0) {
-            return `
-                <tr>
-                    <td colspan="8" style="text-align:center; padding:30px; color:var(--txt-dim); font-weight: 500;">No repair history logs found for selected filters.</td>
-                </tr>
-            `;
-        }
-        return filtered.map(h => {
-            const durationStr = calculateActualDuration(h.startedAt, h.completedAt);
-            return `
-                <tr>
-                    <td class="mono" style="font-weight: 600; color: var(--amber);">${h.reportId}</td>
-                    <td class="mono">${h.itemCode}</td>
-                    <td>${h.part}</td>
-                    <td>${h.defect}</td>
-                    <td class="mono">${formatDateTime(h.scanDate)}</td>
-                    <td class="mono">${formatDateTime(h.startedAt)}</td>
-                    <td class="mono">${formatDateTime(h.completedAt)}</td>
-                    <td class="mono">${durationStr}</td>
-                </tr>
-            `;
-        }).join('');
-    }
-
-    // History filter handlers
-    window.handleHistoryQuickFilter = function(val) {
-        historyQuickFilter = val;
-        refreshHistoryTable();
-    };
-
-    window.handleHistoryFromDate = function(val) {
-        historyFromDate = val;
-        refreshHistoryTable();
-    };
-
-    window.handleHistoryToDate = function(val) {
-        historyToDate = val;
-        refreshHistoryTable();
-    };
-
-    window.resetHistoryFilters = function() {
-        historyQuickFilter = "all";
-        historyFromDate = "";
-        historyToDate = "";
-        
-        const qSelect = document.getElementById('historyQuickFilterSelect');
-        const fromInput = document.getElementById('historyFromDateInput');
-        const toInput = document.getElementById('historyToDateInput');
-        
-        if (qSelect) qSelect.value = "all";
-        if (fromInput) fromInput.value = "";
-        if (toInput) toInput.value = "";
-        
-        refreshHistoryTable();
-    };
-
-    function refreshHistoryTable() {
-        const tbody = document.getElementById('historyTableBody');
-        if (tbody) {
-            tbody.innerHTML = renderHistoryRowsContent();
-        }
-        const totalKPI = document.getElementById('historyTotalKPI');
-        if (totalKPI) {
-            const completedCount = filterHistoryRecords().length;
-            totalKPI.textContent = completedCount;
-        }
-    }
-
     // 5. REPAIR COMPLETED HISTORY VIEW
     function renderHistory() {
-        const totalCompleted = filterHistoryRecords().length;
+        const completedTickets = Object.values(ticketsState).filter(t => t.status === "Completed");
         
+        const historyRows = completedTickets.map(h => `
+            <tr>
+                <td class="mono">${h.meta.id}</td>
+                <td class="mono">${h.meta.itemCode}</td>
+                <td>${h.meta.itemName || 'N/A'}</td>
+                <td>${h.meta.defectCode || 'N/A'}</td>
+                <td>05 Jul 2026</td>
+                <td>${formatTime(h.repairSeconds)}</td>
+                <td><span class="pass-tag">PASS</span></td>
+            </tr>
+        `).join('');
+
+        const staticHistoryRows = staticHistory.map(h => `
+            <tr>
+                <td class="mono">${h.id}</td>
+                <td class="mono">${h.itemCode}</td>
+                <td>${h.part}</td>
+                <td>${h.defect}</td>
+                <td>${h.completed}</td>
+                <td>${h.time}</td>
+                <td><span class="pass-tag">${h.result}</span></td>
+            </tr>
+        `).join('');
+
         return `
             <div class="grid-4">
-                <div class="kpi green"><div class="num" id="historyTotalKPI">${totalCompleted}</div><div class="lbl">Total Completed</div></div>
+                <div class="kpi green"><div class="num">${completedTickets.length + staticHistory.length}</div><div class="lbl">Total Completed</div></div>
                 <div class="kpi"><div class="num">1.4h</div><div class="lbl">Avg Repair Duration</div></div>
                 <div class="kpi green"><div class="num">97%</div><div class="lbl">First Time Right</div></div>
                 <div class="kpi red"><div class="num">3%</div><div class="lbl">QC Rework Rate</div></div>
-            </div>
-
-            <div style="background: var(--good-dim); border-left: 4px solid var(--good); padding: 12px 16px; border-radius: 8px; margin-top: 16px; margin-bottom: 16px; font-size: 13.5px; color: var(--good); font-weight: 600; display: flex; align-items: center; gap: 8px;">
-                <span>ℹ️</span>
-                <span>All completed repair tickets are displayed on this page for verification and historical tracking.</span>
-            </div>
-
-            <!-- SEARCH / FILTERING TOOLBAR -->
-            <div class="search-bar" style="margin-bottom: 16px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; background: white; padding: 16px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="font-size: 13px; font-weight: 600; color: var(--txt-dim);">Quick Filter:</span>
-                    <select id="historyQuickFilterSelect" onchange="handleHistoryQuickFilter(this.value)" style="padding: 8px 12px; border: 1px solid var(--panel-line); border-radius: 8px; font-size: 13px; font-family: inherit; outline: none; background: white; cursor: pointer; min-width: 160px;">
-                        <option value="all" ${historyQuickFilter === 'all' ? 'selected' : ''}>All Time</option>
-                        <option value="latest_today" ${historyQuickFilter === 'latest_today' ? 'selected' : ''}>Latest (Today)</option>
-                        <option value="latest_7days" ${historyQuickFilter === 'latest_7days' ? 'selected' : ''}>Latest (Last 7 Days)</option>
-                        <option value="latest_30days" ${historyQuickFilter === 'latest_30days' ? 'selected' : ''}>Latest (Last 30 Days)</option>
-                        <option value="previous_7days" ${historyQuickFilter === 'previous_7days' ? 'selected' : ''}>Previous (Older than 7 Days)</option>
-                        <option value="previous_30days" ${historyQuickFilter === 'previous_30days' ? 'selected' : ''}>Previous (Older than 30 Days)</option>
-                    </select>
-                </div>
-                
-                <div style="display: flex; align-items: center; gap: 8px; margin-left: 12px;">
-                    <span style="font-size: 13px; font-weight: 600; color: var(--txt-dim);">From:</span>
-                    <input type="date" id="historyFromDateInput" value="${historyFromDate}" onchange="handleHistoryFromDate(this.value)" style="padding: 8px 12px; border: 1px solid var(--panel-line); border-radius: 8px; font-size: 13px; font-family: inherit; outline: none; background: white;">
-                </div>
-                
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="font-size: 13px; font-weight: 600; color: var(--txt-dim);">To:</span>
-                    <input type="date" id="historyToDateInput" value="${historyToDate}" onchange="handleHistoryToDate(this.value)" style="padding: 8px 12px; border: 1px solid var(--panel-line); border-radius: 8px; font-size: 13px; font-family: inherit; outline: none; background: white;">
-                </div>
-
-                <button class="btn-sm btn-ghost" onclick="resetHistoryFilters()" style="margin-left: auto; padding: 8px 16px; font-size: 13px;">Reset Filters</button>
             </div>
             
             <div class="panel">
@@ -2785,14 +2483,14 @@
                                 <th>Item Code</th>
                                 <th>Description / Part</th>
                                 <th>Defect Case</th>
-                                <th>Scan Date</th>
-                                <th>Start Repair</th>
-                                <th>End Repair</th>
+                                <th>Completed Date</th>
                                 <th>Actual Duration</th>
+                                <th>QC Verification</th>
                             </tr>
                         </thead>
-                        <tbody id="historyTableBody">
-                            ${renderHistoryRowsContent()}
+                        <tbody>
+                            ${historyRows}
+                            ${staticHistoryRows}
                         </tbody>
                     </table>
                 </div>
@@ -2961,7 +2659,7 @@
             <div class="qr-topline">
                 <div class="qr-h1">QUARANTINE REPORT</div>
                 <div class="qr-meta-box">
-                    <div class="row"><b>Report No.</b> ${ticket.reportId || t.id}</div>
+                    <div class="row"><b>Report No.</b> ${t.id}</div>
                     <div class="row"><b>Inspection Date</b> ${inspectedDate}</div>
                 </div>
             </div>
@@ -3237,7 +2935,7 @@
 
         statuses[currentSupTicketId] = {
             ...saved,
-            status: 'Waiting for supplement approve',
+            status: saved.status || 'Waiting Accept',
             updatedAt: new Date().toISOString(),
             supplement: {
                 needed: true,
@@ -3248,14 +2946,6 @@
                 details: requestMaterialsList
             }
         };
-
-        // Also update in-memory state so UI updates immediately
-        if (ticketsState[currentSupTicketId]) {
-            ticketsState[currentSupTicketId].status = 'Waiting for supplement approve';
-            ticketsState[currentSupTicketId].updatedAt = new Date().toISOString();
-            ticketsState[currentSupTicketId].supplement = statuses[currentSupTicketId].supplement;
-            ticketsState[currentSupTicketId].meta.supplement = statuses[currentSupTicketId].supplement;
-        }
 
         writeStoredRepairTicketStatuses(statuses);
 
@@ -3271,72 +2961,6 @@
         // Refresh views
         const listContainer = document.getElementById('ticketsListContainer');
         if (listContainer) listContainer.innerHTML = renderTicketsListContent();
-        if (currentView === 'detail' && currentTicketId === currentSupTicketId) {
-            go('detail', currentSupTicketId);
-        }
-        updateSidebarBadges();
-    }
-
-    window.autoPopulateSupplementItems = function() {
-        if (!currentSupTicketId) return;
-        const ticket = inspectionData.find(t => t.id === currentSupTicketId);
-        if (!ticket) return;
-
-        const wo = ticket.wo || '';
-        const itemCode = ticket.itemCode || '';
-        
-        let itemsToOrder = [];
-        if (ticket.defectCode && (ticket.defectCode.includes('Leakage') || ticket.defectCode.includes('Seal') || ticket.defectCode.includes('D-014'))) {
-            itemsToOrder = [
-                {
-                    code: 'MAT-33221100-YY',
-                    name: 'High Temp Rubber Gasket',
-                    qty: 2,
-                    remark: 'Seal leakage replacement'
-                },
-                {
-                    code: 'MAT-GEN-BOLT-M6',
-                    name: 'Replacement Bolt M6',
-                    qty: 4,
-                    remark: 'Bolts for joint'
-                }
-            ];
-        } else {
-            itemsToOrder = [
-                {
-                    code: 'MAT-01829265-WP',
-                    name: 'Replacement Board 18mm',
-                    qty: 2,
-                    remark: 'Defect replacement board'
-                },
-                {
-                    code: 'MAT-GEN-GLUE-WP',
-                    name: 'Standard Wood Glue',
-                    qty: 1,
-                    remark: 'Glue for assembly'
-                }
-            ];
-        }
-
-        requestMaterialsList = itemsToOrder.map(item => ({
-            code: item.code,
-            name: item.name,
-            dimension: '18 x 400 x 600',
-            unit: 'pcs',
-            qty: item.qty,
-            wo: wo,
-            itemCode: itemCode,
-            revision: 'A',
-            carcassCode: 'CAR-021838-A',
-            itemQty: 1,
-            bomQtyPerItem: 1,
-            totalBomQty: item.qty,
-            remark: item.remark,
-            budget: 'Yes'
-        }));
-
-        renderSupplementMaterialsTable();
-        showToast('Automatically populated supplement items to order!');
     }
 
     window.closeSupplementForm = closeSupplementForm;
@@ -3648,13 +3272,10 @@
 <div id="supplementRequestModal" class="sup-modal" style="display: none;">
     <div class="sup-modal-content">
         <!-- ERP Tab Bar Header -->
-        <div class="sup-tab-bar" style="justify-content: space-between; align-items: center; padding-right: 12px;">
-            <div style="display: flex;">
-                <div class="sup-tab">HOME PAGE <span class="sup-tab-close">×</span></div>
-                <div class="sup-tab">Supplement Request List <span class="sup-tab-close">×</span></div>
-                <div class="sup-tab active">New Supplement Request <span class="sup-tab-close">×</span></div>
-            </div>
-            <button id="btn-top-right-add" class="sup-btn btn-add" onclick="window.autoPopulateSupplementItems()" style="padding: 4px 12px; font-size: 12px; font-weight: bold; background: var(--amber); color: white; border: none; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 4px;">➕ Add</button>
+        <div class="sup-tab-bar">
+            <div class="sup-tab">HOME PAGE <span class="sup-tab-close">×</span></div>
+            <div class="sup-tab">Supplement Request List <span class="sup-tab-close">×</span></div>
+            <div class="sup-tab active">New Supplement Request <span class="sup-tab-close">×</span></div>
         </div>
 
         <div class="sup-modal-body">

@@ -42,7 +42,7 @@
                     <div><strong>QC Manager:</strong> qc_manager_1 / password123</div>
                     <div><strong>Prod Manager:</strong> prod_manager_1 / password123</div>
                     <div><strong>Prod Worker:</strong> prod_worker_1 / password123</div>
-                    <div><strong>Warehouse:</strong> warehouse_1 / password123</div>
+                    <div><strong>Higher Dept:</strong> higher_dept_1 / password123</div>
                 </div>
             </div>
         </div>
@@ -75,10 +75,10 @@
                     localStorage.setItem('username', data.username);
                     localStorage.setItem('role', data.role);
                     
-                    // Clear cached repair ticket statuses when signing in (disabled to allow demo role sync)
-                    // localStorage.removeItem('qms_repair_ticket_statuses');
-                    // localStorage.removeItem('qms_under_repair');
-                    // localStorage.removeItem('qms_notifications');
+                    // Clear cached repair ticket statuses when signing in
+                    localStorage.removeItem('qms_repair_ticket_statuses');
+                    localStorage.removeItem('qms_under_repair');
+                    localStorage.removeItem('qms_notifications');
                     
                     // Redirect based on role
                     const roleMap = {
@@ -86,7 +86,7 @@
                         'QC Manager': '/qc-manager.html',
                         'Production Manager': '/production-manager.html',
                         'Production Worker': '/production-worker.html',
-                        'Warehouse': '/warehouse.html'
+                        'Higher Department': '/higher-department.html'
                     };
                     
                     window.location.href = roleMap[data.role] || '/dashboard.html';

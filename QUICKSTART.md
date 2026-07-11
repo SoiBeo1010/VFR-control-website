@@ -82,8 +82,8 @@ Higher Dept:       higher_dept_1 / password123
 6. Record repair cost
 7. Submit
 
-### 5. **Warehouse** - Approve
-1. Login as `warehouse_1`
+### 5. **Higher Department** - Approve
+1. Login as `higher_dept_1`
 2. View repairs pending approval
 3. Click "Review"
 4. Select "Approve" or "Reject"
@@ -102,7 +102,7 @@ public/
   ├── qc-manager.html     ← QC Manager Dashboard
   ├── production-manager.html  ← Production Manager Dashboard
   ├── production-worker.html   ← Production Worker Dashboard
-  ├── warehouse.html      ← Warehouse Dashboard
+  ├── higher-department.html   ← Higher Department Dashboard
   └── styles.css          ← All CSS Styles
 ```
 

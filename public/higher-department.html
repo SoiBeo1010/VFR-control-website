@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Warehouse - QMS System</title>
+    <title>Higher Department - QMS System</title>
     <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
@@ -14,7 +14,7 @@
                 <span>QMS System</span>
             </div>
             <ul class="nav-menu">
-                <li style="color: #6b7280;"><strong>Warehouse</strong> - <span id="username"></span></li>
+                <li style="color: #6b7280;"><strong>Higher Department</strong> - <span id="username"></span></li>
                 <li><button class="logout-btn" onclick="logout()">Logout</button></li>
             </ul>
         </div>
@@ -22,7 +22,7 @@
 
     <main>
         <div class="container">
-            <h1 class="page-title">Warehouse - Approval Dashboard</h1>
+            <h1 class="page-title">Higher Department - Approval Dashboard</h1>
             
             <div id="alertContainer"></div>
 
@@ -102,7 +102,7 @@
 
         async function loadRepairsForApproval() {
             try {
-                const response = await fetch(`${API_BASE}/warehouse/repairs-for-approval`, {
+                const response = await fetch(`${API_BASE}/higher-department/repairs-for-approval`, {
                     headers: { 'token': token }
                 });
 
@@ -181,7 +181,7 @@
             const comments = document.getElementById('approvalComments').value;
             
             try {
-                const response = await fetch(`${API_BASE}/warehouse/approve-repair`, {
+                const response = await fetch(`${API_BASE}/higher-department/approve-repair`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

@@ -294,7 +294,7 @@ Expected Result:
 ✓ Success message displayed
 ✓ Plan status changes to "completed"
 ✓ Sent for approval
-✓ Warehouse receives for review
+✓ Higher Department receives for review
 ```
 
 #### Test 5.3: Cost Recording
@@ -302,11 +302,11 @@ Expected Result:
 Steps:
 1. Complete repair with cost: 250.00
 2. Complete another with cost: 175.50
-3. Check Warehouse dashboard
+3. Check Higher Department dashboard
 
 Expected Result:
 ✓ Costs recorded accurately
-✓ Total cost visible to Warehouse
+✓ Total cost visible to Higher Department
 ✓ Cost calculations correct
 ```
 
@@ -318,19 +318,19 @@ Steps:
 
 Expected Result:
 ✓ Each completion processed independently
-✓ All visible to Warehouse
+✓ All visible to Higher Department
 ✓ Costs tracked separately
 ✓ "Completed" stat accurate
 ```
 
 ---
 
-### 6. Warehouse Tests
+### 6. Higher Department Tests
 
 #### Test 6.1: View Pending Approvals
 ```
 Steps:
-1. Login as warehouse_1
+1. Login as higher_dept_1
 2. Review "Repairs Pending Approval" section
 
 Expected Result:
